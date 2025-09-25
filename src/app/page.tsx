@@ -1,103 +1,138 @@
-import Image from "next/image";
+"use client";
+
+import InputField from "@/components/inputfield";
+import FormSection from "@/components/formsection";
+import Navbar from "@/components/navbar";
+import { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [accessories, setAccessories] = useState<string[]>(["Baterai", "Adaptor"]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleCheckbox = (item: string) => {
+    setAccessories((prev) =>
+      prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
+    );
+  };
+
+  return (
+    // Gunakan <div> sebagai pembungkus utama seluruh halaman
+    // Anda bisa tambahkan warna latar di sini, misal: className="bg-gray-50"
+    <div>
+      {/* 1. Navbar sekarang berada di luar container pembatas lebar */}
+      <Navbar />
+
+      {/* 2. Tag <main> sekarang membungkus konten utama DAN menjadi container yang terpusat */}
+      <main className="max-w-4xl w-full mx-auto p-6 space-y-6">
+        <div className="text-center">
+            <h1 className="text-2xl font-bold">Selamat Datang</h1>
+            <p>Ini halaman utama dengan navbar biru & hitam.</p>
         </div>
+        
+        <form className="space-y-6">
+          {/* Data Customer */}
+          <FormSection title="Data Customer">
+            <InputField label="Nama" placeholder="Nama" />
+            <InputField label="Alamat" placeholder="Alamat" textarea />
+            <InputField label="No. Handphone" placeholder="No. Handphone" />
+            <InputField label="Email" placeholder="Email" />
+          </FormSection>
+
+          {/* Data Barang */}
+          <FormSection title="Data Barang">
+            <InputField label="Merk" placeholder="Merk" />
+            <InputField label="Tipe" placeholder="Tipe" />
+            <InputField label="Serial Number" placeholder="Serial Number" />
+            <InputField label="Keluhan" placeholder="Keluhan" textarea />
+            <InputField label="Spesifikasi Teknis" placeholder="Spesifikasi Teknis" textarea />
+          </FormSection>
+
+          {/* Jenis Perangkat */}
+          <FormSection title="Jenis Perangkat">
+            <div className="flex flex-wrap gap-4">
+              {["Laptop", "PC", "UPS", "Console"].map((device) => (
+                <label key={device} className="flex items-center space-x-2">
+                  <input type="checkbox" className="w-4 h-4" />
+                  <span>{device}</span>
+                </label>
+              ))}
+            </div>
+          </FormSection>
+
+          {/* Accessories */}
+          <FormSection title="Accessories">
+            <div className="flex flex-wrap gap-4">
+              {["Baterai", "Adaptor", "Tas", "Casing", "Mouse", "Receiver"].map(
+                (acc) => (
+                  <label key={acc} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={accessories.includes(acc)}
+                      onChange={() => handleCheckbox(acc)}
+                      className="w-4 h-4"
+                    />
+                    <span>{acc}</span>
+                  </label>
+                )
+              )}
+            </div>
+          </FormSection>
+
+          {/* Garansi */}
+          <FormSection title="Garansi">
+            <div className="flex space-x-6">
+              <label className="flex items-center space-x-2">
+                <input type="radio" name="garansi" className="w-4 h-4" />
+                <span>Ya</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="radio" name="garansi" className="w-4 h-4" />
+                <span>Tidak</span>
+              </label>
+            </div>
+          </FormSection>
+
+          {/* Kondisi */}
+          <FormSection title="Kondisi Saat Masuk">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                "Mati Total", "Layar Gelap", "Layar Biru", "Bekas Jatuh",
+                "Chasing Pecah", "Pernah Dibongkar", "Baret", "Retak",
+                "Kotor / Berdebu",
+              ].map((condition) => (
+                <label key={condition} className="flex items-center space-x-2">
+                  <input type="checkbox" className="w-4 h-4" />
+                  <span>{condition}</span>
+                </label>
+              ))}
+            </div>
+          </FormSection>
+
+          {/* Info Tambahan */}
+          <FormSection title="Info Tambahan">
+            <InputField label="Prioritas Service" placeholder="1. Reguler" />
+            <InputField label="Track Number" placeholder="Track Number" />
+            <InputField label="Cabang" placeholder="Pilih Cabang" />
+            <InputField label="Sales" placeholder="Sales" />
+            <InputField label="Penerima Service" placeholder="Penerima Service" />
+          </FormSection>
+
+          {/* Submit */}
+          <div className="flex space-x-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700"
+            >
+              Submit Only
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded-md shadow hover:bg-blue-600"
+            >
+              Submit & Duplicate
+            </button>
+          </div>
+        </form>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
