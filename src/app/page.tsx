@@ -14,21 +14,40 @@ export default function Home() {
     );
   };
 
-  return (
-    // Gunakan <div> sebagai pembungkus utama seluruh halaman
-    // Anda bisa tambahkan warna latar di sini, misal: className="bg-gray-50"
-    <div >
-      {/* 1. Navbar sekarang berada di luar container pembatas lebar */}
-      <Navbar  />
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = {
+      nama: "John Doe", // ini nanti ganti ambil dari state input
+      alamat: "Jl. Sudirman",
+      no_hp: "08123456789",
+      email: "john@example.com",
+    };
 
-      {/* 2. Tag <main> sekarang membungkus konten utama DAN menjadi container yang terpusat */}
-      <main className="max-w-4xl w-full mx-auto p-6 space-y-6 ">
-        <div className="text-center">
-            <h1 className="text-2xl font-bold">Selamat Datang</h1>
-            <p>Ini halaman utama dengan navbar biru & hitam.</p>
+    const res = await fetch("/api/service", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    const result = await res.json();
+    console.log("Respon API:", result);
+    alert(result.message);
+  };
+
+  return (
+    <div className="bg-white min-h-screen">
+      {/* Navbar */}
+      <Navbar />
+
+      {/* Main */}
+      <main className="max-w-4xl w-full mx-auto p-6 space-y-6">
+        <div className="text-center text-black">
+          <h1 className="text-2xl font-bold">Selamat datang di Layanan Service Kami</h1>
+          <p>Cepat, Mudah, dan Terpercaya!</p>
         </div>
-        
-        <form className=" space-y-6">
+
+        {/* FORM (satu saja, jangan dobel) */}
+        <form className="space-y-6 text-black" onSubmit={handleSubmit}>
           {/* Data Customer */}
           <FormSection title="Data Customer">
             <InputField label="Nama" placeholder="Nama" />
@@ -111,8 +130,6 @@ export default function Home() {
           <FormSection title="Info Tambahan">
             <InputField label="Prioritas Service" placeholder="1. Reguler" />
             <InputField label="Track Number" placeholder="Track Number" />
-            <InputField label="Cabang" placeholder="Pilih Cabang" />
-            <InputField label="Sales" placeholder="Sales" />
             <InputField label="Penerima Service" placeholder="Penerima Service" />
           </FormSection>
 
@@ -123,12 +140,6 @@ export default function Home() {
               className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700"
             >
               Submit Only
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md shadow hover:bg-blue-600"
-            >
-              Submit & Duplicate
             </button>
           </div>
         </form>
