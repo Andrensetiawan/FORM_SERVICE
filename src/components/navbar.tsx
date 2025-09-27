@@ -29,7 +29,7 @@ export default function Navbar() {
               Home
             </a>
             <a href="#" className="text-gray-200 hover:text-white transition">
-              Services
+              Status Services
             </a>
             <a href="#" className="text-gray-200 hover:text-white transition">
               Contact
@@ -66,7 +66,7 @@ export default function Navbar() {
             Home
           </a>
           <a href="#" className="block text-gray-200 hover:text-white">
-            Services
+            Status Services
           </a>
           <a href="#" className="block text-gray-200 hover:text-white">
             Contact

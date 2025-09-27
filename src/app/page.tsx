@@ -75,6 +75,7 @@ export default function Home() {
                 </label>
               ))}
             </div>
+            <InputField label="Keterangan" placeholder="Keterangan" />
           </FormSection>
 
           {/* Accessories */}
@@ -94,6 +95,7 @@ export default function Home() {
                 )
               )}
             </div>
+            <InputField label="Keterangan" placeholder="Keterangan" />
           </FormSection>
 
           {/* Garansi */}
