@@ -17,18 +17,18 @@ export default function Home() {
   return (
     // Gunakan <div> sebagai pembungkus utama seluruh halaman
     // Anda bisa tambahkan warna latar di sini, misal: className="bg-gray-50"
-    <div>
+    <div >
       {/* 1. Navbar sekarang berada di luar container pembatas lebar */}
-      <Navbar />
+      <Navbar  />
 
       {/* 2. Tag <main> sekarang membungkus konten utama DAN menjadi container yang terpusat */}
-      <main className="max-w-4xl w-full mx-auto p-6 space-y-6">
+      <main className="max-w-4xl w-full mx-auto p-6 space-y-6 ">
         <div className="text-center">
             <h1 className="text-2xl font-bold">Selamat Datang</h1>
             <p>Ini halaman utama dengan navbar biru & hitam.</p>
         </div>
         
-        <form className="space-y-6">
+        <form className=" space-y-6">
           {/* Data Customer */}
           <FormSection title="Data Customer">
             <InputField label="Nama" placeholder="Nama" />
