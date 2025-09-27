@@ -108,6 +108,7 @@ export default function Home() {
                 <span>Tidak</span>
               </label>
             </div>
+            <InputField label="Keterangan Garansi" placeholder="Keterangan" />
           </FormSection>
 
           {/* Kondisi */}
