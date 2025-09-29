@@ -6,32 +6,115 @@ import Navbar from "@/components/navbar";
 import { useState } from "react";
 
 export default function Home() {
+  // State untuk accessories
   const [accessories, setAccessories] = useState<string[]>(["Baterai", "Adaptor"]);
+  
+  // State untuk data form
+  const [formData, setFormData] = useState({
+    // Data Customer
+    nama: "",
+    alamat: "",
+    no_hp: "",
+    email: "",
+    
+    // Data Unit
+    merk: "",
+    tipe: "",
+    serial_number: "",
+    keluhan: "",
+    spesifikasi_teknis: "",
+    
+    // Jenis Perangkat
+    jenis_perangkat: [] as string[],
+    keterangan_perangkat: "",
+    
+    // Accessories
+    keterangan_accessories: "",
+    
+    // Garansi
+    garansi: false,
+    keterangan_garansi: "",
+    
+    // Kondisi
+    kondisi: [] as string[],
+    keterangan_kondisi: "",
+    
+    // Info Tambahan
+    prioritas_service: "1. Reguler",
+    track_number: "",
+    penerima_service: ""
+  });
 
+  // Handle perubahan input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle checkbox untuk jenis perangkat
+  const handleJenisPerangkat = (device: string) => {
+    setFormData(prev => {
+      const jenis_perangkat = prev.jenis_perangkat.includes(device)
+        ? prev.jenis_perangkat.filter(x => x !== device)
+        : [...prev.jenis_perangkat, device];
+      
+      return { ...prev, jenis_perangkat };
+    });
+  };
+
+  // Handle checkbox untuk kondisi
+  const handleKondisi = (condition: string) => {
+    setFormData(prev => {
+      const kondisi = prev.kondisi.includes(condition)
+        ? prev.kondisi.filter(x => x !== condition)
+        : [...prev.kondisi, condition];
+      
+      return { ...prev, kondisi };
+    });
+  };
+
+  // Handle radio untuk garansi
+  const handleGaransi = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      garansi: e.target.value === "Ya"
+    }));
+  };
+
+  // Handle accessories
   const handleCheckbox = (item: string) => {
     setAccessories((prev) =>
       prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
     );
   };
 
+  // Handle submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = {
-      nama: "John Doe", // ini nanti ganti ambil dari state input
-      alamat: "Jl. Sudirman",
-      no_hp: "08123456789",
-      email: "john@example.com",
+    
+    // Gabungkan semua data form
+    const dataToSubmit = {
+      ...formData,
+      accessories: accessories
     };
+    
+    try {
+      const res = await fetch("/api/service", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataToSubmit),
+      });
 
-    const res = await fetch("/api/service", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    const result = await res.json();
-    console.log("Respon API:", result);
-    alert(result.message);
+      const result = await res.json();
+      console.log("Respon API:", result);
+      alert(result.message);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Gagal mengirim data. Silakan coba lagi.");
+    }
   };
 
   return (
@@ -46,23 +129,80 @@ export default function Home() {
           <p>Cepat, Mudah, dan Terpercaya!</p>
         </div>
 
-        {/* FORM (satu saja, jangan dobel) */}
+        {/* FORM */}
         <form className="space-y-6 text-black" onSubmit={handleSubmit}>
           {/* Data Customer */}
           <FormSection title="Data Customer">
-            <InputField label="Nama" placeholder="Nama" />
-            <InputField label="Alamat" placeholder="Alamat" textarea />
-            <InputField label="No. Handphone" placeholder="No. Handphone" />
-            <InputField label="Email" placeholder="Email" />
+            <InputField 
+              label="Nama" 
+              placeholder="Nama" 
+              name="nama"
+              value={formData.nama}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Alamat" 
+              placeholder="Alamat" 
+              textarea 
+              name="alamat"
+              value={formData.alamat}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="No. Handphone" 
+              placeholder="No. Handphone" 
+              name="no_hp"
+              value={formData.no_hp}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Email" 
+              placeholder="Email" 
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
-          {/* Data Barang */}
-          <FormSection title="Data Barang">
-            <InputField label="Merk" placeholder="Merk" />
-            <InputField label="Tipe" placeholder="Tipe" />
-            <InputField label="Serial Number" placeholder="Serial Number" />
-            <InputField label="Keluhan" placeholder="Keluhan" textarea />
-            <InputField label="Spesifikasi Teknis" placeholder="Spesifikasi Teknis" textarea />
+          {/* Data Unit */}
+          <FormSection title="Data Unit">
+            <InputField 
+              label="Merk" 
+              placeholder="Merk" 
+              name="merk"
+              value={formData.merk}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Tipe" 
+              placeholder="Tipe" 
+              name="tipe"
+              value={formData.tipe}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Serial Number" 
+              placeholder="Serial Number" 
+              name="serial_number"
+              value={formData.serial_number}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Keluhan" 
+              placeholder="Keluhan" 
+              textarea 
+              name="keluhan"
+              value={formData.keluhan}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Spesifikasi Teknis" 
+              placeholder="Spesifikasi Teknis" 
+              textarea 
+              name="spesifikasi_teknis"
+              value={formData.spesifikasi_teknis}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
           {/* Jenis Perangkat */}
@@ -70,12 +210,23 @@ export default function Home() {
             <div className="flex flex-wrap gap-4">
               {["Laptop", "PC", "UPS", "Console"].map((device) => (
                 <label key={device} className="flex items-center space-x-2">
-                  <input type="checkbox" className="w-4 h-4" />
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4"
+                    checked={formData.jenis_perangkat.includes(device)}
+                    onChange={() => handleJenisPerangkat(device)}
+                  />
                   <span>{device}</span>
                 </label>
               ))}
             </div>
-            <InputField label="Keterangan" placeholder="Keterangan" />
+            <InputField 
+              label="Keterangan" 
+              placeholder="Keterangan" 
+              name="keterangan_perangkat"
+              value={formData.keterangan_perangkat}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
           {/* Accessories */}
@@ -95,22 +246,48 @@ export default function Home() {
                 )
               )}
             </div>
-            <InputField label="Keterangan" placeholder="Keterangan" />
+            <InputField 
+              label="Keterangan" 
+              placeholder="Keterangan" 
+              name="keterangan_accessories"
+              value={formData.keterangan_accessories}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
           {/* Garansi */}
           <FormSection title="Garansi">
             <div className="flex space-x-6">
               <label className="flex items-center space-x-2">
-                <input type="radio" name="garansi" className="w-4 h-4" />
+                <input 
+                  type="radio" 
+                  name="garansi" 
+                  value="Ya"
+                  checked={formData.garansi === true}
+                  onChange={handleGaransi}
+                  className="w-4 h-4" 
+                />
                 <span>Ya</span>
               </label>
               <label className="flex items-center space-x-2">
-                <input type="radio" name="garansi" className="w-4 h-4" />
+                <input 
+                  type="radio" 
+                  name="garansi" 
+                  value="Tidak"
+                  checked={formData.garansi === false}
+                  onChange={handleGaransi}
+                  className="w-4 h-4" 
+                />
                 <span>Tidak</span>
               </label>
             </div>
-            <InputField label="Keterangan Garansi" placeholder="Keterangan" />
+            <InputField 
+              label="Keterangan Garansi" 
+              placeholder="Keterangan" 
+              name="keterangan_garansi"
+              value={formData.keterangan_garansi}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
           {/* Kondisi */}
@@ -122,19 +299,48 @@ export default function Home() {
                 "Kotor / Berdebu",
               ].map((condition) => (
                 <label key={condition} className="flex items-center space-x-2">
-                  <input type="checkbox" className="w-4 h-4" />
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4"
+                    checked={formData.kondisi.includes(condition)}
+                    onChange={() => handleKondisi(condition)}
+                  />
                   <span>{condition}</span>
                 </label>
               ))}
             </div>
-            <InputField label="Keterangan" placeholder="Keterangan" />
+            <InputField 
+              label="Keterangan" 
+              placeholder="Keterangan" 
+              name="keterangan_kondisi"
+              value={formData.keterangan_kondisi}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
           {/* Info Tambahan */}
           <FormSection title="Info Tambahan">
-            <InputField label="Prioritas Service" placeholder="1. Reguler" />
-            <InputField label="Track Number" placeholder="Track Number" />
-            <InputField label="Penerima Service" placeholder="Penerima Service" />
+            <InputField 
+              label="Prioritas Service" 
+              placeholder="1. Reguler" 
+              name="prioritas_service"
+              value={formData.prioritas_service}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Track Number" 
+              placeholder="Track Number" 
+              name="track_number"
+              value={formData.track_number}
+              onChange={handleInputChange}
+            />
+            <InputField 
+              label="Penerima Service" 
+              placeholder="Penerima Service" 
+              name="penerima_service"
+              value={formData.penerima_service}
+              onChange={handleInputChange}
+            />
           </FormSection>
 
           {/* Submit */}
