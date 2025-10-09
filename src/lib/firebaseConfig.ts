@@ -1,8 +1,6 @@
 // Import Firebase
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
-
 // Konfigurasi Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDp3h-P4NhHH1hM-ijVkZRrLS0BR6X-K1M",
@@ -16,12 +14,5 @@ const firebaseConfig = {
 
 // Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+export const db = getFirestore(app);
 
-// Hanya aktifkan analytics di client
-let analytics;
-if (typeof window !== "undefined") {
-  analytics = getAnalytics(app);
-}
-
-export { db, analytics };

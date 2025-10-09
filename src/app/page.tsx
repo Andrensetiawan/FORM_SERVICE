@@ -4,48 +4,37 @@ import InputField from "@/components/inputfield";
 import FormSection from "@/components/formsection";
 import Navbar from "@/components/navbar";
 import { useState } from "react";
+import { db } from "@/lib/firebaseConfig";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { generateTrackNumber } from "@/lib/trackNumber";
+
 
 export default function Home() {
-  // State untuk accessories
-  const [accessories, setAccessories] = useState<string[]>(["Baterai", "Adaptor"]);
-  
-  // State untuk data form
+  // Gabungkan semua state dalam satu objek formData
   const [formData, setFormData] = useState({
-    // Data Customer
-    nama: "",
-    alamat: "",
-    no_hp: "",
-    email: "",
-    
-    // Data Unit
-    merk: "",
-    tipe: "",
-    serial_number: "",
-    keluhan: "",
-    spesifikasi_teknis: "",
-    
-    // Jenis Perangkat
-    jenis_perangkat: [] as string[],
-    keterangan_perangkat: "",
-    
-    // Accessories
-    keterangan_accessories: "",
-    
-    // Garansi
-    garansi: false,
-    keterangan_garansi: "",
-    
-    // Kondisi
-    kondisi: [] as string[],
-    keterangan_kondisi: "",
-    
-    // Info Tambahan
-    prioritas_service: "1. Reguler",
-    track_number: "",
-    penerima_service: ""
-  });
+  nama: "",
+  alamat: "",
+  no_hp: "",
+  email: "",
+  merk: "",
+  tipe: "",
+  serial_number: "",
+  keluhan: "",
+  spesifikasi_teknis: "",
+  jenis_perangkat: [] as string[],
+  keterangan_perangkat: "",
+  accessories: [] as string[], // kosong awal
+  keterangan_accessories: "",
+  garansi: false,
+  keterangan_garansi: "",
+  kondisi: [] as string[],
+  keterangan_kondisi: "",
+  prioritas_service: "1. Reguler", // default valid
+  track_number: "",
+  penerima_service: ""
+});
 
-  // Handle perubahan input
+  // Handle perubahan input text/textarea
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -84,37 +73,37 @@ export default function Home() {
     }));
   };
 
-  // Handle accessories
-  const handleCheckbox = (item: string) => {
-    setAccessories((prev) =>
-      prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
-    );
+  // Handle accessories - sekarang bagian dari formData
+  const handleAccessories = (item: string) => {
+    setFormData(prev => {
+      const accessories = prev.accessories.includes(item)
+        ? prev.accessories.filter(x => x !== item)
+        : [...prev.accessories, item];
+      
+      return { ...prev, accessories };
+    });
   };
 
   // Handle submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Gabungkan semua data form
-    const dataToSubmit = {
-      ...formData,
-      accessories: accessories
-    };
-    
     try {
-      const res = await fetch("/api/service", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToSubmit),
-      });
+    const newTrackNumber = await generateTrackNumber();
+    
+    const docRef = await addDoc(collection(db, "service_requests"), {
+      ...formData,
+      track_number: newTrackNumber,
+      status: "pending", // default status
+      timestamp: serverTimestamp(), 
+      // waktu otomatis
+    });
 
-      const result = await res.json();
-      console.log("Respon API:", result);
-      alert(result.message);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Gagal mengirim data. Silakan coba lagi.");
-    }
+    alert(`✅ Data berhasil disimpan! ID Dokumen: ${docRef.id}`);
+  } catch (error) {
+    console.error("❌ Gagal menyimpan data:", error);
+    alert("Gagal menyimpan data ke Firestore.");
+  }
   };
 
   return (
@@ -164,8 +153,8 @@ export default function Home() {
             />
           </FormSection>
 
-          {/* Data Unit */}
-          <FormSection title="Data Unit">
+          {/* Data Perangkat */}
+          <FormSection title="Data Perangkat">
             <InputField 
               label="Merk" 
               placeholder="Merk" 
@@ -237,8 +226,8 @@ export default function Home() {
                   <label key={acc} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      checked={accessories.includes(acc)}
-                      onChange={() => handleCheckbox(acc)}
+                      checked={formData.accessories.includes(acc)}
+                      onChange={() => handleAccessories(acc)}
                       className="w-4 h-4"
                     />
                     <span>{acc}</span>
@@ -320,16 +309,20 @@ export default function Home() {
 
           {/* Info Tambahan */}
           <FormSection title="Info Tambahan">
-            <InputField 
-              label="Prioritas Service" 
-              placeholder="1. Reguler" 
+            <select
               name="prioritas_service"
               value={formData.prioritas_service}
               onChange={handleInputChange}
-            />
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="1. Reguler">1. Reguler</option>
+              
+              <option value="2. Prioritas">2. Prioritas</option>
+              <option value="3. Onsite">3. Onsite</option>
+            </select>
             <InputField 
-              label="Track Number" 
-              placeholder="Track Number" 
+              label="Work Order" 
+              placeholder="Work Order" 
               name="track_number"
               value={formData.track_number}
               onChange={handleInputChange}
