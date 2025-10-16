@@ -150,7 +150,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <h1 className="text-2xl font-bold">Selamat datang di Layanan Service Kami</h1>
           <p>Cepat, Mudah, dan Terpercaya!</p>
           <br></br>
-          <p>NGGAK NGELES NGGAK MAKAN</p>
+          <p className="text-2xl font-bold">NGGAK NGELES NGGAK MAKAN</p>
         </div>
 
 
