@@ -113,14 +113,14 @@ export default function AdminPage() {
           {/* Download button */}
           <div className="flex items-end">
             <button
-              onClick={() => alert("Fitur Download CSV menyusul 🧩")}
+              onClick={() => alert("Fitur Download CSV menyusul ya Kontol 🧩")}
               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded w-full"
             >
               Download CSV
             </button>
           </div>
         </div>
-      </div>
+      </div>``
 
       {/* Tabel */}
       {loading ? (
@@ -133,7 +133,7 @@ export default function AdminPage() {
             <thead>
               <tr className="bg-blue-700">
                 <th className="p-2 border">Tanggal Masuk</th>
-                <th className="p-2 border">Cabang</th>
+                
                 <th className="p-2 border">Tracking Number</th>
                 <th className="p-2 border">Status Order</th>
                 <th className="p-2 border">Customer</th>

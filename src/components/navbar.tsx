@@ -14,13 +14,13 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <Image
-              src="/logo-hibatillah-ico.png"
+              src="/logo-ico.png"
               alt="Logo"
               width={40}
               height={40}
               className="rounded-full"
             />
-            <span className="text-white text-lg font-bold">Hibatillah Cyber</span>
+            <span className="text-white text-lg font-bold">Alif Cyber Solution</span>
           </div>
 
           {/* Menu Desktop */}
