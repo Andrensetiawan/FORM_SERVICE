@@ -27,6 +27,7 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
+      
       if (mode === "login") {
         await signInWithEmailAndPassword(auth, email, password);
         router.push("/admin");
@@ -37,6 +38,15 @@ export default function AuthPage() {
         await sendPasswordResetEmail(auth, email);
         setMessage("📧 Email reset password telah dikirim!");
       }
+      else if (mode === "register") {
+        if (password.length < 6) {
+        setError("Password minimal 6 karakter.");
+        setLoading(false);
+        return;
+    }
+  await createUserWithEmailAndPassword(auth, email, password);
+  router.push("/form-service");
+}
     } catch (err: any) {
       if (err.code === "auth/user-not-found") setError("Akun tidak ditemukan.");
       else if (err.code === "auth/wrong-password")
@@ -46,9 +56,17 @@ export default function AuthPage() {
       else if (err.code === "auth/invalid-email")
         setError("Format email tidak valid.");
       else setError("Terjadi kesalahan, coba lagi.");
+      console.log("🔥 Firebase error:", err.code, err.message);
+      if (err.code === "auth/user-not-found") setError("Akun tidak ditemukan.");
+      else if (err.code === "auth/wrong-password") setError("Password salah.");
+      else if (err.code === "auth/email-already-in-use") setError("Email sudah terdaftar.");
+      else if (err.code === "auth/invalid-email") setError("Format email tidak valid.");
+      else if (err.code === "auth/weak-password") setError("Password terlalu lemah (minimal 6 karakter).");
+      else setError("Terjadi kesalahan, coba lagi.");
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (
