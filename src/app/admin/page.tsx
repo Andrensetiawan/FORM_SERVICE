@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
+import Navbar from "@/components/navbar";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
 
 
 export default function AdminPage() {
@@ -57,11 +60,10 @@ export default function AdminPage() {
   }, [selectedCabang, selectedTeknisi, data]);
 
   return (
+    <ProtectedRoute>
+    <div>
+    <Navbar/>
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-3xl font-bold text-center mb-8">
-        📋 Data Layanan Service
-      </h1>
-
       {/* Filter Section */}
       <div className="bg-gray-800 p-4 rounded-xl mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -169,5 +171,7 @@ export default function AdminPage() {
       )}
 
     </div>
+    </div>
+    </ProtectedRoute>
   );
 }

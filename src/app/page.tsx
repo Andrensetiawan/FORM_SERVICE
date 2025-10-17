@@ -7,6 +7,9 @@ import { useState } from "react";
 import { db } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { generateTrackNumber } from "@/lib/trackNumber";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -142,6 +145,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
 
   return (
+    <ProtectedRoute>
     <div className="bg-white min-h-screen">
       <Navbar />
 
@@ -270,5 +274,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         </form>
       </main>
     </div>
+    </ProtectedRoute>
   );
 }
