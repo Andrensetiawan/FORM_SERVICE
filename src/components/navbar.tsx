@@ -26,7 +26,7 @@ export default function Navbar() {
     { name: "Home", icon: <Home size={18} />, href: "/" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/" },
     { name: "Status Service", icon: <Wrench size={18} />, href: "/admin" },
-    { name: "Contact", icon: <PhoneCall size={18} />, href: "/contact" },
+    { name: "Contact", icon: <PhoneCall size={18} />, href: "/Login" },
   ];
 
   return (
