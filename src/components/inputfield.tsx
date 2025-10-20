@@ -1,32 +1,38 @@
-// components/inputfield.tsx
 interface InputFieldProps {
   label: string;
-  placeholder: string;
+  placeholder?: string;
   textarea?: boolean;
-  name: string;           // wajib
-  value: string;          // wajib
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;  // wajib
+  name: string; // wajib
+  value: string; // wajib
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; // <-- opsional
+  disabled?: boolean; // <-- tambahan
 }
 
-export default function InputField({ 
-  label, 
-  placeholder, 
-  textarea = false, 
+export default function InputField({
+  label,
+  placeholder,
+  textarea = false,
   name,
   value,
-  onChange 
+  onChange,
+  disabled = false,
 }: InputFieldProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium">{label}</label>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
       {textarea ? (
         <textarea
           name={name}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full p-2 border border-gray-300 rounded-md"
+          disabled={disabled}
           rows={3}
+          className={`w-full p-2 border rounded-md ${
+            disabled
+              ? "bg-gray-100 text-gray-500 border-gray-300 cursor-not-allowed"
+              : "border-gray-300 text-gray-800"
+          }`}
         />
       ) : (
         <input
@@ -35,7 +41,12 @@ export default function InputField({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full p-2 border border-gray-300 rounded-md"
+          disabled={disabled}
+          className={`w-full p-2 border rounded-md ${
+            disabled
+              ? "bg-gray-100 text-gray-500 border-gray-300 cursor-not-allowed"
+              : "border-gray-300 text-gray-800"
+          }`}
         />
       )}
     </div>
