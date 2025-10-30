@@ -1,279 +1,334 @@
 "use client";
 
-import InputField from "@/components/inputfield";
-import FormSection from "@/components/formsection";
-import Navbar from "@/components/navbar";
-import { useState } from "react";
-import { db } from "@/lib/firebaseConfig";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { generateTrackNumber } from "@/lib/trackNumber";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+import useAuth from "@/hooks/useAuth";
+import { Eye, EyeOff } from "lucide-react";
+import { auth, db } from "@/lib/firebaseConfig";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
+export default function login() {
+  const router = useRouter();
+  const { login, register, forgotPassword, resendVerification, refreshVerificationStatus } = useAuth();
 
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [canResend, setCanResend] = useState(true);
+  const [countdown, setCountdown] = useState(0);
 
-export default function Home() {
-  const [formData, setFormData] = useState({
-    nama: "",
-    alamat: "",
-    no_hp: "",
-    email: "",
-    merk: "",
-    tipe: "",
-    serial_number: "",
-    keluhan: "",
-    spesifikasi_teknis: "",
-    jenis_perangkat: [] as string[],
-    keterangan_perangkat: "",
-    accessories: [] as string[],
-    keterangan_accessories: "",
-    garansi: false,
-    keterangan_garansi: "",
-    kondisi: [] as string[],
-    keterangan_kondisi: "",
-    prioritas_service: "1. Reguler",
-    track_number: "",
-    penerima_service: "",
-  });
+  // ✅ Show/hide password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [errors, setErrors] = useState<string[]>([]);
-  const [successMessage, setSuccessMessage] = useState("");
+  // ✅ Validasi email format
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  // ✅ Fungsi utama
+  const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // 🔍 Validasi umum sebelum proses Firebase
+    if (!isValidEmail(email)) {
+      toast.error("Format email tidak valid.");
+      return;
+    }
+
+    if (mode !== "forgot" && password.length < 6) {
+      toast.error("Password minimal 6 karakter.");
+      return;
+    }
+
+    if (mode === "register" && password !== confirmPassword) {
+      toast.error("Konfirmasi password tidak cocok.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (mode === "login") {
+        const user = await login(email, password);
+        if (!user) {
+          toast.error("Login gagal. Coba lagi.");
+          return;
+        }
+
+        if (!user.emailVerified) {
+          toast.error("Email belum diverifikasi. Cek inbox atau halaman Verifikasi Email.");
+          return;
+        }
+
+        const q = query(collection(db, "users"), where("uid", "==", user.uid));
+        const snaps = await getDocs(q);
+
+        if (snaps.empty) {
+          toast.error("Akun tidak ditemukan di database.");
+          return;
+        }
+
+        const data = snaps.docs[0].data() as Record<string, any>;
+        const role = data.role ?? "";
+        const approved = data.approved ?? true;
+
+        if (role === "staff" && !approved) {
+          toast.error("Akun kamu belum disetujui owner. Mohon tunggu konfirmasi.");
+          return;
+        }
+
+        if (role === "staff") {
+          router.push("/staff");
+        } else if (role === "owner" || role === "manager") {
+          router.push("/management/dashboard");
+        } else {
+          toast.error("Role tidak dikenali. Hubungi admin.");
+          router.push("/");
+        }
+      } else if (mode === "register") {
+        await register(email, password, confirmPassword);
+        toast.success("Pendaftaran berhasil! Silakan verifikasi email Anda.");
+        // router.push("/verify-email");
+      } else if (mode === "forgot") {
+        await forgotPassword(email);
+        toast.success("Link reset password telah dikirim jika email terdaftar.");
+      }
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      if (err?.code === "auth/wrong-password") {
+        toast.error("Password salah.");
+      } else if (err?.code === "auth/user-not-found") {
+        toast.error("Akun tidak ditemukan.");
+      } else if (err?.code === "auth/email-already-in-use") {
+        toast.error("Email sudah terdaftar.");
+      } else {
+        toast.error("Terjadi kesalahan. Coba lagi nanti.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleJenisPerangkat = (device: string) => {
-    setFormData(prev => {
-      const jenis_perangkat = prev.jenis_perangkat.includes(device)
-        ? prev.jenis_perangkat.filter(x => x !== device)
-        : [...prev.jenis_perangkat, device];
-      return { ...prev, jenis_perangkat };
-    });
+  // ✅ Timer untuk resend email verifikasi
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (!canResend && countdown > 0) {
+      timer = setTimeout(() => setCountdown((prev) => prev - 1), 1000);
+    } else if (countdown === 0 && !canResend) {
+      setCanResend(true);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown, canResend]);
+
+  // ✅ Resend email verifikasi
+  const handleResend = async () => {
+    try {
+      if (!auth.currentUser) {
+        toast.error("Kamu belum login.");
+        return;
+      }
+
+      await auth.currentUser.reload();
+
+      if (auth.currentUser.emailVerified) {
+        toast.success("Email kamu sudah diverifikasi!");
+        return;
+      }
+
+      if (!canResend) {
+        toast.error(`Tunggu ${countdown}s sebelum kirim ulang.`);
+        return;
+      }
+
+      await resendVerification();
+      toast.success("Email verifikasi telah dikirim. Cek inbox atau folder spam.");
+      setCanResend(false);
+      setCountdown(30);
+    } catch (err: any) {
+      console.error("Resend error:", err);
+      if (err.code === "auth/too-many-requests") {
+        toast.error("Terlalu sering mengirim ulang. Tunggu beberapa menit.");
+      } else {
+        toast.error("Gagal mengirim email verifikasi.");
+      }
+    }
   };
-
-  const handleKondisi = (condition: string) => {
-    setFormData(prev => {
-      const kondisi = prev.kondisi.includes(condition)
-        ? prev.kondisi.filter(x => x !== condition)
-        : [...prev.kondisi, condition];
-      return { ...prev, kondisi };
-    });
-  };
-
-  const handleGaransi = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, garansi: e.target.value === "Ya" }));
-  };
-
-  const handleAccessories = (item: string) => {
-    setFormData(prev => {
-      const accessories = prev.accessories.includes(item)
-        ? prev.accessories.filter(x => x !== item)
-        : [...prev.accessories, item];
-      return { ...prev, accessories };
-    });
-  };
-
-  // Validasi semua field sebelum submit
-  const validateForm = () => {
-    const newErrors: string[] = [];
-
-    if (!formData.nama.trim()) newErrors.push("Nama wajib diisi.");
-    if (!formData.alamat.trim()) newErrors.push("Alamat wajib diisi.");
-    if (!formData.no_hp.trim()) newErrors.push("No HP wajib diisi.");
-    if (!formData.email.trim()) newErrors.push("Email wajib diisi.");
-    if (!formData.merk.trim()) newErrors.push("Merk wajib diisi.");
-    if (!formData.tipe.trim()) newErrors.push("Tipe wajib diisi.");
-    if (!formData.serial_number.trim()) newErrors.push("Serial Number wajib diisi.");
-    if (!formData.keluhan.trim()) newErrors.push("Keluhan wajib diisi.");
-    if (!formData.spesifikasi_teknis.trim()) newErrors.push("Spesifikasi Teknis wajib diisi.");
-    if (formData.jenis_perangkat.length === 0) newErrors.push("Pilih minimal 1 jenis perangkat.");    if (formData.accessories.length === 0) newErrors.push("Pilih minimal 1 accessories.");
-    if (formData.kondisi.length === 0) newErrors.push("Pilih minimal 1 kondisi perangkat.");
-    if (!formData.prioritas_service.trim()) newErrors.push("Prioritas Service wajib diisi.");
-    if (!formData.penerima_service.trim()) newErrors.push("Penerima Service wajib diisi.");
-
-    setErrors(newErrors);
-    return newErrors.length === 0;
-  };
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-
-  try {
-    const newTrackNumber = await generateTrackNumber();
-    setFormData(prev => ({ ...prev, track_number: newTrackNumber }));
-
-    await addDoc(collection(db, "service_requests"), {
-      ...formData,
-      track_number: newTrackNumber,
-      status: "pending",
-      timestamp: serverTimestamp(),
-    });
-
-    setSuccessMessage(`✅ Data berhasil disimpan! Track Number: ${newTrackNumber}`);
-    setErrors([]);
-
-    // reset form
-    setFormData({
-      nama: "",
-      alamat: "",
-      no_hp: "",
-      email: "",
-      merk: "",
-      tipe: "",
-      serial_number: "",
-      keluhan: "",
-      spesifikasi_teknis: "",
-      jenis_perangkat: [],
-      keterangan_perangkat: "",
-      accessories: [],
-      keterangan_accessories: "",
-      garansi: false,
-      keterangan_garansi: "",
-      kondisi: [],
-      keterangan_kondisi: "",
-      prioritas_service: "1. Reguler",
-      track_number: "",
-      penerima_service: "",
-    });
-  } catch (error) {
-    console.error("❌ Gagal menyimpan data:", error);
-    setErrors(["Gagal menyimpan data ke Firestore."]);
-  }
-};
-
 
   return (
-    <ProtectedRoute>
-    <div className="bg-white min-h-screen">
-      <Navbar />
+    <div className="bg-gradient-to-br from-blue-100 via-indigo-100 to-white min-h-screen flex items-center justify-center">
+      <Toaster position="top-center" />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white/90 shadow-2xl rounded-3xl border border-gray-100 p-10 w-full max-w-md"
+      >
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-2">
+          {mode === "login"
+            ? "Selamat Datang 👋"
+            : mode === "register"
+            ? "Buat Akun Baru 📝"
+            : "Lupa Password 🔑"}
+        </h1>
 
-      <main className="max-w-4xl w-full mx-auto p-6 space-y-6">
-        <div className="text-center text-black">
-          <h1 className="text-2xl font-bold">Selamat datang di Layanan Service Kami</h1>
-          <p>Cepat, Mudah, dan Terpercaya!</p>
-          <br></br>
-          <p className="text-2xl font-bold">NGGAK NGELES NGGAK MAKAN</p>
-        </div>
+        <p className="text-center text-gray-500 mb-8 text-sm">
+          {mode === "login"
+            ? "Masuk untuk melanjutkan ke dashboard"
+            : mode === "register"
+            ? "Daftar untuk akses aplikasi"
+            : "Masukkan email untuk reset password"}
+        </p>
 
-
-        <form className="space-y-6 text-black" onSubmit={handleSubmit}>
-          {/* Form Sections tetap sama */}
-          {/* Data Customer */}
-          <FormSection title="Data Customer">
-            <InputField label="Nama" placeholder="Nama" name="nama" value={formData.nama} onChange={handleInputChange} />
-            <InputField label="Alamat" placeholder="Alamat" textarea name="alamat" value={formData.alamat} onChange={handleInputChange} />
-            <InputField label="No. Handphone" placeholder="No. Handphone" name="no_hp" value={formData.no_hp} onChange={handleInputChange} />
-            <InputField label="Email" placeholder="Email" name="email" value={formData.email} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Data Perangkat */}
-          <FormSection title="Data Perangkat">
-            <InputField label="Merk" placeholder="Merk" name="merk" value={formData.merk} onChange={handleInputChange} />
-            <InputField label="Tipe" placeholder="Tipe" name="tipe" value={formData.tipe} onChange={handleInputChange} />
-            <InputField label="Serial Number" placeholder="Serial Number" name="serial_number" value={formData.serial_number} onChange={handleInputChange} />
-            <InputField label="Keluhan" placeholder="Keluhan" textarea name="keluhan" value={formData.keluhan} onChange={handleInputChange} />
-            <InputField label="Spesifikasi Teknis" placeholder="Spesifikasi Teknis" textarea name="spesifikasi_teknis" value={formData.spesifikasi_teknis} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Jenis Perangkat */}
-          <FormSection title="Jenis Perangkat">
-            <div className="flex flex-wrap gap-4">
-              {["Laptop", "PC", "UPS", "Console"].map((device) => (
-                <label key={device} className="flex items-center space-x-2">
-                  <input type="checkbox" className="w-4 h-4" checked={formData.jenis_perangkat.includes(device)} onChange={() => handleJenisPerangkat(device)} />
-                  <span>{device}</span>
-                </label>
-              ))}
-            </div>
-            <InputField label="Keterangan" placeholder="Keterangan" name="keterangan_perangkat" value={formData.keterangan_perangkat} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Accessories */}
-          <FormSection title="Accessories">
-            <div className="flex flex-wrap gap-4">
-              {["Baterai", "Adaptor", "Tas", "Casing", "Mouse", "Receiver"].map((acc) => (
-                <label key={acc} className="flex items-center space-x-2">
-                  <input type="checkbox" checked={formData.accessories.includes(acc)} onChange={() => handleAccessories(acc)} className="w-4 h-4" />
-                  <span>{acc}</span>
-                </label>
-              ))}
-            </div>
-            <InputField label="Keterangan" placeholder="Keterangan" name="keterangan_accessories" value={formData.keterangan_accessories} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Garansi */}
-          <FormSection title="Garansi">
-            <div className="flex space-x-6">
-              <label className="flex items-center space-x-2">
-                <input type="radio" name="garansi" value="Ya" checked={formData.garansi} onChange={handleGaransi} className="w-4 h-4" />
-                <span>Ya</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="radio" name="garansi" value="Tidak" checked={!formData.garansi} onChange={handleGaransi} className="w-4 h-4" />
-                <span>Tidak</span>
-              </label>
-            </div>
-            <InputField label="Keterangan Garansi" placeholder="Keterangan" name="keterangan_garansi" value={formData.keterangan_garansi} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Kondisi */}
-          <FormSection title="Kondisi Saat Masuk">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                "Mati Total", "Layar Gelap", "Layar Biru", "Bekas Jatuh",
-                "Chasing Pecah", "Pernah Dibongkar", "Baret", "Retak",
-                "Kotor / Berdebu",
-              ].map((condition) => (
-                <label key={condition} className="flex items-center space-x-2">
-                  <input type="checkbox" className="w-4 h-4" checked={formData.kondisi.includes(condition)} onChange={() => handleKondisi(condition)} />
-                  <span>{condition}</span>
-                </label>
-              ))}
-            </div>
-            <InputField label="Keterangan" placeholder="Keterangan" name="keterangan_kondisi" value={formData.keterangan_kondisi} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Info Tambahan */}
-          <FormSection title="Info Tambahan">
-            <select name="prioritas_service" value={formData.prioritas_service} onChange={handleInputChange} className="w-full p-2 border rounded-md">
-              <option value="1. Reguler">1. Reguler</option>
-              <option value="2. Prioritas">2. Prioritas</option>
-              <option value="3. Onsite">3. Onsite</option>
-            </select>
-
-            <InputField label="Work Order" placeholder="Work Order" name="track_number" value={formData.track_number} onChange={() => {}} /> {/* readonly */}
-            <InputField label="Penerima Service" placeholder="Penerima Service" name="penerima_service" value={formData.penerima_service} onChange={handleInputChange} />
-          </FormSection>
-
-          {/* Submit */}
-          <div className="flex space-x-4">
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
-              Submit Only
-            </button>
+        <form onSubmit={handleAuth} className="space-y-5">
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+            <input
+              type="email"
+              placeholder="Masukkan email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              required
+            />
           </div>
-                      {/* 🔻 Error & Success Message muncul di bawah tombol submit */}
-            <div className="mt-4 space-y-2">
-              {errors.length > 0 && (
-                <div className="bg-red-100 text-red-700 p-3 rounded-md">
-                  <ul>
-                    {errors.map((err, idx) => (
-                      <li key={idx}>• {err}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
-              {successMessage && (
-                <div className="bg-green-100 text-green-700 p-3 rounded-md">
-                  {successMessage}
+          {/* Password */}
+          {mode !== "forgot" && (
+            <>
+              {/* Password utama */}
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Password</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Masukkan password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-[65%] -translate-y-1/2 p-1 rounded-full hover:bg-indigo-50 transition"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-600 hover:text-indigo-600 transition" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-600 hover:text-indigo-600 transition" />
+                  )}
+                </button>
+              </div>
+
+              {/* Konfirmasi Password */}
+              {mode === "register" && (
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Ulangi Password</label>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Masukkan ulang password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((s) => !s)}
+                    className="absolute right-2 top-[65%] -translate-y-1/2 p-1 rounded-full hover:bg-indigo-50 transition"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-600 hover:text-indigo-600 transition" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-600 hover:text-indigo-600 transition" />
+                    )}
+                  </button>
                 </div>
               )}
-            </div>
+            </>
+          )}
+
+          {/* Tombol utama */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-2 font-semibold rounded-lg text-white transition-all ${
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
+          >
+            {loading
+              ? "Memproses..."
+              : mode === "login"
+              ? "Masuk Sekarang"
+              : mode === "register"
+              ? "Daftar Akun"
+              : "Kirim Link Reset"}
+          </button>
         </form>
-      </main>
+
+        {/* Tombol tambahan untuk register */}
+        {mode === "register" && (
+          <>
+            <button
+              type="button"
+              onClick={refreshVerificationStatus}
+              className="w-full mt-2 py-2 font-semibold bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+            >
+              Cek Status Verifikasi Email
+            </button>
+
+            <button
+              type="button"
+              disabled={!canResend}
+              onClick={handleResend}
+              className={`w-full mt-2 py-2 font-semibold rounded-lg text-white transition-all ${
+                canResend ? "bg-yellow-500 hover:bg-yellow-600" : "bg-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {canResend ? "Kirim Ulang Email Verifikasi" : `Tunggu ${countdown}s`}
+            </button>
+          </>
+        )}
+
+        {/* Footer Mode Switch */}
+        <div className="text-center mt-6 space-y-2 text-sm text-gray-600">
+          {mode === "login" && (
+            <>
+              <p>
+                Belum punya akun?{" "}
+                <button onClick={() => setMode("register")} className="text-indigo-600 hover:underline font-medium">
+                  Daftar
+                </button>
+              </p>
+              <p>
+                Lupa password?{" "}
+                <button onClick={() => setMode("forgot")} className="text-indigo-600 hover:underline font-medium">
+                  Reset di sini
+                </button>
+              </p>
+            </>
+          )}
+          {mode === "register" && (
+            <p>
+              Sudah punya akun?{" "}
+              <button onClick={() => setMode("login")} className="text-indigo-600 hover:underline font-medium">
+                Masuk
+              </button>
+            </p>
+          )}
+          {mode === "forgot" && (
+            <p>
+              Kembali ke{" "}
+              <button onClick={() => setMode("login")} className="text-indigo-600 hover:underline font-medium">
+                Halaman Login
+              </button>
+            </p>
+          )}
+        </div>
+      </motion.div>
     </div>
-    </ProtectedRoute>
   );
 }

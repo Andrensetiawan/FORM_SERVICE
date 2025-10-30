@@ -5,8 +5,9 @@ import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import Image from "next/image";
+import Navbar from "@/app/components/navbar";
 
-export default function WorkOrderDetail() {
+export default function trakingnumberserviceDetail() {
   const { id } = useParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +15,7 @@ export default function WorkOrderDetail() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const docRef = doc(db, "work_orders", id as string);
+        const docRef = doc(db, "Traking_Number_Service", id as string);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setData(docSnap.data());
@@ -34,7 +35,7 @@ export default function WorkOrderDetail() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600 text-lg">
-        Memuat data WO...
+        Memuat data Traking Number Service...
       </div>
     );
   }
@@ -42,18 +43,20 @@ export default function WorkOrderDetail() {
   if (!data) {
     return (
       <div className="flex flex-col justify-center items-center h-screen text-center text-red-600">
-        <p className="text-2xl font-semibold mb-3">❌ Data WO Tidak Ditemukan</p>
-        <p>Periksa kembali nomor WO yang kamu masukkan.</p>
+        <p className="text-2xl font-semibold mb-3">❌ Data TNS Tidak Ditemukan</p>
+        <p>Periksa kembali nomor Traking Number Service yang kamu masukkan.</p>
       </div>
     );
   }
 
   return (
+    <div>
+    <Navbar/>
     <main className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
         {/* Header */}
         <div className="bg-blue-700 text-white px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold">Work Order #{id}</h1>
+          <h1 className="text-2xl font-semibold">Traking Number Service #{id}</h1>
           <p className="text-sm text-blue-100">Status: {data.status || "Dalam Proses"}</p>
         </div>
 
@@ -176,6 +179,7 @@ export default function WorkOrderDetail() {
         </div>
       </div>
     </main>
+    </div>
   );
 }
 
@@ -188,4 +192,5 @@ function Detail({ label, value }: { label: string; value: any }) {
       </span>
     </div>
   );
+  
 }

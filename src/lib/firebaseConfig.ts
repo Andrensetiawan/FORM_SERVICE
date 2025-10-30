@@ -1,9 +1,8 @@
-// Import Firebase
-import { initializeApp } from "firebase/app";
+// Import Firebase SDK
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-
 
 // Konfigurasi Firebase
 const firebaseConfig = {
@@ -13,13 +12,13 @@ const firebaseConfig = {
   storageBucket: "form-sevice.appspot.com",
   messagingSenderId: "947490221653",
   appId: "1:947490221653:web:a04484feb7feeed9bf6edc",
-  measurementId: "G-MR5Z7T7R6T"
+  measurementId: "G-MR5Z7T7R6T",
 };
 
-// Inisialisasi Firebase
-const app = initializeApp(firebaseConfig);
+// ✅ Inisialisasi hanya sekali (hindari duplikasi)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Ekspor instance tunggal
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
-
-

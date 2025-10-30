@@ -11,9 +11,10 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { useRouter } from "next/navigation";
-import PhotoUpload from "@/components/PhotoUpload";
-import EditFields from "@/components/EditFields";
+import PhotoUpload from "@/app/components/PhotoUpload";
+import EditFields from "@/app/components/EditFields";
 import { motion } from "framer-motion";
+import Navbar from "@/app/components/navbar";
 
 export default function DetailServicePage({ params }: { params: { id: string } }) {
   const id = params.id;
@@ -100,6 +101,9 @@ export default function DetailServicePage({ params }: { params: { id: string } }
     );
 
   return (
+    <div>
+      <Navbar/>
+    
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -228,6 +232,7 @@ export default function DetailServicePage({ params }: { params: { id: string } }
         </div>
       </motion.div>
     </main>
+    </div>
   );
 }
 

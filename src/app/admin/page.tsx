@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
-import Navbar from "@/components/navbar";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import Navbar from "@/app/components/navbar";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
 import Link from "next/link";
 
 export default function AdminPage() {
