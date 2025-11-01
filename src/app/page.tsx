@@ -76,7 +76,7 @@ export default function login() {
         const approved = data.approved ?? true;
 
         if (role === "staff" && !approved) {
-          toast.error("Akun kamu belum disetujui owner. Mohon tunggu konfirmasi.");
+          toast.error( "Akun kamu belum disetujui owner. Mohon tunggu konfirmasi.");
           return;
         }
 
