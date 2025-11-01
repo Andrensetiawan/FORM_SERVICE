@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Navbar from "@/app/components/navbar";
+import Navbar from "@/app/components/navbars/NavbarStaff"
 
 export default function WOSearchPage() {
   const [trackNumber, setTrackNumber] = useState("");

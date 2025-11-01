@@ -83,7 +83,7 @@ export default function login() {
         if (role === "staff") {
           router.push("/staff");
         } else if (role === "owner" || role === "manager") {
-          router.push("/management/dashboard");
+          router.push("/management");
         } else {
           toast.error("Role tidak dikenali. Hubungi admin.");
           router.push("/");

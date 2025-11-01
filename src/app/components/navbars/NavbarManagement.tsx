@@ -1,0 +1,146 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  Menu,
+  X,
+  Home,
+  Users,
+  ClipboardList,
+  FileBarChart,
+  LogOut,
+} from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebaseConfig";
+
+export default function NavbarManagement() {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout gagal:", err);
+    }
+  };
+
+  const menuItems = [
+    { name: "Dashboard", icon: <Home size={18} />, href: "/management/dashboard" },
+    { name: "Pending Approval", icon: <Users size={18} />, href: "/management/pending-users" },
+    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/management/staff" },
+    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/management/laporan" },
+  ];
+
+  return (
+    <nav className="bg-gradient-to-r from-blue-800 via-indigo-900 to-gray-900 border-b border-blue-600/30 shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex justify-between items-center h-16">
+          {/* === Brand === */}
+          <Link href="/management/dashboard" className="flex items-center gap-3">
+            <Image
+              src="/logo-ico.png"
+              alt="Logo"
+              width={42}
+              height={42}
+              className="rounded-full border border-blue-400 shadow-sm"
+            />
+            <span className="text-white font-semibold text-lg sm:text-xl tracking-wide">
+              Alif Cyber Solution
+            </span>
+          </Link>
+
+          {/* === Desktop Menu === */}
+          <div className="hidden md:flex items-center gap-8">
+            {menuItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-1 text-sm font-medium transition-all ${
+                  pathname === item.href
+                    ? "text-white border-b-2 border-blue-400"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* === Info + Logout === */}
+          <div className="hidden md:flex items-center gap-6">
+            <div className="text-sm text-gray-300 text-right">
+              <p className="font-medium">📞 0813 1566 2763</p>
+              <a
+                href="mailto:alifcybersolution@gmail.com"
+                className="hover:text-white transition"
+              >
+                alifcybersolution@gmail.com
+              </a>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 active:scale-95"
+            >
+              <LogOut size={18} />
+              <span className="font-medium">Logout</span>
+            </button>
+          </div>
+
+          {/* === Mobile Toggle === */}
+          <button
+            className="md:hidden text-gray-200 hover:text-white transition"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
+      </div>
+
+      {/* === Mobile Menu === */}
+      {isOpen && (
+        <div className="md:hidden bg-gradient-to-b from-blue-800 via-blue-900 to-black border-t border-blue-700/40">
+          <div className="px-6 py-4 space-y-3">
+            {menuItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-2 text-gray-200 hover:text-white transition ${
+                  pathname === item.href ? "text-white font-semibold" : ""
+                }`}
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
+
+            <button
+              onClick={handleLogout}
+              className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white py-2.5 rounded-lg shadow-md font-medium transition-all"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+
+            <div className="pt-3 border-t border-blue-700/40 text-gray-300 text-sm">
+              <p>📞 0813 1566 2763</p>
+              <a
+                href="mailto:alifcybersolution@gmail.com"
+                className="hover:text-white transition"
+              >
+                alifcybersolution@gmail.com
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+}

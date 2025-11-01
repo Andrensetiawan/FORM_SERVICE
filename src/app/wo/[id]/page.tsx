@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import Image from "next/image";
-import Navbar from "@/app/components/navbar";
+import Navbar from "@/app/components/navbars/NavbarStaff";
 
 export default function trakingnumberserviceDetail() {
   const { id } = useParams();

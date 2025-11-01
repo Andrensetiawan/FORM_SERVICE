@@ -2,7 +2,7 @@
 
 import InputField from "@/app/components/inputfield";
 import FormSection from "@/app/components/formsection";
-import Navbar from "@/app/components/navbar";
+import Navbar from "@/app/components/navbars/NavbarStaff";
 import { useState } from "react";
 import { db } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";

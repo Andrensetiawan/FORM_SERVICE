@@ -1,200 +1,233 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
-import {
-  collection,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import { UserCog, ShieldCheck, Trash2, ArrowDown } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import NavbarManagement from "@/app/components/navbars/NavbarManagement";
 
-interface Staff {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
-export default function StaffManagementPage() {
+export default function ManagementDashboard() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [actionId, setActionId] = useState<string | null>(null);
 
+  const [data, setData] = useState<any[]>([]);
+  const [filtered, setFiltered] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const [selectedCabang, setSelectedCabang] = useState("");
+  const [selectedTeknisi, setSelectedTeknisi] = useState("");
+  const [showEntries, setShowEntries] = useState(10);
+
+  // 🔒 Proteksi: hanya manager dan owner boleh masuk
   useEffect(() => {
     if (!loading) {
       if (!user) router.push("/login");
-      else if (role !== "owner" && role !== "manager")
+      else if (!["manager", "owner"].includes(role || ""))
         router.push("/unauthorized");
-      else fetchStaff();
     }
-  }, [user, role, loading]);
+  }, [user, role, loading, router]);
 
-  const fetchStaff = async () => {
-    const querySnapshot = await getDocs(collection(db, "users"));
-    const staffData: Staff[] = [];
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (data.role === "staff" || data.role === "manager") {
-        staffData.push({
-          id: docSnap.id,
-          name: data.name || "(Tanpa Nama)",
-          email: data.email,
-          role: data.role,
-        });
+  // 🔥 Ambil data Firestore
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "service_requests"));
+        const items = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setData(items);
+        setFiltered(items);
+      } catch (error: any) {
+        console.error("❌ Gagal ambil data:", error.message);
+      } finally {
+        setLoadingData(false);
       }
-    });
-    setStaffList(staffData);
-  };
+    };
 
-  const updateRole = async (id: string, newRole: string) => {
-    setActionId(id);
-    try {
-      const userRef = doc(db, "users", id);
-      await updateDoc(userRef, { role: newRole });
-      toast.success(
-        newRole === "manager"
-          ? "✅ Staff berhasil dinaikkan jadi Manager"
-          : "👤 Manager diturunkan jadi Staff"
+    if (!loading && user && role) fetchData();
+  }, [loading, user, role]);
+
+  // Filter
+  const cabangOptions = [...new Set(data.map((item) => item.cabang || "-"))];
+  const teknisiOptions = [...new Set(data.map((item) => item.teknisi || "-"))];
+
+  useEffect(() => {
+    let filteredData = [...data];
+    if (selectedCabang)
+      filteredData = filteredData.filter(
+        (item) => item.cabang === selectedCabang
       );
-      fetchStaff();
-    } catch (error) {
-      console.error(error);
-      toast.error("❌ Gagal memperbarui role staff");
-    } finally {
-      setActionId(null);
-    }
-  };
+    if (selectedTeknisi)
+      filteredData = filteredData.filter(
+        (item) => item.teknisi === selectedTeknisi
+      );
+    setFiltered(filteredData);
+  }, [selectedCabang, selectedTeknisi, data]);
 
-  const deleteStaff = async (id: string, email: string) => {
-    if (
-      !confirm(
-        `⚠️ Hapus staff ${email}? Tindakan ini tidak dapat dibatalkan.`
-      )
-    )
-      return;
-
-    setActionId(id);
-    try {
-      await deleteDoc(doc(db, "users", id));
-      setStaffList((prev) => prev.filter((s) => s.id !== id));
-      toast.success("🗑️ Staff berhasil dihapus");
-    } catch (error) {
-      console.error(error);
-      toast.error("❌ Gagal menghapus staff");
-    } finally {
-      setActionId(null);
-    }
-  };
-
-  if (loading) {
+  if (loading || loadingData) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        Memuat data staff...
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-gray-300">
+        Memuat data...
       </div>
     );
   }
 
   return (
-    <>
-      <Toaster position="top-right" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-16 px-6 md:px-12">
-        <div className="max-w-6xl mx-auto">
-          <header className="text-center mb-12">
-            <h1 className="text-4xl font-extrabold text-gray-800 mb-2">
-              Daftar Staff
+    <div className="min-h-screen bg-[#0d1117] text-white">
+      <NavbarManagement />
+
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-extrabold text-blue-400 tracking-tight">
+              Dashboard Management
             </h1>
-            <p className="text-gray-600">
-              Kelola anggota tim dengan mudah. Ubah role atau hapus akun sesuai
-              kebijakan perusahaan.
+            <p className="text-gray-400 text-sm mt-1">
+              Pantau seluruh aktivitas service dan kinerja cabang
             </p>
-          </header>
-
-          {staffList.length === 0 ? (
-            <p className="text-center text-gray-500">
-              Belum ada staff terdaftar.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {staffList.map((staff) => (
-                <motion.div
-                  key={staff.id}
-                  whileHover={{ y: -6, scale: 1.02 }}
-                  className="bg-white shadow-lg border border-gray-200 rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl transition"
-                >
-                  <div>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <UserCog className="w-7 h-7 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          {staff.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">{staff.email}</p>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-4">
-                      Role:{" "}
-                      <span
-                        className={`font-semibold ${
-                          staff.role === "manager"
-                            ? "text-green-600"
-                            : "text-gray-800"
-                        }`}
-                      >
-                        {staff.role}
-                      </span>
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3 mt-4">
-                    {staff.role === "staff" ? (
-                      <button
-                        onClick={() => updateRole(staff.id, "manager")}
-                        disabled={actionId === staff.id}
-                        className="flex-1 bg-blue-600 text-white py-2 rounded-xl font-medium hover:bg-blue-700 transition disabled:opacity-60"
-                      >
-                        {actionId === staff.id
-                          ? "Mengubah..."
-                          : "Naikkan jadi Manager"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => updateRole(staff.id, "staff")}
-                        disabled={actionId === staff.id}
-                        className="flex-1 bg-green-50 text-green-700 py-2 rounded-xl font-medium border border-green-200 hover:bg-green-100 transition disabled:opacity-60 flex items-center justify-center gap-2"
-                      >
-                        <ArrowDown className="w-5 h-5" />
-                        {actionId === staff.id
-                          ? "Mengubah..."
-                          : "Turunkan jadi Staff"}
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => deleteStaff(staff.id, staff.email)}
-                      disabled={actionId === staff.id}
-                      className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-xl p-2 transition"
-                      title="Hapus staff"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
+          </div>
+          <p className="text-sm text-gray-400 italic">
+            Role kamu:{" "}
+            <span className="text-blue-400 font-semibold">
+              {role?.toUpperCase()}
+            </span>
+          </p>
         </div>
+
+        {/* Filter Section */}
+        <div className="bg-gray-800/70 border border-gray-700 rounded-2xl shadow-md p-5 mb-8 backdrop-blur-sm">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Cabang */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">
+                Cabang
+              </label>
+              <select
+                value={selectedCabang}
+                onChange={(e) => setSelectedCabang(e.target.value)}
+                className="w-full p-2.5 rounded-lg bg-gray-900 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="">- Pilih Cabang -</option>
+                {cabangOptions.map((cabang, i) => (
+                  <option key={i} value={cabang}>
+                    {cabang}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Teknisi */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">
+                Teknisi
+              </label>
+              <select
+                value={selectedTeknisi}
+                onChange={(e) => setSelectedTeknisi(e.target.value)}
+                className="w-full p-2.5 rounded-lg bg-gray-900 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="">- Pilih Teknisi -</option>
+                {teknisiOptions.map((t, i) => (
+                  <option key={i} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Show Entries */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">
+                Tampilkan
+              </label>
+              <input
+                type="number"
+                value={showEntries}
+                min="1"
+                onChange={(e) => setShowEntries(Number(e.target.value))}
+                className="w-full p-2.5 rounded-lg bg-gray-900 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            {/* Download */}
+            <div className="flex items-end">
+              <button
+                onClick={() => alert("📁 Fitur Download CSV segera hadir")}
+                className="bg-blue-600 hover:bg-blue-700 transition px-4 py-2.5 rounded-lg w-full font-semibold shadow"
+              >
+                Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Section */}
+        {filtered.length === 0 ? (
+          <div className="text-center text-gray-400 py-20">
+            Tidak ada data ditemukan.
+          </div>
+        ) : (
+          <div className="overflow-x-auto shadow-lg rounded-2xl border border-gray-700 bg-gray-800/60 backdrop-blur-sm">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-blue-700 text-white uppercase text-xs">
+                <tr>
+                  <th className="p-3 border-b border-gray-700">Tanggal Masuk</th>
+                  <th className="p-3 border-b border-gray-700">Tracking</th>
+                  <th className="p-3 border-b border-gray-700">Status</th>
+                  <th className="p-3 border-b border-gray-700">Customer</th>
+                  <th className="p-3 border-b border-gray-700">No HP</th>
+                  <th className="p-3 border-b border-gray-700">Tipe</th>
+                  <th className="p-3 border-b border-gray-700">Teknisi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.slice(0, showEntries).map((item, index) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-gray-700/40 transition duration-200"
+                  >
+                    <td className="p-3 border-b border-gray-700 text-gray-300">
+                      {item.timestamp?.seconds
+                        ? new Date(item.timestamp.seconds * 1000).toLocaleString(
+                            "id-ID",
+                            { dateStyle: "short", timeStyle: "medium" }
+                          )
+                        : "-"}
+                    </td>
+                    <td className="p-3 border-b border-gray-700 text-blue-400 font-semibold">
+                      <Link
+                        href={`/management/wo/${item.id}`}
+                        className="hover:underline"
+                      >
+                        WO{index + 1}
+                      </Link>
+                    </td>
+                    <td className="p-3 border-b border-gray-700 text-yellow-400">
+                      {item.status || "-"}
+                    </td>
+                    <td className="p-3 border-b border-gray-700 text-gray-200">
+                      {item.nama || "-"}
+                    </td>
+                    <td className="p-3 border-b border-gray-700 text-gray-300">
+                      {item.no_hp || "-"}
+                    </td>
+                    <td className="p-3 border-b border-gray-700 text-gray-300">
+                      {item.tipe || "-"}
+                    </td>
+                    <td className="p-3 border-b border-gray-700 text-gray-300">
+                      {item.teknisi || "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
