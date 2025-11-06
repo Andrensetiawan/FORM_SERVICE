@@ -14,6 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 import toast from "react-hot-toast";
+import NavbarManagement from "@/app/components/navbars/NavbarManagement";
 
 export default function PendingUsersPage() {
   const { user, role, loading } = useAuth();
@@ -84,6 +85,8 @@ export default function PendingUsersPage() {
   }
 
   return (
+    <div>
+    <NavbarManagement/>
     <div className="min-h-screen bg-gray-50 py-12 px-6 md:px-16">
       <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-md border border-gray-100 p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">
@@ -127,6 +130,7 @@ export default function PendingUsersPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

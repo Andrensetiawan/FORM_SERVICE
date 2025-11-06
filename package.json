@@ -9,11 +9,13 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "cloudinary": "^2.8.0",
     "firebase": "^12.4.0",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.544.0",
     "mysql2": "^3.15.1",
     "next": "15.5.4",
+    "next-cloudinary": "^6.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.65.0",

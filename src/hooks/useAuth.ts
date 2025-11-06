@@ -56,29 +56,31 @@ export default function useAuth() {
   // -------------------------
   // Pantau status login user
   // -------------------------
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          const docRes = await fetchUserDocByAuthUid(currentUser.uid);
-          if (docRes && docRes.data) {
-            setRole(docRes.data.role || null);
-          } else {
-            // jika tidak ada dokumen, biarkan role null (owner/manager harus set manual)
-            setRole(null);
-          }
-        } catch (err) {
-          console.error("onAuthStateChanged fetch role error:", err);
+useEffect(() => {
+    console.log("🔥 Detected role:", role);
+  const unsub = onAuthStateChanged(auth, async (currentUser) => {
+    setUser(currentUser);
+    if (currentUser) {
+      try {
+        const docRes = await fetchUserDocByAuthUid(currentUser.uid);
+        if (docRes && docRes.data) {
+          const userRole = (docRes.data.role || "").toLowerCase(); // ✅ lowercase fix
+          setRole(userRole);
+        } else {
           setRole(null);
         }
-      } else {
+      } catch (err) {
+        console.error("onAuthStateChanged fetch role error:", err);
         setRole(null);
       }
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
+    } else {
+      setRole(null);
+    }
+    setLoading(false);
+  });
+  return () => unsub();
+}, []);
+
 
   // -------------------------
   // LOGIN
@@ -93,7 +95,7 @@ export default function useAuth() {
         await signOut(auth); // sign out to prevent partially signed sessions
         return null;
       }
-      toast.success("✅ Login berhasil!");
+      toast.success(" Login berhasil!");
       return u;
     } catch (err: any) {
       console.error("login error:", err);

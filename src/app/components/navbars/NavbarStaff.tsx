@@ -24,9 +24,9 @@ export default function Navbar() {
 
   const menuItems = [
     { name: "Home", icon: <Home size={18} />, href: "/" },
-    { name: "Form Service", icon: <FileText size={18} />, href: "/" },
-    { name: "Status Service", icon: <Wrench size={18} />, href: "/admin" },
-    { name: "Contact", icon: <PhoneCall size={18} />, href: "/Login" },
+    { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
+    { name: "Status Service", icon: <Wrench size={18} />, href: "/staff" },
+    { name: "Contact", icon: <PhoneCall size={18} />, href: "/" },
   ];
 
   return (
