@@ -12,16 +12,17 @@ import {
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import { UserCog, Trash2, Save, Import } from "lucide-react";
+import { UserCog, Trash2, Save } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
-
+import Image from "next/image";
 
 interface Staff {
   id: string;
   name: string;
   email: string;
   role: string;
+  photoURL?: string;
 }
 
 export default function StaffManagementPage() {
@@ -29,11 +30,10 @@ export default function StaffManagementPage() {
   const router = useRouter();
 
   const [staffList, setStaffList] = useState<Staff[]>([]);
-  // Menyimpan pilihan role yang diedit tapi belum disimpan
   const [editedRoles, setEditedRoles] = useState<Record<string, string>>({});
   const [actionId, setActionId] = useState<string | null>(null);
 
-  const roleOptions = ["owner","manager","staff"];
+  const roleOptions = ["owner", "manager", "staff"];
 
   useEffect(() => {
     if (!loading) {
@@ -41,8 +41,7 @@ export default function StaffManagementPage() {
       else if (role !== "owner" && role !== "manager") router.push("/unauthorized");
       else fetchStaff();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, role, loading]);
+  }, [user, role, loading, router]);
 
   const fetchStaff = async () => {
     try {
@@ -56,6 +55,7 @@ export default function StaffManagementPage() {
             name: data.name || "(Tanpa Nama)",
             email: data.email,
             role: data.role,
+            photoURL: data.photoURL || "", // 🔹 Tambah foto profil dari Firestore
           });
         }
       });
@@ -75,11 +75,10 @@ export default function StaffManagementPage() {
       await updateDoc(userRef, { role: newRole });
       toast.success(`✅ Role diperbarui menjadi "${newRole}"`);
 
-      // Update list di UI tanpa refetch penuh
       setStaffList((prev) =>
         prev.map((s) => (s.id === id ? { ...s, role: newRole } : s))
       );
-      // Hapus status edited untuk item ini
+
       setEditedRoles((prev) => {
         const clone = { ...prev };
         delete clone[id];
@@ -101,12 +100,13 @@ export default function StaffManagementPage() {
     try {
       await deleteDoc(doc(db, "users", id));
       setStaffList((prev) => prev.filter((s) => s.id !== id));
-      // Bersihkan edited kalau ada
+
       setEditedRoles((prev) => {
         const clone = { ...prev };
         delete clone[id];
         return clone;
       });
+
       toast.success("🗑️ Staff berhasil dihapus");
     } catch (error) {
       console.error(error);
@@ -117,7 +117,6 @@ export default function StaffManagementPage() {
   };
 
   const onSelectChange = (id: string, value: string, currentRole: string) => {
-    // Simpan hanya jika berbeda dari role sekarang
     setEditedRoles((prev) => {
       const next = { ...prev };
       if (value === currentRole) {
@@ -139,14 +138,17 @@ export default function StaffManagementPage() {
 
   return (
     <>
-    <NavbarManagement/>
+      <NavbarManagement />
       <Toaster position="top-right" />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-16 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <header className="text-center mb-12">
-            <h1 className="text-4xl font-extrabold text-gray-800 mb-2">Daftar Staff</h1>
+            <h1 className="text-4xl font-extrabold text-gray-800 mb-2">
+              Daftar Staff
+            </h1>
             <p className="text-gray-600">
-              Kelola anggota tim: ubah jabatan lalu tekan <b>Simpan</b> untuk menyimpan ke database.
+              Kelola anggota tim: ubah jabatan lalu tekan{" "}
+              <b>Simpan</b> untuk menyimpan ke database.
             </p>
           </header>
 
@@ -157,7 +159,8 @@ export default function StaffManagementPage() {
               {staffList.map((staff) => {
                 const pendingRole = editedRoles[staff.id];
                 const effectiveRole = pendingRole ?? staff.role;
-                const isDirty = pendingRole !== undefined && pendingRole !== staff.role;
+                const isDirty =
+                  pendingRole !== undefined && pendingRole !== staff.role;
                 const isBusy = actionId === staff.id;
 
                 return (
@@ -168,9 +171,18 @@ export default function StaffManagementPage() {
                   >
                     <div>
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <UserCog className="w-7 h-7 text-blue-600" />
-                        </div>
+                        {/* 🔹 FOTO PROFIL CLOUDINARY */}
+                        <Image
+                          src={
+                            staff.photoURL ||
+                            "https://via.placeholder.com/100?text=No+Photo"
+                          }
+                          alt={staff.name}
+                          width={60}
+                          height={60}
+                          className="rounded-full border border-blue-300 object-cover"
+                          unoptimized
+                        />
                         <div>
                           <h3 className="text-lg font-semibold text-gray-800">
                             {staff.name}
@@ -182,7 +194,9 @@ export default function StaffManagementPage() {
                       <label className="text-sm text-gray-600">Jabatan:</label>
                       <select
                         value={effectiveRole}
-                        onChange={(e) => onSelectChange(staff.id, e.target.value, staff.role)}
+                        onChange={(e) =>
+                          onSelectChange(staff.id, e.target.value, staff.role)
+                        }
                         disabled={isBusy}
                         className="mt-1 w-full border border-gray-300 rounded-xl py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                       >
@@ -199,9 +213,11 @@ export default function StaffManagementPage() {
                         onClick={() => saveRole(staff.id)}
                         disabled={!isDirty || isBusy}
                         className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium transition
-                          ${isDirty && !isBusy
-                            ? "bg-blue-600 text-white hover:bg-blue-700"
-                            : "bg-gray-100 text-gray-500 cursor-not-allowed"}`}
+                          ${
+                            isDirty && !isBusy
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          }`}
                         title={isDirty ? "Simpan perubahan" : "Tidak ada perubahan"}
                       >
                         <Save className="w-5 h-5" />

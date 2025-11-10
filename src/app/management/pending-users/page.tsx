@@ -12,6 +12,8 @@ import {
   deleteDoc,
   query,
   where,
+  setDoc,
+  getDoc, // ✅ Tambahkan ini
 } from "firebase/firestore";
 import toast from "react-hot-toast";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
@@ -21,8 +23,9 @@ export default function PendingUsersPage() {
   const router = useRouter();
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // ✅ indikator loading tombol aksi
 
-  // Cek role, hanya owner/manager boleh masuk
+  // ✅ Cek role, hanya owner/manager boleh masuk
   useEffect(() => {
     if (!loading) {
       if (!user) {
@@ -33,7 +36,7 @@ export default function PendingUsersPage() {
     }
   }, [user, role, loading, router]);
 
-  // Ambil data staff yang belum disetujui
+  // ✅ Ambil data staff yang belum disetujui
   useEffect(() => {
     const fetchPending = async () => {
       try {
@@ -52,27 +55,42 @@ export default function PendingUsersPage() {
     if (role === "owner" || role === "manager") fetchPending();
   }, [role]);
 
-  // Setujui staff
+  // ✅ Setujui staff (dengan indikator loading)
   const approveUser = async (id: string) => {
-    try {
-      await updateDoc(doc(db, "users", id), { approved: true });
-      toast.success("✅ Staff disetujui!");
-      setPendingUsers(pendingUsers.filter((u) => u.id !== id));
-    } catch (err) {
-      console.error("approveUser error:", err);
-      toast.error("Gagal menyetujui staff.");
-    }
-  };
+  setActionLoading(id);
+  try {
+    const ref = doc(db, "users", id);
+    await new Promise((r) => setTimeout(r, 300)); // ⏳ beri jeda 300ms
 
-  // Tolak staff (hapus dokumen user)
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { approved: true }, { merge: true });
+    } else {
+      await updateDoc(ref, { approved: true });
+    }
+
+    toast.success("✅ Staff disetujui!");
+    setPendingUsers((prev) => prev.filter((u) => u.id !== id));
+  } catch (err) {
+    console.error("approveUser error:", err);
+    toast.error("Gagal menyetujui staff. Coba refresh halaman.");
+  } finally {
+    setActionLoading(null);
+  }
+};
+
+
+  // ✅ Tolak staff (hapus dokumen user)
   const rejectUser = async (id: string) => {
+    setActionLoading(id);
     try {
       await deleteDoc(doc(db, "users", id));
       toast("🗑️ Staff ditolak dan dihapus.");
-      setPendingUsers(pendingUsers.filter((u) => u.id !== id));
-    } catch (err) {
-      console.error("rejectUser error:", err);
+      setPendingUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch {
       toast.error("Gagal menolak staff.");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -86,51 +104,61 @@ export default function PendingUsersPage() {
 
   return (
     <div>
-    <NavbarManagement/>
-    <div className="min-h-screen bg-gray-50 py-12 px-6 md:px-16">
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-md border border-gray-100 p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          Pending Approval Staff
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Daftar staff yang menunggu persetujuan owner atau manager.
-        </p>
+      <NavbarManagement />
+      <div className="min-h-screen bg-gray-50 py-12 px-6 md:px-16">
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-md border border-gray-100 p-8">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            Pending Approval Staff
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Daftar staff yang menunggu persetujuan owner atau manager.
+          </p>
 
-        {pendingUsers.length === 0 ? (
-          <div className="text-center text-gray-500 py-10">
-            Tidak ada staff yang menunggu persetujuan. 🎉
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pendingUsers.map((u) => (
-              <div
-                key={u.id}
-                className="flex flex-col md:flex-row md:items-center justify-between bg-gray-50 border border-gray-200 p-4 rounded-xl"
-              >
-                <div>
-                  <p className="font-semibold text-gray-800">{u.email}</p>
-                  <p className="text-sm text-gray-500">Role: {u.role}</p>
+          {pendingUsers.length === 0 ? (
+            <div className="text-center text-gray-500 py-10">
+              Tidak ada staff yang menunggu persetujuan. 🎉
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between bg-gray-50 border border-gray-200 p-4 rounded-xl"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-800">{u.email}</p>
+                    <p className="text-sm text-gray-500">Role: {u.role}</p>
+                  </div>
+                  <div className="flex gap-2 mt-3 md:mt-0">
+                    <button
+                      disabled={actionLoading === u.id}
+                      onClick={() => approveUser(u.id)}
+                      className={`px-4 py-2 rounded-lg text-white transition ${
+                        actionLoading === u.id
+                          ? "bg-green-400 cursor-not-allowed"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {actionLoading === u.id ? "Memproses..." : "Setujui"}
+                    </button>
+                    <button
+                      onClick={() => rejectUser(u.id)}
+                      disabled={actionLoading === u.id}
+                      className={`px-4 py-2 rounded-lg text-white transition ${
+                        actionLoading === u.id
+                          ? "bg-red-400 cursor-not-allowed"
+                          : "bg-red-500 hover:bg-red-600"
+                      }`}
+                    >
+                      {actionLoading === u.id ? "Menghapus..." : "Tolak"}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2 mt-3 md:mt-0">
-                  <button
-                    onClick={() => approveUser(u.id)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                  >
-                    Setujui
-                  </button>
-                  <button
-                    onClick={() => rejectUser(u.id)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-                  >
-                    Tolak
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </div>
   );
 }
