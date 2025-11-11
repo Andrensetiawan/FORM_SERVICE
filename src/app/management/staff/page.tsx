@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/firebaseConfig";
+
 import {
   collection,
   getDocs,
@@ -16,14 +17,18 @@ import { UserCog, Trash2, Save } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
 import Image from "next/image";
+import Link from "next/link";
+
 
 interface Staff {
   id: string;
   name: string;
   email: string;
   role: string;
+  address?: string;
   photoURL?: string;
 }
+
 
 export default function StaffManagementPage() {
   const { user, role, loading } = useAuth();
@@ -156,88 +161,70 @@ export default function StaffManagementPage() {
             <p className="text-center text-gray-500">Belum ada staff terdaftar.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {staffList.map((staff) => {
-                const pendingRole = editedRoles[staff.id];
-                const effectiveRole = pendingRole ?? staff.role;
-                const isDirty =
-                  pendingRole !== undefined && pendingRole !== staff.role;
-                const isBusy = actionId === staff.id;
-
-                return (
-                  <motion.div
-                    key={staff.id}
-                    whileHover={{ y: -6, scale: 1.02 }}
-                    className="bg-white shadow-lg border border-gray-200 rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl transition"
-                  >
-                    <div>
-                      <div className="flex items-center gap-4 mb-4">
-                        {/* 🔹 FOTO PROFIL CLOUDINARY */}
-                        <Image
-                          src={
-                            staff.photoURL ||
-                            "https://via.placeholder.com/100?text=No+Photo"
-                          }
-                          alt={staff.name}
-                          width={60}
-                          height={60}
-                          className="rounded-full border border-blue-300 object-cover"
-                          unoptimized
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            {staff.name}
-                          </h3>
-                          <p className="text-sm text-gray-500">{staff.email}</p>
-                        </div>
-                      </div>
-
-                      <label className="text-sm text-gray-600">Jabatan:</label>
-                      <select
-                        value={effectiveRole}
-                        onChange={(e) =>
-                          onSelectChange(staff.id, e.target.value, staff.role)
+              {staffList.map((staff) => (
+                <motion.div
+                  key={staff.id}
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  className="relative bg-gradient-to-b from-white to-blue-50 border border-blue-100 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all text-center"
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <img
+                        src={
+                          staff.photoURL ||
+                          "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                         }
-                        disabled={isBusy}
-                        className="mt-1 w-full border border-gray-300 rounded-xl py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                      >
-                        {roleOptions.map((r) => (
-                          <option key={r} value={r}>
-                            {r.charAt(0).toUpperCase() + r.slice(1)}
-                          </option>
-                        ))}
-                      </select>
+                        alt="Avatar"
+                        className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover shadow-sm"
+                      />
                     </div>
 
-                    <div className="flex items-center gap-3 mt-6">
+                    <h3 className="mt-4 text-lg font-semibold text-gray-800">
+                      {staff.name || "Tanpa Nama"}
+                    </h3>
+
+                    {/* 🔹 Badge per role */}
+                    <span
+                      className={`px-3 py-1 text-xs font-semibold rounded-full mt-1 ${
+                        staff.role === "owner"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : staff.role === "manager"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {staff.role}
+                    </span>
+
+                    <p className="text-gray-500 text-sm mt-2">{staff.email}</p>
+
+                    <p className="text-xs text-gray-400 mt-2 line-clamp-2 px-2">
+                      {staff.address || "Alamat belum diisi"}
+                    </p>
+
+                    {/* 🔹 Buttons */}
+                    <div className="flex justify-center gap-3 mt-5">
                       <button
-                        onClick={() => saveRole(staff.id)}
-                        disabled={!isDirty || isBusy}
-                        className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium transition
-                          ${
-                            isDirty && !isBusy
-                              ? "bg-blue-600 text-white hover:bg-blue-700"
-                              : "bg-gray-100 text-gray-500 cursor-not-allowed"
-                          }`}
-                        title={isDirty ? "Simpan perubahan" : "Tidak ada perubahan"}
+                        onClick={() => router.push(`/management/staff/${staff.id}`)}
+                        className="px-4 py-2 text-sm font-medium border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition"
                       >
-                        <Save className="w-5 h-5" />
-                        {isBusy ? "Menyimpan..." : "Simpan"}
+                        Detail
                       </button>
 
                       <button
                         onClick={() => deleteStaff(staff.id, staff.email)}
-                        disabled={isBusy}
-                        className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-xl p-2 transition"
-                        title="Hapus staff"
+                        disabled={actionId === staff.id}
+                        className="px-4 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-400 rounded-lg transition disabled:opacity-50"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        {actionId === staff.id ? "Menghapus..." : "Hapus"}
                       </button>
                     </div>
-                  </motion.div>
-                );
-              })}
+                  </div>
+                </motion.div>
+              ))}
             </div>
           )}
+
         </div>
       </div>
     </>
