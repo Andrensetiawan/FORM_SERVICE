@@ -60,7 +60,8 @@ export default function StaffManagementPage() {
             name: data.name || "(Tanpa Nama)",
             email: data.email,
             role: data.role,
-            photoURL: data.photoURL || "", // 🔹 Tambah foto profil dari Firestore
+            photoURL: data.photoURL || "",
+            address: data.address || "",
           });
         }
       });

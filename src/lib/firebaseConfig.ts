@@ -18,6 +18,7 @@ const firebaseConfig = {
 // ✅ Inisialisasi hanya sekali (hindari duplikasi)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+
 // Ekspor instance tunggal
 export const db = getFirestore(app);
 export const auth = getAuth(app);

@@ -1,20 +1,20 @@
-// lib/trackNumber.ts
+// ✅ src/lib/trackNumber.ts
 import { db } from "./firebaseConfig";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
-export const generateTrackNumber = async (): Promise<string> => {
-  const q = query(collection(db, "service_requests"), orderBy("timestamp", "desc"), limit(1));
+// Fungsi generate nomor tracking tanpa index Firestore
+export const generateTrackNumber = async (cabang: string): Promise<string> => {
+  // Tentukan prefix berdasarkan cabang
+  const prefix = cabang === "Alifcyber Solution" ? "ACS" : "HC";
+
+  // Ambil semua dokumen dengan cabang yang sama (tanpa orderBy)
+  const q = query(collection(db, "service_requests"), where("cabang", "==", cabang));
   const querySnapshot = await getDocs(q);
 
-  let lastNumber = 0;
-  querySnapshot.forEach(doc => {
-    const track = doc.data().track_number as string;
-    if (track?.startsWith("WO")) {
-      const num = parseInt(track.replace("WO", ""));
-      if (!isNaN(num)) lastNumber = num;
-    }
-  });
+  // Hitung total dokumen di cabang itu
+  const totalDocs = querySnapshot.size;
+  const newNumber = totalDocs + 1;
 
-  const newNumber = lastNumber + 1;
-  return `WO${newNumber}`;
+  // Return format nomor tracking baru
+  return `${prefix}-TNS${newNumber}`;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import InputField from "@/app/components/inputfield";
 import FormSection from "@/app/components/formsection";
 import NavbarStaff from "@/app/components/navbars/NavbarStaff";
@@ -12,7 +12,8 @@ import { generateTrackNumber } from "@/lib/trackNumber";
 import useAuth from "@/hooks/useAuth";
 
 export default function FormService() {
-  const { role, loading } = useAuth(); // ✅ ambil role user
+  const { role, loading } = useAuth();
+
   const initialForm = {
     nama: "",
     alamat: "",
@@ -34,12 +35,14 @@ export default function FormService() {
     prioritas_service: "1. Reguler",
     track_number: "",
     penerima_service: "",
+    cabang: "", // ✅ Tambahan field cabang
   };
 
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
 
+  // 🧩 Input handler
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -47,6 +50,7 @@ export default function FormService() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 🧩 Checkbox handler
   const toggleCheckbox = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => {
       const selected = prev[field] as string[];
@@ -57,13 +61,15 @@ export default function FormService() {
     });
   };
 
+  // 🧩 Radio Garansi handler
   const handleGaransi = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, garansi: e.target.value === "Ya" }));
   };
 
+  // 🧩 Validasi
   const validateForm = () => {
     const newErrors: string[] = [];
-    const requiredFields: (keyof typeof formData)[] = [
+    const required: (keyof typeof formData)[] = [
       "nama",
       "alamat",
       "no_hp",
@@ -73,14 +79,12 @@ export default function FormService() {
       "serial_number",
       "keluhan",
       "spesifikasi_teknis",
-      "prioritas_service",
       "penerima_service",
+      "cabang",
     ];
 
-    requiredFields.forEach((f) => {
-      if (!String(formData[f]).trim()) {
-        newErrors.push(`${f.replace("_", " ")} wajib diisi.`);
-      }
+    required.forEach((f) => {
+      if (!String(formData[f]).trim()) newErrors.push(`${f.replace("_", " ")} wajib diisi.`);
     });
 
     if (formData.jenis_perangkat.length === 0)
@@ -94,12 +98,18 @@ export default function FormService() {
     return newErrors.length === 0;
   };
 
+  // 🧩 Submit ke Firestore
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     try {
-      const newTrackNumber = await generateTrackNumber();
+      if (!formData.cabang) {
+        setErrors(["Cabang wajib dipilih sebelum submit."]);
+        return;
+      }
+
+      const newTrackNumber = await generateTrackNumber(formData.cabang);
       const dataToSave = {
         ...formData,
         track_number: newTrackNumber,
@@ -109,11 +119,11 @@ export default function FormService() {
 
       await addDoc(collection(db, "service_requests"), dataToSave);
 
-      setSuccessMessage(`✅ Data berhasil disimpan! Track Number: ${newTrackNumber}`);
-      setErrors([]);
+      setSuccessMessage(`✅ Data berhasil disimpan! Nomor Service: ${newTrackNumber}`);
       setFormData(initialForm);
-    } catch (error) {
-      console.error("❌ Gagal menyimpan data:", error);
+      setErrors([]);
+    } catch (err) {
+      console.error("❌ Gagal menyimpan data:", err);
       setErrors(["Gagal menyimpan data ke Firestore."]);
     }
   };
@@ -126,30 +136,29 @@ export default function FormService() {
     );
   }
 
-  // ✅ Pilih Navbar berdasarkan role user
   const Navbar = role === "owner" || role === "manager" ? NavbarManagement : NavbarStaff;
 
   return (
     <ProtectedRoute>
       <div className="bg-white min-h-screen">
         <Navbar />
-        <main className="max-w-4xl w-full mx-auto p-6 space-y-6 text-black">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Selamat datang di Layanan Service Kami</h1>
-            <p>Cepat, Mudah, dan Terpercaya!</p>
+        <main className="max-w-4xl mx-auto p-6 space-y-6 text-black">
+          <div className="text-center mb-4">
+            <h1 className="text-2xl font-bold">📋 Form Service Cabang</h1>
+            <p className="text-gray-500">Cekatan, Aman, dan Terpercaya</p>
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Data Customer */}
-            <FormSection title="Data Customer">
+            {/* Customer */}
+            <FormSection title="🧍 Data Customer">
               <InputField label="Nama" name="nama" value={formData.nama} onChange={handleInputChange} />
               <InputField label="Alamat" name="alamat" textarea value={formData.alamat} onChange={handleInputChange} />
               <InputField label="No. Handphone" name="no_hp" value={formData.no_hp} onChange={handleInputChange} />
               <InputField label="Email" name="email" value={formData.email} onChange={handleInputChange} />
             </FormSection>
 
-            {/* Data Perangkat */}
-            <FormSection title="Data Perangkat">
+            {/* Perangkat */}
+            <FormSection title="💻 Data Perangkat">
               <InputField label="Merk" name="merk" value={formData.merk} onChange={handleInputChange} />
               <InputField label="Tipe" name="tipe" value={formData.tipe} onChange={handleInputChange} />
               <InputField label="Serial Number" name="serial_number" value={formData.serial_number} onChange={handleInputChange} />
@@ -158,7 +167,7 @@ export default function FormService() {
             </FormSection>
 
             {/* Jenis Perangkat */}
-            <FormSection title="Jenis Perangkat">
+            <FormSection title="🔧 Jenis Perangkat">
               <div className="flex flex-wrap gap-4">
                 {["Laptop", "PC", "UPS", "Console"].map((d) => (
                   <label key={d} className="flex items-center space-x-2">
@@ -176,7 +185,7 @@ export default function FormService() {
             </FormSection>
 
             {/* Accessories */}
-            <FormSection title="Accessories">
+            <FormSection title="🎒 Accessories">
               <div className="flex flex-wrap gap-4">
                 {["Baterai", "Adaptor", "Tas", "Casing", "Mouse", "Receiver"].map((acc) => (
                   <label key={acc} className="flex items-center space-x-2">
@@ -190,11 +199,11 @@ export default function FormService() {
                   </label>
                 ))}
               </div>
-              <InputField label="Keterangan" name="keterangan_accessories" value={formData.keterangan_accessories} onChange={handleInputChange} />
+              <InputField label="Keterangan Accessories" name="keterangan_accessories" value={formData.keterangan_accessories} onChange={handleInputChange} />
             </FormSection>
 
             {/* Garansi */}
-            <FormSection title="Garansi">
+            <FormSection title="🧾 Garansi">
               <div className="flex space-x-6">
                 {["Ya", "Tidak"].map((val) => (
                   <label key={val} className="flex items-center space-x-2">
@@ -214,7 +223,7 @@ export default function FormService() {
             </FormSection>
 
             {/* Kondisi */}
-            <FormSection title="Kondisi Saat Masuk">
+            <FormSection title="🔍 Kondisi Saat Masuk">
               <div className="grid grid-cols-2 gap-3">
                 {[
                   "Mati Total", "Layar Gelap", "Layar Biru", "Bekas Jatuh",
@@ -234,8 +243,23 @@ export default function FormService() {
               <InputField label="Keterangan" name="keterangan_kondisi" value={formData.keterangan_kondisi} onChange={handleInputChange} />
             </FormSection>
 
+            {/* Cabang */}
+            <FormSection title="🏢 Informasi Cabang">
+              <select
+                name="cabang"
+                value={formData.cabang}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded-md"
+                required
+              >
+                <option value="">-- Pilih Cabang --</option>
+                <option value="Alifcyber Solution">Alifcyber Solution</option>
+                <option value="Hibatillah">Hibatillah</option>
+              </select>
+            </FormSection>
+
             {/* Info Tambahan */}
-            <FormSection title="Info Tambahan">
+            <FormSection title="🗂️ Info Tambahan">
               <select
                 name="prioritas_service"
                 value={formData.prioritas_service}
@@ -247,29 +271,28 @@ export default function FormService() {
                 <option value="3. Onsite">3. Onsite</option>
               </select>
 
-              <InputField label="Tracking Number Service" name="track_number" value={formData.track_number} onChange={() => {}} />
+              <InputField label="Tracking Number" name="track_number" value={formData.track_number} onChange={() => {}} />
               <InputField label="Penerima Service" name="penerima_service" value={formData.penerima_service} onChange={handleInputChange} />
             </FormSection>
 
-            <div className="flex space-x-4">
-              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
-                Submit
+            {/* Submit */}
+            <div className="flex justify-end">
+              <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 shadow">
+                Simpan
               </button>
             </div>
 
-            <div className="mt-4 space-y-2">
-              {errors.length > 0 && (
-                <div className="bg-red-100 text-red-700 p-3 rounded-md">
-                  <ul>{errors.map((err, idx) => <li key={idx}>• {err}</li>)}</ul>
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="bg-green-100 text-green-700 p-3 rounded-md">
-                  {successMessage}
-                </div>
-              )}
-            </div>
+            {/* Alerts */}
+            {errors.length > 0 && (
+              <div className="bg-red-100 text-red-700 p-3 rounded-md">
+                <ul>{errors.map((err, idx) => <li key={idx}>• {err}</li>)}</ul>
+              </div>
+            )}
+            {successMessage && (
+              <div className="bg-green-100 text-green-700 p-3 rounded-md">
+                {successMessage}
+              </div>
+            )}
           </form>
         </main>
       </div>

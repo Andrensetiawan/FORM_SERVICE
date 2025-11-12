@@ -4,9 +4,7 @@ const nextConfig = {
 
   images: {
     remotePatterns: [
-      // Izinkan Cloudinary images
-      { protocol: "https", hostname: "res.cloudinary.com" },
-      // Tambahan opsional untuk ikon eksternal
+      { protocol: "https", hostname: "**.cloudinary.com" },
       { protocol: "https", hostname: "cdn-icons-png.flaticon.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
@@ -34,10 +32,12 @@ const nextConfig = {
                 https://api.cloudinary.com;
               img-src
                 'self'
+                https:
                 blob:
                 data:
                 https://firebasestorage.googleapis.com
-                https://res.cloudinary.com;
+                https://res.cloudinary.com
+                https://*.cloudinary.com;
               frame-src
                 'self'
                 https://*.firebaseapp.com

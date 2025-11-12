@@ -200,7 +200,7 @@ export default function ManagementDashboard() {
                     </td>
                     <td className="p-3 border-b border-gray-700 text-blue-400 font-semibold">
                       <Link href={`/management/tns/${item.id}`} className="hover:underline">
-                        WO{index + 1}
+                        TNS{index + 1}
                       </Link>
                     </td>
                     <td className="p-3 border-b border-gray-700 text-yellow-400">
