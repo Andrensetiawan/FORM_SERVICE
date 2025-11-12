@@ -33,6 +33,7 @@ export default function Home() {
     prioritas_service: "1. Reguler",
     track_number: "",
     penerima_service: "",
+    cabang: "",
   });
 
   const [errors, setErrors] = useState<string[]>([]);
@@ -101,7 +102,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (!validateForm()) return;
 
   try {
-    const newTrackNumber = await generateTrackNumber();
+    const newTrackNumber = await generateTrackNumber(formData.cabang);
     setFormData(prev => ({ ...prev, track_number: newTrackNumber }));
 
     await addDoc(collection(db, "service_requests"), {
@@ -136,6 +137,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       prioritas_service: "1. Reguler",
       track_number: "",
       penerima_service: "",
+      cabang: ""
+      
     });
   } catch (error) {
     console.error("❌ Gagal menyimpan data:", error);
