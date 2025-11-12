@@ -52,7 +52,7 @@ export default function NavbarManagement() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push("/");
   };
 
   const menuItems = [
