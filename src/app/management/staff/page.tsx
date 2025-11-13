@@ -7,6 +7,8 @@ import { db } from "@/lib/firebaseConfig";
 import {
   collection,
   getDocs,
+  query,
+  where,
   updateDoc,
   deleteDoc,
   doc,
@@ -18,6 +20,7 @@ import { Toaster, toast } from "react-hot-toast";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
 import Image from "next/image";
 import Link from "next/link";
+import { ROLES } from "@/lib/roles";
 
 
 interface Staff {
@@ -43,14 +46,22 @@ export default function StaffManagementPage() {
   useEffect(() => {
     if (!loading) {
       if (!user) router.push("/login");
-      else if (role !== "owner" && role !== "manager") router.push("/unauthorized");
+      else if (role !== ROLES.OWNER && role !== ROLES.MANAGER && role !== ROLES.ADMIN) router.push("/unauthorized");
       else fetchStaff();
     }
   }, [user, role, loading, router]);
 
   const fetchStaff = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, "users"));
+      // Non-admin/owner viewers should only see users that are approved
+      let queryRef;
+      if (role === ROLES.OWNER || role === ROLES.ADMIN) {
+        queryRef = collection(db, "users");
+      } else {
+        queryRef = query(collection(db, "users"), where("approved", "==", true));
+      }
+
+      const querySnapshot = await getDocs(queryRef as any);
       const staffData: Staff[] = [];
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data() as any;

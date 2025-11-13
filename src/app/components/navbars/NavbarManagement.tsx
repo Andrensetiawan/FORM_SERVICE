@@ -14,11 +14,13 @@ import {
   FileText,
   Wrench,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
+import { ROLES } from "@/lib/roles";
 
 export default function NavbarManagement() {
   const router = useRouter();
@@ -56,11 +58,15 @@ export default function NavbarManagement() {
   };
 
   const menuItems = [
-    { name: "Pending Approval", icon: <Users size={18} />, href: "/management/pending-users" },
+    // hanya owner atau admin yang melihat menu Pending Approval
+    ...(user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
+      ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/management/pending-users" }]
+      : []),
     { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/management/staff" },
     { name: "Laporan", icon: <FileBarChart size={18} />, href: "/management/laporan" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
     { name: "Status Service", icon: <Wrench size={18} />, href: "/management" },
+    ...(user?.role === ROLES.ADMIN ? [{ name: "Admin Panel", icon: <Shield size={18} />, href: "/admin-dashboard" }] : []),
   ];
 
   return (

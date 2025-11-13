@@ -8,6 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
 import { collection, query, where, getDocs } from "firebase/firestore";
+import { ROLES } from "@/lib/roles";
 
 export default function login() {
   const router = useRouter();
@@ -76,14 +77,18 @@ export default function login() {
         const approved = data.approved ?? true;
 
         if (role === "staff" && !approved) {
-          toast.error( "Akun kamu belum disetujui owner. Mohon tunggu konfirmasi.");
+          toast.error("Akun kamu belum disetujui oleh Manager atau Admin. Mohon tunggu konfirmasi.");
           return;
         }
 
-        if (role === "staff") {
+        if (role === ROLES.STAFF) {
           router.push("/staff");
-        } else if (role === "owner" || role === "manager") {
+        } else if (role === ROLES.MANAGER) {
           router.push("/management");
+        } else if (role === ROLES.OWNER) {
+          router.push("/owner-dashboard");
+        } else if (role === ROLES.ADMIN) {
+          router.push("/admin-dashboard");
         } else {
           toast.error("Role tidak dikenali. Hubungi admin.");
           router.push("/");

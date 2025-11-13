@@ -56,30 +56,30 @@ export default function useAuth() {
   // -------------------------
   // Pantau status login user
   // -------------------------
-useEffect(() => {
-    console.log("🔥 Detected role:", role);
-  const unsub = onAuthStateChanged(auth, async (currentUser) => {
-    setUser(currentUser);
-    if (currentUser) {
-      try {
-        const docRes = await fetchUserDocByAuthUid(currentUser.uid);
-        if (docRes && docRes.data) {
-          const userRole = (docRes.data.role || "").toLowerCase(); // ✅ lowercase fix
-          setRole(userRole);
-        } else {
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        try {
+          const docRes = await fetchUserDocByAuthUid(currentUser.uid);
+          if (docRes && docRes.data) {
+            const userRole = (docRes.data.role || "").toLowerCase(); // ✅ lowercase fix
+            setRole(userRole);
+            console.log("🔥 Detected role:", userRole);
+          } else {
+            setRole(null);
+          }
+        } catch (err) {
+          console.error("onAuthStateChanged fetch role error:", err);
           setRole(null);
         }
-      } catch (err) {
-        console.error("onAuthStateChanged fetch role error:", err);
+      } else {
         setRole(null);
       }
-    } else {
-      setRole(null);
-    }
-    setLoading(false);
-  });
-  return () => unsub();
-}, []);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
 
 
   // -------------------------

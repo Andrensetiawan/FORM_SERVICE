@@ -144,7 +144,7 @@ export default function FormService() {
         <Navbar />
         <main className="max-w-4xl mx-auto p-6 space-y-6 text-black">
           <div className="text-center mb-4">
-            <h1 className="text-2xl font-bold">📋 Form Service Cabang</h1>
+            <h1 className="text-2xl font-bold">📋 Form Service </h1>
             <p className="text-gray-500">Cekatan, Aman, dan Terpercaya</p>
           </div>
 

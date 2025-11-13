@@ -7,6 +7,7 @@ import useAuth from "@/hooks/useAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import { ROLES } from "@/lib/roles";
 
 export default function ManagementDashboard() {
   const { user, role, loading } = useAuth();
@@ -24,7 +25,7 @@ export default function ManagementDashboard() {
   useEffect(() => {
     if (!loading) {
       if (!user) router.push("/login");
-      else if (!["manager", "owner"].includes(role || ""))
+      else if (![ROLES.MANAGER, ROLES.OWNER, ROLES.ADMIN].includes(role as any))
         router.push("/unauthorized");
     }
   }, [user, role, loading, router]);

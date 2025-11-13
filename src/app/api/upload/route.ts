@@ -13,6 +13,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const folderPath = formData.get("folderPath") as string | null;
 
     if (!file) {
       console.error("❌ Tidak ada file dikirim!");
@@ -23,23 +24,38 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64File = `data:${file.type};base64,${buffer.toString("base64")}`;
-    console.log("🌥️ Cloudinary Config:", {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY ? "✅ ada" : "❌ kosong",
-    });
     
+    console.log("🌥️ Cloudinary Config:", {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY ? "✅ ada" : "❌ kosong",
+    });
 
-    console.log("📤 Uploading to Cloudinary...");
+    console.log("📤 Uploading to Cloudinary with folder:", folderPath || "default");
 
-    const result = await cloudinary.uploader.upload(base64File, {
-      folder: "avatars",
+    // Generate unique filename dengan timestamp
+    const timestamp = Date.now();
+    const filename = `${timestamp}_${file.name.replace(/\s+/g, '_')}`;
+
+    // Upload dengan folder structure
+    const uploadOptions: any = {
       resource_type: "image",
       transformation: [
-    { width: 800, height: 800, crop: "limit" },
-    { quality: "auto" },
-    { fetch_format: "auto" },
-  ],
-    });
+        { width: 1200, height: 1200, crop: "limit" },
+        { quality: "auto" },
+        { fetch_format: "auto" },
+      ],
+    };
+
+    // Set folder path jika ada
+    if (folderPath) {
+      uploadOptions.folder = `service_form/${folderPath}`;
+      uploadOptions.public_id = filename;
+    } else {
+      uploadOptions.folder = "service_form/default";
+      uploadOptions.public_id = filename;
+    }
+
+    const result = await cloudinary.uploader.upload(base64File, uploadOptions);
 
     if (!result.secure_url) {
       console.error("🚨 Upload gagal, tidak ada secure_url:", result);
@@ -52,6 +68,10 @@ export async function POST(request: Request) {
       success: true,
       secure_url: result.secure_url,
       public_id: result.public_id,
+      width: result.width,
+      height: result.height,
+      size: result.bytes,
+      folder: uploadOptions.folder,
     });
   } catch (err: any) {
     console.error("❌ Cloudinary upload error:", err);

@@ -7,6 +7,7 @@ import useAuth from "@/hooks/useAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/navbars/NavbarStaff";
+import { ROLES } from "@/lib/roles";
 
 export default function AdminPage() {
   const { user, role, loading } = useAuth();
@@ -23,8 +24,8 @@ export default function AdminPage() {
   // 🔒 Akses terbatas
   useEffect(() => {
     if (!loading) {
-      if (!user) router.push("/login");
-      else if (!["staff", "manager", "owner"].includes(role || ""))
+      if (!user) router.push("/");
+      else if (![ROLES.STAFF, ROLES.MANAGER, ROLES.OWNER, ROLES.ADMIN].includes(role as any))
         router.push("/unauthorized");
     }
   }, [user, role, loading, router]);
@@ -98,7 +99,7 @@ export default function AdminPage() {
         </div>
 
         {/* Filter */}
-        {(role === "manager" || role === "owner") && (
+        {(role === ROLES.MANAGER || role === ROLES.OWNER || role === ROLES.ADMIN) && (
           <div className="bg-gray-800/70 border border-gray-700 rounded-2xl shadow-md p-5 mb-8 backdrop-blur-sm">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Cabang */}

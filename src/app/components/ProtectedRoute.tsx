@@ -2,7 +2,8 @@
 
 import { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import useAuth from "@/hooks/useAuth"; // ✅ pakai hook-mu sendiri
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/lib/roles";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({
   children,
-  allowedRoles = ["staff", "management", "owner"],
+  allowedRoles = [ROLES.STAFF, ROLES.MANAGER, ROLES.OWNER, ROLES.ADMIN],
 }: ProtectedRouteProps) {
   const router = useRouter();
   const { user, role, loading } = useAuth(); // ✅ ambil dari hook
@@ -29,6 +30,12 @@ export default function ProtectedRoute({
   if (!role) {
     router.push("/unauthorized");
     return null;
+  }
+
+  // Admin is a superuser: allow access to everything
+  if (role === ROLES.ADMIN) {
+    console.log("🔑 Admin override - full access");
+    return <>{children}</>;
   }
 
   if (!allowedRoles.includes(role)) {

@@ -13,10 +13,11 @@ import {
   query,
   where,
   setDoc,
-  getDoc, // ✅ Tambahkan ini
+  getDoc,
 } from "firebase/firestore";
 import toast from "react-hot-toast";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import { ROLES } from "@/lib/roles";
 
 export default function PendingUsersPage() {
   const { user, role, loading } = useAuth();
@@ -25,12 +26,12 @@ export default function PendingUsersPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null); // ✅ indikator loading tombol aksi
 
-  // ✅ Cek role, hanya owner/manager boleh masuk
+  // Hanya owner atau admin yang boleh mengakses halaman pending (manager disembunyikan)
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push("/login");
-      } else if (role !== "owner" && role !== "manager") {
+      } else if (role !== ROLES.OWNER && role !== ROLES.ADMIN) {
         router.push("/unauthorized");
       }
     }
@@ -52,7 +53,7 @@ export default function PendingUsersPage() {
       }
     };
 
-    if (role === "owner" || role === "manager") fetchPending();
+    if (role === ROLES.OWNER || role === ROLES.ADMIN) fetchPending();
   }, [role]);
 
   // ✅ Setujui staff (dengan indikator loading)
@@ -111,7 +112,7 @@ export default function PendingUsersPage() {
             Pending Approval Staff
           </h1>
           <p className="text-gray-600 mb-6">
-            Daftar staff yang menunggu persetujuan owner atau manager.
+            Daftar staff yang menunggu persetujuan owner atau admin.
           </p>
 
           {pendingUsers.length === 0 ? (

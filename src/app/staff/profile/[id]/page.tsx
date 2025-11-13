@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarManagement from "@/app/components/navbars/NavbarStaff";
 import toast from "react-hot-toast";
 import { Upload, Trash2 } from "lucide-react";
 
