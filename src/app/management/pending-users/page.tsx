@@ -17,33 +17,42 @@ import {
 } from "firebase/firestore";
 import toast from "react-hot-toast";
 import NavbarManagement from "@/app/components/navbars/NavbarManagement";
-import { ROLES } from "@/lib/roles";
 
 export default function PendingUsersPage() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null); // ✅ indikator loading tombol aksi
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Hanya owner atau admin yang boleh mengakses halaman pending (manager disembunyikan)
+  // 🔐 Validasi role: hanya owner / manager / admin
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push("/login");
-      } else if (role !== ROLES.OWNER && role !== ROLES.ADMIN) {
+      } else if (
+        role !== "owner" &&
+        role !== "manager" &&
+        role !== "admin"
+      ) {
         router.push("/unauthorized");
       }
     }
   }, [user, role, loading, router]);
 
-  // ✅ Ambil data staff yang belum disetujui
+  // 🔥 Ambil user yang belum approved
   useEffect(() => {
     const fetchPending = async () => {
       try {
         const q = query(collection(db, "users"), where("approved", "==", false));
         const snaps = await getDocs(q);
-        const data = snaps.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        const data = snaps.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
         setPendingUsers(data);
       } catch (err) {
         console.error("fetchPending error:", err);
@@ -53,40 +62,51 @@ export default function PendingUsersPage() {
       }
     };
 
-    if (role === ROLES.OWNER || role === ROLES.ADMIN) fetchPending();
+    // owner, manager, admin: semua boleh lihat pending
+    if (role === "owner" || role === "manager" || role === "admin") {
+      fetchPending();
+    }
   }, [role]);
 
-  // ✅ Setujui staff (dengan indikator loading)
+  // 🔔 Setujui pengguna
   const approveUser = async (id: string) => {
-  setActionLoading(id);
-  try {
-    const ref = doc(db, "users", id);
-    await new Promise((r) => setTimeout(r, 300)); // ⏳ beri jeda 300ms
+    setActionLoading(id);
 
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, { approved: true }, { merge: true });
-    } else {
-      await updateDoc(ref, { approved: true });
+    try {
+      const ref = doc(db, "users", id);
+
+      await new Promise((r) => setTimeout(r, 300)); // jeda animasi
+
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        // jika doc hilang
+        await setDoc(ref, { approved: true }, { merge: true });
+      } else {
+        await updateDoc(ref, { approved: true });
+      }
+
+      toast.success("✅ Staff disetujui!");
+
+      // hapus dari daftar pending
+      setPendingUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch (err) {
+      console.error("approveUser error:", err);
+      toast.error("Gagal menyetujui staff. Coba lagi.");
+    } finally {
+      setActionLoading(null);
     }
+  };
 
-    toast.success("✅ Staff disetujui!");
-    setPendingUsers((prev) => prev.filter((u) => u.id !== id));
-  } catch (err) {
-    console.error("approveUser error:", err);
-    toast.error("Gagal menyetujui staff. Coba refresh halaman.");
-  } finally {
-    setActionLoading(null);
-  }
-};
-
-
-  // ✅ Tolak staff (hapus dokumen user)
+  // ❌ Tolak pengguna
   const rejectUser = async (id: string) => {
     setActionLoading(id);
+
     try {
       await deleteDoc(doc(db, "users", id));
       toast("🗑️ Staff ditolak dan dihapus.");
+
+      // update list
       setPendingUsers((prev) => prev.filter((u) => u.id !== id));
     } catch {
       toast.error("Gagal menolak staff.");
@@ -106,13 +126,15 @@ export default function PendingUsersPage() {
   return (
     <div>
       <NavbarManagement />
+
       <div className="min-h-screen bg-gray-50 py-12 px-6 md:px-16">
         <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-md border border-gray-100 p-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">
             Pending Approval Staff
           </h1>
+
           <p className="text-gray-600 mb-6">
-            Daftar staff yang menunggu persetujuan owner atau admin.
+            Daftar staff yang menunggu persetujuan owner / manager / admin.
           </p>
 
           {pendingUsers.length === 0 ? (
@@ -130,6 +152,7 @@ export default function PendingUsersPage() {
                     <p className="font-semibold text-gray-800">{u.email}</p>
                     <p className="text-sm text-gray-500">Role: {u.role}</p>
                   </div>
+
                   <div className="flex gap-2 mt-3 md:mt-0">
                     <button
                       disabled={actionLoading === u.id}
@@ -142,6 +165,7 @@ export default function PendingUsersPage() {
                     >
                       {actionLoading === u.id ? "Memproses..." : "Setujui"}
                     </button>
+
                     <button
                       onClick={() => rejectUser(u.id)}
                       disabled={actionLoading === u.id}
