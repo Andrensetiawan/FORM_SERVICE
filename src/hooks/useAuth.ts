@@ -16,6 +16,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,   // ← DITAMBAHKAN
   collection,
   serverTimestamp,
   query,
@@ -29,16 +30,14 @@ export default function useAuth() {
   const [loading, setLoading] = useState(true);
 
   // -------------------------
-  // Helper: ambil user doc (coba direct id dulu, kalau tidak ada pakai query uid)
+  // Helper ambil user doc
   // -------------------------
   const fetchUserDocByAuthUid = async (authUid: string) => {
     try {
-      // Try document with id = authUid (recommended structure)
       const ref = doc(db, "users", authUid);
       const snap = await getDoc(ref);
       if (snap.exists()) return { id: snap.id, data: snap.data() as any };
 
-      // Fallback: cari dokumen yang punya field uid == authUid (for legacy data like UID1)
       const q = query(collection(db, "users"), where("uid", "==", authUid));
       const snaps = await getDocs(q);
       if (!snaps.empty) {
@@ -59,16 +58,42 @@ export default function useAuth() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+
       if (currentUser) {
         try {
           const docRes = await fetchUserDocByAuthUid(currentUser.uid);
-          if (docRes && docRes.data) {
-            const userRole = (docRes.data.role || "").toLowerCase(); // ✅ lowercase fix
+
+          if (docRes?.data) {
+            const userRole = (docRes.data.role || "").toLowerCase();
             setRole(userRole);
-            console.log("🔥 Detected role:", userRole);
           } else {
             setRole(null);
           }
+
+          // ------------------------------------------------------
+          // ✅ ONLINE STATUS ADD (HANYA TAMBAHAN — AMAN)
+          // ------------------------------------------------------
+          try {
+            const ref = doc(db, "users", currentUser.uid);
+
+            // Set online = true saat login
+            await updateDoc(ref, {
+              online: true,
+              lastActive: serverTimestamp(),
+            });
+
+            // Set offline saat tab ditutup
+            window.addEventListener("beforeunload", () => {
+              updateDoc(ref, {
+                online: false,
+                lastActive: serverTimestamp(),
+              });
+            });
+          } catch (err) {
+            console.error("Gagal update status online:", err);
+          }
+          // ------------------------------------------------------
+
         } catch (err) {
           console.error("onAuthStateChanged fetch role error:", err);
           setRole(null);
@@ -76,11 +101,12 @@ export default function useAuth() {
       } else {
         setRole(null);
       }
+
       setLoading(false);
     });
+
     return () => unsub();
   }, []);
-
 
   // -------------------------
   // LOGIN
@@ -90,19 +116,29 @@ export default function useAuth() {
     try {
       const res = await signInWithEmailAndPassword(auth, email, password);
       const u = res.user;
+
       if (!u.emailVerified) {
         toast.error("⚠️ Email belum diverifikasi. Silakan cek inbox.");
-        await signOut(auth); // sign out to prevent partially signed sessions
+        await signOut(auth);
         return null;
       }
+
       toast.success(" Login berhasil!");
+
+      // Set online ketika login
+      try {
+        await updateDoc(doc(db, "users", u.uid), {
+          online: true,
+          lastActive: serverTimestamp(),
+        });
+      } catch {}
+
       return u;
     } catch (err: any) {
       console.error("login error:", err);
       if (err.code === "auth/user-not-found") toast.error("Email tidak terdaftar!");
       else if (err.code === "auth/wrong-password") toast.error("Email atau password salah!");
-      else if (err.code === "auth/too-many-requests")
-        toast.error("Terlalu banyak percobaan login. Coba lagi nanti.");
+      else if (err.code === "auth/too-many-requests") toast.error("Terlalu banyak percobaan login. Coba lagi nanti.");
       else toast.error("Gagal login. Coba lagi.");
       return null;
     } finally {
@@ -111,13 +147,9 @@ export default function useAuth() {
   };
 
   // -------------------------
-  // REGISTER (simpan doc id = auth.uid, approved:false)
+  // REGISTER
   // -------------------------
-  const register = async (
-    email: string,
-    password: string,
-    confirmPassword: string
-  ): Promise<User | null> => {
+  const register = async (email: string, password: string, confirmPassword: string): Promise<User | null> => {
     if (password !== confirmPassword) {
       toast.error("❌ Password tidak cocok!");
       return null;
@@ -132,19 +164,18 @@ export default function useAuth() {
       const res = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = res.user;
 
-      // Simpan doc dengan document id = newUser.uid (lebih konsisten)
       await setDoc(doc(db, "users", newUser.uid), {
         uid: newUser.uid,
         email: newUser.email,
         role: "staff",
-        approved: false, // default menunggu approval owner
+        approved: false,
+        online: false, // default belum login
         createdAt: serverTimestamp(),
       });
 
-      // Kirim email verifikasi
       await sendEmailVerification(newUser);
 
-      toast.success("✅ Akun dibuat! Cek email untuk verifikasi dan tunggu approval owner.");
+      toast.success("✅ Akun dibuat! Cek email untuk verifikasi.");
       return newUser;
     } catch (err: any) {
       console.error("register error:", err);
@@ -171,7 +202,7 @@ export default function useAuth() {
   };
 
   // -------------------------
-  // RESEND VERIFICATION
+  // RESEND VERIF
   // -------------------------
   const resendVerification = async () => {
     if (!auth.currentUser) {
@@ -183,14 +214,12 @@ export default function useAuth() {
       toast.success("📨 Email verifikasi telah dikirim ulang!");
     } catch (err: any) {
       console.error("resendVerification error:", err);
-      if (err.code === "auth/too-many-requests")
-        toast.error("Terlalu sering kirim ulang. Tunggu beberapa menit.");
-      else toast.error("Gagal mengirim ulang verifikasi.");
+      toast.error("Gagal mengirim ulang verifikasi.");
     }
   };
 
   // -------------------------
-  // REFRESH VERIFICATION STATUS
+  // REFRESH VERIFICATION
   // -------------------------
   const refreshVerificationStatus = async () => {
     if (!auth.currentUser) return;
@@ -209,6 +238,14 @@ export default function useAuth() {
   // -------------------------
   const logout = async () => {
     try {
+      // set user offline
+      if (auth.currentUser) {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+          online: false,
+          lastActive: serverTimestamp(),
+        });
+      }
+
       await signOut(auth);
       toast("👋 Kamu sudah logout.");
     } catch (err) {

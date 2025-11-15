@@ -2,7 +2,7 @@
 
 import InputField from "@/app/components/inputfield";
 import FormSection from "@/app/components/formsection";
-import Navbar from "@/app/components/navbars/NavbarStaff";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { useState } from "react";
 import { db } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -150,7 +150,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <ProtectedRoute>
     <div className="bg-white min-h-screen">
-      <Navbar />
+      <NavbarSwitcher />
 
       <main className="max-w-4xl w-full mx-auto p-6 space-y-6">
         <div className="text-center text-black">

@@ -3,8 +3,7 @@
 import { useState } from "react";
 import InputField from "@/app/components/inputfield";
 import FormSection from "@/app/components/formsection";
-import NavbarStaff from "@/app/components/navbars/NavbarStaff";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { db } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -136,12 +135,10 @@ export default function FormService() {
     );
   }
 
-  const Navbar = role === "owner" || role === "manager" ? NavbarManagement : NavbarStaff;
-
   return (
     <ProtectedRoute>
       <div className="bg-white min-h-screen">
-        <Navbar />
+        <NavbarSwitcher />
         <main className="max-w-4xl mx-auto p-6 space-y-6 text-black">
           <div className="text-center mb-4">
             <h1 className="text-2xl font-bold">📋 Form Service </h1>

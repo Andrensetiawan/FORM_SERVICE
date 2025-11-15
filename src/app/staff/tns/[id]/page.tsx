@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import PhotoUpload from "@/app/components/PhotoUpload";
 import EditFields from "@/app/components/EditFields";
 import { motion } from "framer-motion";
-import Navbar from "@/app/components/navbars/NavbarStaff";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 
 export default function DetailServicePage({ params }: { params: { id: string } }) {
   const id = params.id;

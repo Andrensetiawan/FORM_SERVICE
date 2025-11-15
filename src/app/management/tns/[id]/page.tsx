@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { motion } from "framer-motion";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { useRouter } from "next/navigation";
 
 export default function DetailTNSManagementPage({
@@ -47,7 +47,7 @@ export default function DetailTNSManagementPage({
 
   return (
     <>
-      <NavbarManagement />
+      <NavbarSwitcher />
       <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4">
         <motion.div
           initial={{ opacity: 0, y: 15 }}

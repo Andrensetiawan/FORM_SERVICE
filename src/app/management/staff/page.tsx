@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { UserCog, Trash2, Save } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import Image from "next/image";
 import Link from "next/link";
 import { ROLES } from "@/lib/roles";
@@ -155,7 +155,7 @@ export default function StaffManagementPage() {
 
   return (
     <>
-      <NavbarManagement />
+      <NavbarSwitcher />
       <Toaster position="top-right" />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-16 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">

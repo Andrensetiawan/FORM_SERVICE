@@ -76,7 +76,7 @@ export default function NavbarStaff() {
   // 🔹 Menu navigasi staff
 
   const menuItems = [
-    { name: "Home", icon: <Home size={18} />, href: "/" },
+    { name: "Home", icon: <Home size={18} />, href: "/staff" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
     { name: "Status Service", icon: <Wrench size={18} />, href: "/staff" },
     { name: "Contact", icon: <PhoneCall size={18} />, href: "/contact" },

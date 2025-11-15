@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
-import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -29,8 +29,8 @@ export default function AdminLogsPage() {
 
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-16 lg:ml-64">
-        <NavbarAdmin />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
+        <NavbarSwitcher />
 
         <div className="w-full max-w-6xl mx-auto px-6 py-12">
           {/* Header */}

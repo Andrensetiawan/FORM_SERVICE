@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import toast from "react-hot-toast";
 import { Upload, Trash2 } from "lucide-react";
 import useAuth from "@/hooks/useAuth"; // ⭐ Tambahan penting
@@ -171,7 +171,7 @@ export default function StaffProfilePage() {
 
   return (
     <>
-      <NavbarManagement />
+      <NavbarSwitcher />
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-14 px-6 md:px-20">
         <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-lg p-10 flex flex-col md:flex-row gap-10 items-center md:items-start">

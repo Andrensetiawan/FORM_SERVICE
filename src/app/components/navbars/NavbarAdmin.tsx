@@ -14,7 +14,6 @@ import {
   LogOut,
   Settings,
   BarChart3,
-  Shield,
   Home,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
@@ -60,6 +59,7 @@ export default function NavbarAdmin() {
 
   const adminMenus = [
     { name: "Dashboard", icon: <Home size={18} />, href: "/admin-dashboard" },
+    { name: "Pending Approval", icon: <Home size={18} />, href: "/admin-dashboard/pending-users" },
     { name: "Pengguna", icon: <Users size={18} />, href: "/admin-dashboard/users" },
     { name: "Cabang", icon: <Building2 size={18} />, href: "/admin-dashboard/cabang" },
     { name: "Database", icon: <Database size={18} />, href: "/admin-dashboard/database" },
@@ -67,184 +67,151 @@ export default function NavbarAdmin() {
     { name: "Pengaturan", icon: <Settings size={18} />, href: "/admin-dashboard/settings" },
   ];
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
-
   return (
     <>
-      {/* 🔹 Navbar Top - Fixed */}
-      <nav className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700/40 shadow-lg fixed top-0 left-0 right-0 z-50 backdrop-blur-lg">
-        <div className="flex items-center justify-between h-16 px-4 md:px-6">
-          {/* Kiri: Menu + Logo */}
-          <div className="flex items-center gap-3 flex-1">
+      {/* 🔹 Navbar Atas */}
+      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500/40 shadow-md fixed top-0 left-0 right-0 z-50 backdrop-blur-lg">
+        <div className="w-full flex items-center justify-between h-16 px-3 md:px-6">
+
+          {/* Tombol Menu + Logo */}
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMenuOpen(true)}
-              className="lg:hidden text-white hover:text-blue-100 transition p-1"
+              className="text-gray-300 hover:text-white transition"
             >
-              <Menu size={24} />
+              <Menu size={26} />
             </button>
 
             <Link
               href="/admin-dashboard"
-              className="flex items-center gap-2 hover:opacity-90 transition"
+              className="flex items-center gap-3 hover:opacity-90 transition"
             >
-              <div className="flex items-center justify-center w-9 h-9 bg-blue-600 rounded-full border-2 border-blue-400">
-                <Shield size={18} className="text-white" />
-              </div>
-              <span className="hidden sm:inline text-white font-bold text-base tracking-wide">
-                Admin
+              <Image
+                src="/logo-ico.png"
+                alt="Logo"
+                width={40}
+                height={40}
+                className="rounded-full border border-blue-400 shadow-sm"
+              />
+              <span className="text-white font-semibold text-lg tracking-wide whitespace-nowrap">
+                Admin Panel
               </span>
             </Link>
           </div>
 
-          {/* Kanan: User Info + Logout */}
+          {/* Avatar */}
           {user && (
-            <div className="relative flex items-center gap-2 md:gap-3">
+            <div className="relative flex items-center gap-2">
               <Image
-                src={user.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-                alt="Avatar"
+                src={
+                  user.photoURL ||
+                  "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                }
+                alt="User"
                 width={40}
                 height={40}
-                className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-blue-300 object-cover"
+                onClick={() => {
+                  toast.loading("Membuka profil...");
+                  setTimeout(() => {
+                    router.push(`/admin-dashboard/users/${user?.uid}`);
+                    toast.dismiss();
+                  }, 400);
+                }}
+                className="rounded-full border border-blue-500 shadow-sm cursor-pointer hover:scale-105 hover:border-blue-400 transition-transform"
+                unoptimized
               />
-              <div className="hidden md:flex flex-col items-start">
-                <p className="text-white font-semibold text-xs md:text-sm leading-tight">{user.name || user.email}</p>
-                <p className="text-blue-100 text-xs uppercase">🛡️ {user.role}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-1.5 hover:bg-blue-700 rounded-lg transition duration-200"
-                title="Logout"
-              >
-                <LogOut size={18} className="text-white" />
-              </button>
+
+              <span className="absolute -bottom-1 -right-1 text-[10px] font-semibold px-2 py-[2px] rounded-full bg-yellow-400 text-black">
+                A
+              </span>
             </div>
           )}
         </div>
       </nav>
 
-      {/* 🔹 Sidebar Menu (Mobile Modal) */}
+      {/* 🔹 Sidebar Animasi */}
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Backdrop */}
+            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ opacity: 0.6 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black z-[998]"
             />
 
-            {/* Sidebar */}
+            {/* Panel */}
             <motion.div
-              initial={{ x: -300 }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              className="fixed left-0 top-0 w-80 h-screen bg-gradient-to-b from-gray-900 to-gray-800 border-r border-blue-600/30 z-40 shadow-2xl overflow-y-auto pt-16"
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="fixed top-0 left-0 h-full w-[25%] min-w-[280px] bg-[#0f172a]/95 backdrop-blur-2xl border-r border-blue-800 z-[999] flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
-                <span className="text-white font-bold text-lg">Menu Admin</span>
-                <button
-                  onClick={() => setMenuOpen(false)}
-                  className="text-gray-300 hover:text-white"
-                >
+              <div className="flex justify-between items-center px-6 py-4 border-b border-blue-800">
+                <h2 className="text-white font-semibold text-lg">Menu Admin</h2>
+                <button onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white">
                   <X size={24} />
                 </button>
               </div>
 
-              {/* Menu Items */}
-              <div className="p-4 space-y-2">
-                {adminMenus.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                      isActive(item.href)
-                        ? "bg-blue-600 text-white font-semibold"
-                        : "text-gray-300 hover:bg-gray-700"
-                    }`}
-                  >
-                    {item.icon}
-                    <span>{item.name}</span>
-                  </Link>
-                ))}
+              {/* Profil */}
+              {user && (
+                <div className="flex flex-col items-center text-center px-6 py-6 border-b border-blue-800">
+                  <img
+                    src={
+                      user?.photoURL ||
+                      "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                    }
+                    alt="Profile"
+                    className="w-28 h-28 rounded-full border-4 border-blue-400 object-cover shadow-lg mb-3"
+                  />
+                  <h2 className="text-lg font-bold text-white">{user?.name}</h2>
+                  <p className="mt-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-semibold">
+                    Admin
+                  </p>
+                </div>
+              )}
+
+              {/* Menu */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+                {adminMenus.map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        active
+                          ? "bg-blue-600/40 text-white font-semibold border-l-4 border-blue-400"
+                          : "text-gray-300 hover:bg-blue-500/10 hover:text-white"
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
               </div>
 
-              {/* Divider */}
-              <div className="border-t border-gray-700 my-4" />
-
-              {/* Quick Links */}
-              <div className="p-4 space-y-2">
-                <p className="text-xs uppercase text-gray-500 font-semibold px-4">Quick Links</p>
-                <Link
-                  href="/management"
-                  className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-lg transition"
+              {/* Logout */}
+              <div className="border-t border-blue-800 px-6 py-4 flex items-center justify-end">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-red-500/10 hover:bg-red-600/20 text-red-400 hover:text-red-500 px-4 py-2 rounded-lg transition"
                 >
-                  Management Dashboard
-                </Link>
-                <Link
-                  href="/staff"
-                  className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-lg transition"
-                >
-                  Staff View
-                </Link>
+                  <span className="text-sm font-medium hidden md:inline">Logout</span>
+                  <LogOut size={20} />
+                </button>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
-
-      {/* 🔹 Desktop Sidebar (hidden on mobile, visible on lg) */}
-      <aside className="hidden lg:flex lg:fixed lg:left-0 lg:top-16 lg:w-64 lg:h-[calc(100vh-4rem)] lg:flex-col lg:bg-gradient-to-b lg:from-gray-900 lg:to-gray-800 lg:border-r lg:border-blue-600/30 lg:shadow-xl lg:z-40 lg:overflow-y-auto">
-        <div className="w-full p-5 space-y-2 flex flex-col flex-1">
-          {adminMenus.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition font-medium text-sm ${
-                isActive(item.href)
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
-              }`}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </Link>
-          ))}
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Divider */}
-          <div className="border-t border-gray-700 my-3" />
-
-          {/* Quick Links */}
-          <p className="text-xs uppercase text-gray-500 font-semibold px-4 mt-2 mb-2">Quick Links</p>
-          <Link
-            href="/management"
-            className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-lg transition text-xs font-medium"
-          >
-            📊 Management
-          </Link>
-          <Link
-            href="/staff"
-            className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-lg transition text-xs font-medium"
-          >
-            👥 Staff View
-          </Link>
-
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm mt-3"
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
     </>
   );
 }

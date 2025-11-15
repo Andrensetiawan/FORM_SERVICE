@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build --turbopack",
     "start": "next start"
   },
   "dependencies": {
+    "20": "^3.1.9",
     "@hookform/resolvers": "^5.2.2",
     "cloudinary": "^2.8.0",
     "firebase": "^12.4.0",

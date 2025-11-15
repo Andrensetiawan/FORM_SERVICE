@@ -18,7 +18,7 @@ import {
 import { db } from "@/lib/firebaseConfig";
 import { collection, getDocs, query, Timestamp } from "firebase/firestore";
 import { Wrench, CheckCircle, Clock, User } from "lucide-react";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { useRouter } from "next/navigation";
 
 // =======================
@@ -234,7 +234,7 @@ export default function ServiceReportPage() {
   // =======================
   return (
     <>
-      <NavbarManagement />
+      <NavbarSwitcher />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

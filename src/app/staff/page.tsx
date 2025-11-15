@@ -6,7 +6,7 @@ import { db } from "@/lib/firebaseConfig";
 import useAuth from "@/hooks/useAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Navbar from "@/app/components/navbars/NavbarStaff";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
 
 export default function AdminPage() {
@@ -78,7 +78,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
-      <Navbar />
+      <NavbarSwitcher />
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">

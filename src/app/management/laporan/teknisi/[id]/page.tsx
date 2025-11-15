@@ -15,7 +15,7 @@ import {
   Cell,
 } from "recharts";
 import { CheckCircle, Clock, Wrench } from "lucide-react";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 
 type ServiceDoc = {
   id?: string;
@@ -138,7 +138,7 @@ export default function TechnicianDetailPage() {
 
   return (
     <>
-      <NavbarManagement />
+      <NavbarSwitcher />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

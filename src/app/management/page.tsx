@@ -6,7 +6,7 @@ import { db } from "@/lib/firebaseConfig";
 import useAuth from "@/hooks/useAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavbarManagement from "@/app/components/navbars/NavbarManagement";
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
 
 export default function ManagementDashboard() {
@@ -78,7 +78,7 @@ export default function ManagementDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-white">
-      <NavbarManagement />
+      <NavbarSwitcher />
 
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}

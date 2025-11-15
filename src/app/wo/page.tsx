@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Navbar from "@/app/components/navbars/NavbarStaff"
+import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 
 export default function WOSearchPage() {
   const [trackNumber, setTrackNumber] = useState("");
@@ -26,7 +26,7 @@ export default function WOSearchPage() {
 
   return (
     <div>
-      <Navbar/>
+      <NavbarSwitcher/>
     
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex flex-col items-center justify-center px-4">
       <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md text-center border border-gray-200">
