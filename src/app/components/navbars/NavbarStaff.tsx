@@ -66,7 +66,7 @@ export default function NavbarStaff() {
     try {
       await signOut(auth);
       toast.success("Berhasil logout!");
-      router.push("/login");
+      router.push("/");
     } catch (err) {
       console.error("Logout gagal:", err);
       toast.error("Gagal logout");
@@ -74,6 +74,7 @@ export default function NavbarStaff() {
   };
 
   // 🔹 Menu navigasi staff
+
   const menuItems = [
     { name: "Home", icon: <Home size={18} />, href: "/" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
