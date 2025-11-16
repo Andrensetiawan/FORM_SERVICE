@@ -51,7 +51,7 @@ export default function trakingnumberserviceDetail() {
 
   return (
     <div>
-    <Navbar/>
+    <NavbarSwitcher/>
     <main className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
         {/* Header */}
