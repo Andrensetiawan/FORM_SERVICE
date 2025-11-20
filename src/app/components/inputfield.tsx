@@ -9,6 +9,8 @@ interface InputFieldProps {
   value: string; // wajib
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void; // <-- opsional
   disabled?: boolean; // <-- tambahan
+  readOnly?: boolean; // ⬅ tambahkan ini
+
 }
 
 export default function InputField({

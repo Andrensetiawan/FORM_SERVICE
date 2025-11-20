@@ -34,14 +34,13 @@ export default function FormService() {
     prioritas_service: "1. Reguler",
     track_number: "",
     penerima_service: "",
-    cabang: "", // ✅ Tambahan field cabang
+    cabang: "",
   };
 
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // 🧩 Input handler
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -49,7 +48,6 @@ export default function FormService() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🧩 Checkbox handler
   const toggleCheckbox = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => {
       const selected = prev[field] as string[];
@@ -60,12 +58,10 @@ export default function FormService() {
     });
   };
 
-  // 🧩 Radio Garansi handler
   const handleGaransi = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, garansi: e.target.value === "Ya" }));
   };
 
-  // 🧩 Validasi
   const validateForm = () => {
     const newErrors: string[] = [];
     const required: (keyof typeof formData)[] = [
@@ -97,18 +93,13 @@ export default function FormService() {
     return newErrors.length === 0;
   };
 
-  // 🧩 Submit ke Firestore
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     try {
-      if (!formData.cabang) {
-        setErrors(["Cabang wajib dipilih sebelum submit."]);
-        return;
-      }
-
       const newTrackNumber = await generateTrackNumber(formData.cabang);
+
       const dataToSave = {
         ...formData,
         track_number: newTrackNumber,
@@ -119,6 +110,7 @@ export default function FormService() {
       await addDoc(collection(db, "service_requests"), dataToSave);
 
       setSuccessMessage(`✅ Data berhasil disimpan! Nomor Service: ${newTrackNumber}`);
+
       setFormData(initialForm);
       setErrors([]);
     } catch (err) {
@@ -139,7 +131,7 @@ export default function FormService() {
     <ProtectedRoute>
       <div className="bg-white min-h-screen">
         <NavbarSwitcher />
-        <main className="max-w-4xl mx-auto p-6 space-y-6 text-black">
+          <main className="max-w-4xl mx-auto p-6 pt-24 space-y-6 text-black">
           <div className="text-center mb-4">
             <h1 className="text-2xl font-bold">📋 Form Service </h1>
             <p className="text-gray-500">Cekatan, Aman, dan Terpercaya</p>
@@ -219,7 +211,7 @@ export default function FormService() {
               <InputField label="Keterangan Garansi" name="keterangan_garansi" value={formData.keterangan_garansi} onChange={handleInputChange} />
             </FormSection>
 
-            {/* Kondisi */}
+            {/* Kondisi Saat Masuk */}
             <FormSection title="🔍 Kondisi Saat Masuk">
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -268,8 +260,20 @@ export default function FormService() {
                 <option value="3. Onsite">3. Onsite</option>
               </select>
 
-              <InputField label="Tracking Number" name="track_number" value={formData.track_number} onChange={() => {}} />
-              <InputField label="Penerima Service" name="penerima_service" value={formData.penerima_service} onChange={handleInputChange} />
+              <InputField
+                label="Tracking Number"
+                name="track_number"
+                value={formData.track_number}
+                onChange={() => {}}
+                readOnly
+              />
+
+              <InputField
+                label="Penerima Service"
+                name="penerima_service"
+                value={formData.penerima_service}
+                onChange={handleInputChange}
+              />
             </FormSection>
 
             {/* Submit */}
