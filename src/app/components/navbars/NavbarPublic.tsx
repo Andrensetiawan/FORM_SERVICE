@@ -18,7 +18,7 @@ export default function NavbarPublic() {
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-blue-700 via-indigo-800 to-gray-900 backdrop-blur-md border-b border-blue-500/30 shadow-md sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-blue-700 via-indigo-800 to-gray-900 border-b border-blue-500 shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* === Brand === */}
@@ -44,7 +44,7 @@ export default function NavbarPublic() {
                 className={`flex items-center gap-1 text-sm font-medium transition-all ${
                   pathname === item.href
                     ? "text-white border-b-2 border-blue-400"
-                    : "text-gray-300 hover:text-white"
+                    : "text-gray-100 hover:text-white"
                 }`}
               >
                 {item.icon} {item.name}
@@ -54,7 +54,7 @@ export default function NavbarPublic() {
 
           {/* === Kontak (kanan) === */}
           <div className="hidden md:flex items-center gap-6">
-            <div className="text-sm text-gray-300 text-right">
+            <div className="text-sm text-gray-100 text-right">
               <p className="font-medium">📞 0813 1566 2763</p>
               <a
                 href="mailto:alifcybersolution@gmail.com"
@@ -67,7 +67,7 @@ export default function NavbarPublic() {
 
           {/* === Mobile Toggle === */}
           <button
-            className="md:hidden text-gray-200 hover:text-white transition"
+            className="md:hidden text-gray-100 hover:text-white transition"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -84,7 +84,7 @@ export default function NavbarPublic() {
                 key={item.name}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-2 text-gray-200 hover:text-white transition ${
+                className={`flex items-center gap-2 text-gray-100 hover:text-white transition ${
                   pathname === item.href ? "text-white font-semibold" : ""
                 }`}
               >
@@ -93,7 +93,7 @@ export default function NavbarPublic() {
               </Link>
             ))}
 
-            <div className="pt-3 border-t border-blue-700/40 text-gray-300 text-sm">
+            <div className="pt-3 border-t border-blue-700 text-gray-200 text-sm">
               <p>📞 0813 1566 2763</p>
               <a
                 href="mailto:alifcybersolution@gmail.com"

@@ -10,15 +10,15 @@ export default function UnauthorizedPage() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl p-10 rounded-2xl max-w-md text-center"
+        className="bg-gray-800 border border-gray-700 shadow-2xl p-10 rounded-2xl max-w-md text-center"
       >
         <div className="flex justify-center mb-4">
           <ShieldAlert className="w-14 h-14 text-red-400 drop-shadow-lg" />
         </div>
 
         <h1 className="text-4xl font-bold">Akses Ditolak</h1>
-        <p className="text-gray-300 mt-3">
-          Kamu tidak memiliki izin untuk membuka halaman ini.  
+        <p className="text-gray-200 mt-3">
+          Kamu tidak memiliki izin untuk membuka halaman ini.
           Silakan kembali ke dashboard atau login ulang.
         </p>
 
@@ -32,15 +32,15 @@ export default function UnauthorizedPage() {
 
           <Link
             href="/"
-            className="w-full py-2 rounded-lg font-semibold border border-white/30 hover:bg-white/10 transition"
+            className="w-full py-2 rounded-lg font-semibold border border-gray-600 hover:bg-gray-700 transition"
           >
             Login Ulang
           </Link>
         </div>
       </motion.div>
 
-      <p className="text-gray-500 text-xs mt-6 opacity-60">
-        Error Code: <span className="text-red-400">401 Unauthorized</span>
+      <p className="text-gray-600 text-xs mt-6">
+        Error Code: <span className="text-red-500">401 Unauthorized</span>
       </p>
     </div>
   );

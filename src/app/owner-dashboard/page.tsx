@@ -53,7 +53,7 @@ export default function OwnerDashboard() {
 
   return (
     <ProtectedRoute allowedRoles={['owner']}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-100">
         <NavbarSwitcher />
         
         <main className="max-w-7xl mx-auto p-6">
@@ -71,90 +71,90 @@ export default function OwnerDashboard() {
 
             {/* Stats Cards */}
             {loading ? (
-              <div className="p-12 text-center text-gray-500">
+              <div className="p-12 text-center text-gray-600">
                 Memuat statistik...
               </div>
             ) : (
               <div className="p-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                   {/* Total Requests Card */}
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}
-                    className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200 shadow-sm"
+                    className="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl border border-blue-300 shadow-sm"
                   >
-                    <h3 className="text-gray-600 font-medium mb-1">Total Requests</h3>
-                    <p className="text-3xl font-bold text-blue-700">{stats.totalRequests}</p>
-                    <div className="mt-3 h-2 bg-blue-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-600" 
+                    <h3 className="text-gray-800 font-medium mb-1">Total Requests</h3>
+                    <p className="text-3xl font-bold text-blue-800">{stats.totalRequests}</p>
+                    <div className="mt-3 h-2 bg-blue-300 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-700"
                         style={{ width: `${stats.totalRequests > 0 ? 100 : 0}%` }}
                       ></div>
                     </div>
                   </motion.div>
 
                   {/* Completed Requests Card */}
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.1 }}
-                    className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200 shadow-sm"
+                    className="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl border border-green-300 shadow-sm"
                   >
-                    <h3 className="text-gray-600 font-medium mb-1">Selesai</h3>
-                    <p className="text-3xl font-bold text-green-700">{stats.completedRequests}</p>
-                    <div className="mt-3 h-2 bg-green-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-600" 
+                    <h3 className="text-gray-800 font-medium mb-1">Selesai</h3>
+                    <p className="text-3xl font-bold text-green-800">{stats.completedRequests}</p>
+                    <div className="mt-3 h-2 bg-green-300 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-green-700"
                         style={{ width: `${stats.totalRequests > 0 ? (stats.completedRequests / stats.totalRequests) * 100 : 0}%` }}
                       ></div>
                     </div>
                   </motion.div>
 
                   {/* Pending Requests Card */}
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
-                    className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200 shadow-sm"
+                    className="bg-gradient-to-br from-yellow-100 to-yellow-200 p-6 rounded-xl border border-yellow-300 shadow-sm"
                   >
-                    <h3 className="text-gray-600 font-medium mb-1">Pending</h3>
-                    <p className="text-3xl font-bold text-yellow-700">{stats.pendingRequests}</p>
-                    <div className="mt-3 h-2 bg-yellow-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-yellow-600" 
+                    <h3 className="text-gray-800 font-medium mb-1">Pending</h3>
+                    <p className="text-3xl font-bold text-yellow-800">{stats.pendingRequests}</p>
+                    <div className="mt-3 h-2 bg-yellow-300 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-yellow-700"
                         style={{ width: `${stats.totalRequests > 0 ? (stats.pendingRequests / stats.totalRequests) * 100 : 0}%` }}
                       ></div>
                     </div>
                   </motion.div>
 
                   {/* Revenue Card */}
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.3 }}
-                    className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200 shadow-sm"
+                    className="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl border border-purple-300 shadow-sm"
                   >
-                    <h3 className="text-gray-600 font-medium mb-1">Pendapatan</h3>
-                    <p className="text-3xl font-bold text-purple-700">Rp {stats.totalRevenue.toLocaleString()}</p>
-                    <div className="mt-3 h-2 bg-purple-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple-600" style={{ width: '75%' }}></div>
+                    <h3 className="text-gray-800 font-medium mb-1">Pendapatan</h3>
+                    <p className="text-3xl font-bold text-purple-800">Rp {stats.totalRevenue.toLocaleString()}</p>
+                    <div className="mt-3 h-2 bg-purple-300 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-700" style={{ width: '75%' }}></div>
                     </div>
                   </motion.div>
                 </div>
 
                 {/* Charts Placeholder */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h3 className="font-semibold text-gray-800 mb-4">Statistik Berdasarkan Cabang</h3>
-                    <div className="h-64 bg-white rounded-lg border border-gray-200 flex items-center justify-center text-gray-500">
+                  <div className="bg-gray-100 p-6 rounded-xl border border-gray-300">
+                    <h3 className="font-semibold text-gray-900 mb-4">Statistik Berdasarkan Cabang</h3>
+                    <div className="h-64 bg-white rounded-lg border border-gray-300 flex items-center justify-center text-gray-600">
                       Grafik statistik per cabang akan muncul di sini
                     </div>
                   </div>
-                  
-                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h3 className="font-semibold text-gray-800 mb-4">Tren Service Request</h3>
-                    <div className="h-64 bg-white rounded-lg border border-gray-200 flex items-center justify-center text-gray-500">
+
+                  <div className="bg-gray-100 p-6 rounded-xl border border-gray-300">
+                    <h3 className="font-semibold text-gray-900 mb-4">Tren Service Request</h3>
+                    <div className="h-64 bg-white rounded-lg border border-gray-300 flex items-center justify-center text-gray-600">
                       Grafik tren service request akan muncul di sini
                     </div>
                   </div>
@@ -162,33 +162,33 @@ export default function OwnerDashboard() {
 
                 {/* Recent Requests */}
                 <div className="mt-8">
-                  <h3 className="font-semibold text-gray-800 mb-4">Service Request Terbaru</h3>
-                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <h3 className="font-semibold text-gray-900 mb-4">Service Request Terbaru</h3>
+                  <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-100">
                         <tr>
-                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">No. Tracking</th>
-                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Nama Customer</th>
-                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Status</th>
-                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Cabang</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-800">No. Tracking</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-800">Nama Customer</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-800">Status</th>
+                          <th className="py-3 px-4 text-left text-sm font-semibold text-gray-800">Cabang</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-gray-300">
                         <tr>
-                          <td className="py-3 px-4 text-sm text-gray-800">ACS001</td>
-                          <td className="py-3 px-4 text-sm text-gray-800">Andi Prasetyo</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">ACS001</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">Andi Prasetyo</td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Selesai</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">Selesai</span>
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-800">Jakarta</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">Jakarta</td>
                         </tr>
                         <tr>
-                          <td className="py-3 px-4 text-sm text-gray-800">ACS002</td>
-                          <td className="py-3 px-4 text-sm text-gray-800">Budi Santoso</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">ACS002</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">Budi Santoso</td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Proses</span>
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">Proses</span>
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-800">Bandung</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">Bandung</td>
                         </tr>
                       </tbody>
                     </table>

@@ -57,12 +57,12 @@ export default function NavbarManagement() {
   return (
     <>
       {/* NAVBAR */}
-      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500/40 shadow-md sticky top-0 z-[50] backdrop-blur-lg">
+      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500 shadow-md sticky top-0 z-[50]">
         <div className="w-full flex items-center justify-between h-16 px-3 md:px-6">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMenuOpen(true)}
-              className="text-gray-300 hover:text-white transition"
+              className="text-gray-200 hover:text-white transition"
             >
               <Menu size={26} />
             </button>
@@ -108,7 +108,7 @@ export default function NavbarManagement() {
               </div>
 
               <div className="hidden md:flex flex-col text-right">
-                <span className="text-gray-200 font-medium">
+                <span className="text-gray-100 font-medium">
                   {user?.displayName || "User"}
                 </span>
                 <span className="text-xs text-blue-400 capitalize">{role}</span>
@@ -141,7 +141,7 @@ export default function NavbarManagement() {
             >
               <div className="flex justify-between items-center px-6 py-4 border-b border-blue-800">
                 <h2 className="text-white font-semibold text-lg">Navigasi</h2>
-                <button onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white">
+                <button onClick={() => setMenuOpen(false)} className="text-gray-200 hover:text-white">
                   <X size={24} />
                 </button>
               </div>
@@ -183,8 +183,8 @@ export default function NavbarManagement() {
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                         active
-                          ? "bg-blue-600/40 text-white border-l-4 border-blue-400"
-                          : "text-gray-300 hover:bg-blue-500/10"
+                          ? "bg-blue-600 text-white border-l-4 border-blue-400"
+                          : "text-gray-200 hover:bg-blue-500"
                       }`}
                     >
                       {item.icon}

@@ -69,14 +69,14 @@ export default function NavbarAdmin() {
   return (
     <>
       {/* 🔹 Navbar Atas */}
-      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500/40 shadow-md fixed top-0 left-0 right-0 z-50 backdrop-blur-lg">
+      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500 shadow-md fixed top-0 left-0 right-0 z-50">
         <div className="w-full flex items-center justify-between h-16 px-3 md:px-6">
 
           {/* Tombol Menu + Logo */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMenuOpen(true)}
-              className="text-gray-300 hover:text-white transition"
+              className="text-gray-200 hover:text-white transition"
             >
               <Menu size={26} />
             </button>
@@ -147,12 +147,12 @@ export default function NavbarAdmin() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.35, ease: "easeOut" }}
-              className="fixed top-0 left-0 h-full w-[25%] min-w-[280px] bg-[#0f172a]/95 backdrop-blur-2xl border-r border-blue-800 z-[999] flex flex-col"
+              className="fixed top-0 left-0 h-full w-[25%] min-w-[280px] bg-[#0f172a] border-r border-blue-800 z-[999] flex flex-col"
             >
               {/* Header */}
               <div className="flex justify-between items-center px-6 py-4 border-b border-blue-800">
                 <h2 className="text-white font-semibold text-lg">Menu Admin</h2>
-                <button onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white">
+                <button onClick={() => setMenuOpen(false)} className="text-gray-200 hover:text-white">
                   <X size={24} />
                 </button>
               </div>
@@ -186,8 +186,8 @@ export default function NavbarAdmin() {
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                         active
-                          ? "bg-blue-600/40 text-white font-semibold border-l-4 border-blue-400"
-                          : "text-gray-300 hover:bg-blue-500/10 hover:text-white"
+                          ? "bg-blue-600 text-white font-semibold border-l-4 border-blue-400"
+                          : "text-gray-200 hover:bg-blue-500 hover:text-white"
                       }`}
                     >
                       {item.icon}

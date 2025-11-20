@@ -62,7 +62,7 @@ export default function ManagementPage() {
 
   if (loading || loadingData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-gray-300">
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-gray-200">
         Loading data...
       </div>
     );
@@ -80,11 +80,11 @@ export default function ManagementPage() {
               <h1 className="text-3xl font-extrabold text-blue-400 tracking-tight">
                 Daftar Service Request
               </h1>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-gray-300 text-sm mt-1">
                 Kelola dan pantau seluruh aktivitas service pelanggan
               </p>
             </div>
-            <p className="text-sm text-gray-400 italic">
+            <p className="text-sm text-gray-300 italic">
               Role kamu:{" "}
               <span className="text-blue-400 font-semibold">
                 {role?.toUpperCase()}
@@ -96,12 +96,12 @@ export default function ManagementPage() {
           {(role === ROLES.MANAGER ||
             role === ROLES.OWNER ||
             role === ROLES.ADMIN) && (
-            <div className="bg-gray-800/70 border border-gray-700 rounded-2xl shadow-md p-5 mb-8 backdrop-blur-sm">
+            <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-md p-5 mb-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                 {/* Teknisi */}
                 <div>
-                  <label className="block text-sm text-gray-300 mb-2">
+                  <label className="block text-sm text-gray-200 mb-2">
                     Teknisi
                   </label>
                   <select
@@ -120,7 +120,7 @@ export default function ManagementPage() {
 
                 {/* Show Entries */}
                 <div>
-                  <label className="block text-sm text-gray-300 mb-2">
+                  <label className="block text-sm text-gray-200 mb-2">
                     Tampilkan
                   </label>
                   <input
@@ -149,11 +149,11 @@ export default function ManagementPage() {
 
           {/* Table */}
           {filtered.length === 0 ? (
-            <div className="text-center text-gray-400 py-20">
+            <div className="text-center text-gray-300 py-20">
               Tidak ada data ditemukan.
             </div>
           ) : (
-            <div className="overflow-x-auto shadow-lg rounded-2xl border border-gray-700 bg-gray-800/60 backdrop-blur-sm">
+            <div className="overflow-x-auto shadow-lg rounded-2xl border border-gray-700 bg-gray-800">
               <table className="w-full text-sm text-left border-collapse">
                 <thead className="bg-blue-700 text-white uppercase text-xs">
                   <tr>
@@ -187,7 +187,7 @@ export default function ManagementPage() {
                       key={item.id}
                       className="hover:bg-gray-700/40 transition duration-200"
                     >
-                      <td className="p-3 border-b border-gray-700 text-gray-300">
+                      <td className="p-3 border-b border-gray-700 text-gray-200">
                         {item.timestamp?.seconds
                           ? new Date(
                               item.timestamp.seconds * 1000
@@ -211,19 +211,19 @@ export default function ManagementPage() {
                         {item.status || "-"}
                       </td>
 
-                      <td className="p-3 border-b border-gray-700 text-gray-200">
+                      <td className="p-3 border-b border-gray-700 text-gray-100">
                         {item.nama || "-"}
                       </td>
 
-                      <td className="p-3 border-b border-gray-700 text-gray-300">
+                      <td className="p-3 border-b border-gray-700 text-gray-100">
                         {item.no_hp || "-"}
                       </td>
 
-                      <td className="p-3 border-b border-gray-700 text-gray-300">
+                      <td className="p-3 border-b border-gray-700 text-gray-100">
                         {item.tipe || "-"}
                       </td>
 
-                      <td className="p-3 border-b border-gray-700 text-gray-300">
+                      <td className="p-3 border-b border-gray-700 text-gray-100">
                         {item.teknisi || "-"}
                       </td>
                     </tr>
