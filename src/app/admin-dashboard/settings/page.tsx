@@ -1,23 +1,62 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
-import { ArrowLeft, Save } from "lucide-react";
+import { Users, Database, LogOut, Settings, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
+import { db } from "@/lib/firebaseConfig";
+import { collection, query, where, getCountFromServer, getDocs } from "firebase/firestore";
 
-export default function AdminSettingsPage() {
-  const { role, loading } = useAuth();
+export default function AdminDashboard() {
+  const { user, role, loading } = useAuth();
   const router = useRouter();
 
+  const [totalUsers, setTotalUsers] = useState<number | null>(null);
+  const [totalRequests, setTotalRequests] = useState<number | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+  // ⛔ Redirect jika bukan admin
   useEffect(() => {
     if (!loading && role !== ROLES.ADMIN) {
-      router.push("/unauthorized");
+      router.replace("/unauthorized");
     }
   }, [role, loading, router]);
+
+  // 🔢 Ambil statistik Firestore
+  useEffect(() => {
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      setStatsError(null);
+
+      try {
+        const usersSnap = await getCountFromServer(query(collection(db, "users")));
+        setTotalUsers(usersSnap.data().count);
+
+        const reqSnap = await getCountFromServer(query(collection(db, "service_requests")));
+        setTotalRequests(reqSnap.data().count);
+
+        const pendingSnap = await getCountFromServer(
+          query(collection(db, "users"), where("approved", "==", false))
+        );
+        setPendingApprovals(pendingSnap.data().count);
+
+        await getDocs(collection(db, "service_requests"));
+      } catch (err: any) {
+        setStatsError("Gagal memuat statistik.");
+        console.error(err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   if (loading) {
     return (
@@ -27,83 +66,113 @@ export default function AdminSettingsPage() {
     );
   }
 
+  const adminMenus = [
+    {
+      title: "Manajemen Pengguna",
+      description: "Kelola role, persetujuan, dan data staff",
+      icon: <Users size={32} className="text-blue-500" />,
+      href: "/admin-dashboard/users",
+      color: "from-blue-50 to-blue-100",
+    },
+    {
+      title: "Database",
+      description: "Backup, restore, dan analisis data",
+      icon: <Database size={32} className="text-purple-500" />,
+      href: "/admin-dashboard/database",
+      color: "from-purple-50 to-purple-100",
+    },
+    {
+      title: "Audit Log",
+      description: "Lihat history aktivitas dan perubahan sistem",
+      icon: <LogOut size={32} className="text-orange-500" />,
+      href: "/admin-dashboard/logs",
+      color: "from-orange-50 to-orange-100",
+    },
+    {
+      title: "Role & Permission Management",
+      description: "Atur hak akses dan peran pengguna (RBAC lengkap)",
+      icon: <ShieldCheck size={32} className="text-green-500" />,
+      href: "/admin-dashboard/rbac",
+      color: "from-green-50 to-green-100",
+    },
+    {
+      title: "Pengaturan Sistem",
+      description: "Konfigurasi logo, tema, notifikasi, dan maintenance mode",
+      icon: <SlidersHorizontal size={32} className="text-red-500" />,
+      href: "/admin-dashboard/settings",
+      color: "from-red-50 to-red-100",
+    },
+  ];
+
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
         <NavbarSwitcher />
 
-        <div className="w-full max-w-6xl mx-auto px-6 py-12">
+        <div className="w-full max-w-7xl mx-auto px-6 py-12">
           {/* Header */}
-          <div className="mb-8">
-            <Link href="/admin-dashboard" className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4">
-              <ArrowLeft size={20} /> Kembali
-            </Link>
-            <h1 className="text-3xl font-extrabold text-gray-900">⚙️ Pengaturan Sistem</h1>
-            <p className="text-gray-600 mt-1">Konfigurasi aplikasi dan preferensi</p>
+          <div className="mb-12">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+              🛡️ Admin Dashboard
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Kelola sistem, pengguna, dan data aplikasi Form Service
+            </p>
           </div>
 
-          {/* Settings Form */}
-          <div className="bg-white rounded-2xl shadow-md p-8">
-            <form className="space-y-6">
-              {/* General Settings */}
-              <div className="border-b pb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">📌 Pengaturan Umum</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nama Aplikasi</label>
-                    <input type="text" defaultValue="Form Service" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Versi Aplikasi</label>
-                    <input type="text" defaultValue="1.0.0" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-              </div>
+          {/* Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+              <p className="text-gray-500 text-sm">Total Pengguna</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {statsLoading ? "—" : totalUsers}
+              </p>
+            </div>
 
-              {/* Email Settings */}
-              <div className="border-b pb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">📧 Pengaturan Email</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Admin</label>
-                    <input type="email" placeholder="admin@example.com" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Support</label>
-                    <input type="email" placeholder="support@example.com" className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+              <p className="text-gray-500 text-sm">Service Requests</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {statsLoading ? "—" : totalRequests}
+              </p>
+            </div>
 
-              {/* Security Settings */}
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">🔐 Pengaturan Keamanan</h2>
-                <div className="space-y-4">
-                  <label className="flex items-center">
-                    <input type="checkbox" defaultChecked className="w-4 h-4" />
-                    <span className="ml-3 text-gray-700">Require two-factor authentication (2FA) untuk admin</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="w-4 h-4" />
-                    <span className="ml-3 text-gray-700">Aktifkan session timeout setelah 30 menit</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" defaultChecked className="w-4 h-4" />
-                    <span className="ml-3 text-gray-700">Log semua aktivitas admin</span>
-                  </label>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+              <p className="text-gray-500 text-sm">Pending Approval</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {statsLoading ? "—" : pendingApprovals}
+              </p>
+            </div>
+          </div>
 
-              {/* Save Button */}
-              <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
-                <button type="button" className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition">
-                  Batal
-                </button>
-                <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
-                  <Save size={20} /> Simpan Pengaturan
-                </button>
-              </div>
-            </form>
+          {/* Menu Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {adminMenus.map((menu, idx) => (
+              <Link key={idx} href={menu.href}>
+                <div
+                  className={`bg-gradient-to-br ${menu.color} rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 cursor-pointer transform hover:scale-105`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    {menu.icon}
+                    <span className="text-2xl text-gray-400">→</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{menu.title}</h3>
+                  <p className="text-gray-700 text-sm">{menu.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mt-12 bg-white rounded-2xl shadow-md p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">⚡ Aksi Cepat</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+                ➕ Tambah Pengguna Baru
+              </button>
+              <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+                💾 Backup Database
+              </button>
+            </div>
           </div>
         </div>
       </div>

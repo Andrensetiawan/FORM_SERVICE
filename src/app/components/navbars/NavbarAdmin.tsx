@@ -61,7 +61,6 @@ export default function NavbarAdmin() {
     { name: "Dashboard", icon: <Home size={18} />, href: "/admin-dashboard" },
     { name: "Pending Approval", icon: <Home size={18} />, href: "/admin-dashboard/pending-users" },
     { name: "Pengguna", icon: <Users size={18} />, href: "/admin-dashboard/users" },
-    { name: "Cabang", icon: <Building2 size={18} />, href: "/admin-dashboard/cabang" },
     { name: "Database", icon: <Database size={18} />, href: "/admin-dashboard/database" },
     { name: "Audit Log", icon: <BarChart3 size={18} />, href: "/admin-dashboard/logs" },
     { name: "Pengaturan", icon: <Settings size={18} />, href: "/admin-dashboard/settings" },

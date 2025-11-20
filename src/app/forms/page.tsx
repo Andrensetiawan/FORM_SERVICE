@@ -102,7 +102,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (!validateForm()) return;
 
   try {
-    const newTrackNumber = await generateTrackNumber(formData.cabang);
+    const newTrackNumber = await generateTrackNumber();
     setFormData(prev => ({ ...prev, track_number: newTrackNumber }));
 
     await addDoc(collection(db, "service_requests"), {

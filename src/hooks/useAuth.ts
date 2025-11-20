@@ -16,7 +16,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,   // ← DITAMBAHKAN
+  updateDoc,
   collection,
   serverTimestamp,
   query,
@@ -71,26 +71,28 @@ export default function useAuth() {
           }
 
           // ------------------------------------------------------
-          // ✅ ONLINE STATUS ADD (HANYA TAMBAHAN — AMAN)
+          // FIXED: Online status (non-blocking — tidak menghambat loading)
           // ------------------------------------------------------
           try {
             const ref = doc(db, "users", currentUser.uid);
 
-            // Set online = true saat login
-            await updateDoc(ref, {
+            // Update online=true tanpa await
+            updateDoc(ref, {
               online: true,
               lastActive: serverTimestamp(),
-            });
+            }).catch((err) =>
+              console.error("Gagal update status online:", err)
+            );
 
-            // Set offline saat tab ditutup
+            // offline saat tab ditutup
             window.addEventListener("beforeunload", () => {
               updateDoc(ref, {
                 online: false,
                 lastActive: serverTimestamp(),
-              });
+              }).catch(() => {});
             });
           } catch (err) {
-            console.error("Gagal update status online:", err);
+            console.error("Online-status error:", err);
           }
           // ------------------------------------------------------
 
@@ -127,10 +129,10 @@ export default function useAuth() {
 
       // Set online ketika login
       try {
-        await updateDoc(doc(db, "users", u.uid), {
+        updateDoc(doc(db, "users", u.uid), {
           online: true,
           lastActive: serverTimestamp(),
-        });
+        }).catch(() => {});
       } catch {}
 
       return u;
@@ -149,7 +151,11 @@ export default function useAuth() {
   // -------------------------
   // REGISTER
   // -------------------------
-  const register = async (email: string, password: string, confirmPassword: string): Promise<User | null> => {
+  const register = async (
+    email: string,
+    password: string,
+    confirmPassword: string
+  ): Promise<User | null> => {
     if (password !== confirmPassword) {
       toast.error("❌ Password tidak cocok!");
       return null;
@@ -169,7 +175,7 @@ export default function useAuth() {
         email: newUser.email,
         role: "staff",
         approved: false,
-        online: false, // default belum login
+        online: false,
         createdAt: serverTimestamp(),
       });
 
@@ -202,7 +208,7 @@ export default function useAuth() {
   };
 
   // -------------------------
-  // RESEND VERIF
+  // RESEND VERIFICATION
   // -------------------------
   const resendVerification = async () => {
     if (!auth.currentUser) {
@@ -225,7 +231,8 @@ export default function useAuth() {
     if (!auth.currentUser) return;
     try {
       await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) toast.success("✅ Email sudah diverifikasi!");
+      if (auth.currentUser.emailVerified)
+        toast.success("✅ Email sudah diverifikasi!");
       else toast("⚠️ Email belum diverifikasi.");
     } catch (err) {
       console.error("refreshVerificationStatus error:", err);
@@ -238,12 +245,11 @@ export default function useAuth() {
   // -------------------------
   const logout = async () => {
     try {
-      // set user offline
       if (auth.currentUser) {
-        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        updateDoc(doc(db, "users", auth.currentUser.uid), {
           online: false,
           lastActive: serverTimestamp(),
-        });
+        }).catch(() => {});
       }
 
       await signOut(auth);

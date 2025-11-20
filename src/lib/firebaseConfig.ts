@@ -6,13 +6,13 @@ import { getStorage } from "firebase/storage";
 
 // Konfigurasi Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDp3h-P4NhHH1hM-ijVkZRrLS0BR6X-K1M",
-  authDomain: "form-sevice.firebaseapp.com",
-  projectId: "form-sevice",
-  storageBucket: "form-sevice.appspot.com",
-  messagingSenderId: "947490221653",
-  appId: "1:947490221653:web:a04484feb7feeed9bf6edc",
-  measurementId: "G-MR5Z7T7R6T",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDp3h-P4NhHH1hM-ijVkZRrLS0BR6X-K1M",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "form-sevice.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "form-sevice",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "form-sevice.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "947490221653",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:947490221653:web:a04484feb7feeed9bf6edc",
+  measurementId: process.env.NEXT_PUBLIC_MEASUREMENT_ID || "G-MR5Z7T7R6T",
 };
 
 // ✅ Inisialisasi hanya sekali (hindari duplikasi)

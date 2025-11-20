@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/lib/roles";
@@ -15,35 +15,44 @@ export default function ProtectedRoute({
   allowedRoles = [ROLES.STAFF, ROLES.MANAGER, ROLES.OWNER, ROLES.ADMIN],
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { user, role, loading } = useAuth(); // ✅ ambil dari hook
-  console.log("🧩 ProtectedRoute Role:", role);
+  const { user, role, loading } = useAuth();
 
+  // ⏳ 1. TUNGGU SAMPAI AUTH LOADING SELESAI
   if (loading) {
-    return <p className="text-center mt-10">🔄 Memuat...</p>;
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-600">
+        🔄 Memuat...
+      </div>
+    );
   }
 
+  // ❌ 2. JIKA BELUM LOGIN → ARAHKAN LOGIN
   if (!user) {
-    router.push("/login");
+    router.replace("/");
     return null;
   }
 
+  // ⏳ 3. JIKA ROLE MASIH NULL → TUNGGU !!
+  //    (INI FIX PALING PENTING)
   if (!role) {
-    router.push("/unauthorized");
-    return null;
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-600">
+        🔄 Memuat hak akses...
+      </div>
+    );
   }
 
-  // Admin is a superuser: allow access to everything
+  // 🔑 4. ADMIN = SUPERUSER (BOLEH AKSES SEMUA)
   if (role === ROLES.ADMIN) {
-    console.log("🔑 Admin override - full access");
     return <>{children}</>;
   }
 
+  // 🚫 5. ROLE TIDAK DIIZINKAN
   if (!allowedRoles.includes(role)) {
-    console.warn(`🚫 Role "${role}" tidak diizinkan`);
-    router.push("/unauthorized");
+    router.replace("/unauthorized");
     return null;
   }
 
-  console.log("✅ Akses diizinkan:", role);
+  // ✔ 6. ROLE VALID → IZINKAN
   return <>{children}</>;
 }
