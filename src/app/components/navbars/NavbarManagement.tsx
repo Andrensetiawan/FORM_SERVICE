@@ -90,7 +90,7 @@ export default function NavbarManagement() {
                   width={40}
                   height={40}
                   alt="User"
-                  onClick={() => router.push(`/management/staff/${user.uid}`)}
+                  onClick={() => router.push(`/management/profile/${user.uid}`)}
                   className="rounded-full border border-blue-500 cursor-pointer hover:scale-105 transition"
                   unoptimized
                 />
