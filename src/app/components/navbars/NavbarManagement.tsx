@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
@@ -14,54 +14,40 @@ import {
   FileText,
   Wrench,
   LogOut,
-  Shield,
 } from "lucide-react";
-import { auth, db } from "@/lib/firebaseConfig";
-import { signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { ROLES } from "@/lib/roles";
+import useAuth from "@/hooks/useAuth";
 
 export default function NavbarManagement() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
+
+  const { user, role, logout } = useAuth();
+
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // ❗ FIX TERPENTING: AUTO CLOSE SIDEBAR SAAT PINDAH HALAMAN
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (u) => {
-      if (u) {
-        const ref = doc(db, "users", u.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setUser({ ...u, ...snap.data() });
-        } else {
-          await setDoc(ref, {
-            uid: u.uid,
-            email: u.email,
-            name: u.displayName || "User",
-            role: "staff",
-            photoURL: u.photoURL || "",
-            approved: false,
-            createdAt: new Date(),
-          });
-          setUser(u);
-        }
-      }
-    });
-    return () => unsub();
-  }, []);
+    if (menuOpen) setMenuOpen(false);
+  }, [pathname]);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await logout();
     router.push("/");
   };
 
   const menuItems = [
-    // hanya owner atau admin yang melihat menu Pending Approval
-    ...(user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
-      ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/management/pending-users" }]
+    ...(role === ROLES.MANAGER || role === ROLES.OWNER || role === ROLES.ADMIN
+      ? [
+          {
+            name: "Pending Approval",
+            icon: <Users size={18} />,
+            href: "/management/pending-users",
+          },
+        ]
       : []),
+
     { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/management/staff" },
     { name: "Laporan", icon: <FileBarChart size={18} />, href: "/management/laporan" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
@@ -70,36 +56,29 @@ export default function NavbarManagement() {
 
   return (
     <>
-      {/* 🔹 Navbar Atas */}
-      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500/40 shadow-md sticky top-0 z-50 backdrop-blur-lg">
+      {/* NAVBAR */}
+      <nav className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500 shadow-md sticky top-0 z-[50]">
         <div className="w-full flex items-center justify-between h-16 px-3 md:px-6">
-          {/* Kiri: Tombol Menu + Logo */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMenuOpen(true)}
-              className="text-gray-300 hover:text-white transition"
+              className="text-gray-200 hover:text-white transition"
             >
               <Menu size={26} />
             </button>
 
-            <Link
-              href="/management"
-              className="flex items-center gap-3 hover:opacity-90 transition"
-            >
+            <Link href="/management" className="flex items-center gap-3 hover:opacity-90 transition">
               <Image
                 src="/logo-ico.png"
-                alt="Logo"
                 width={40}
                 height={40}
+                alt="Logo"
                 className="rounded-full border border-blue-400 shadow-sm"
               />
-              <span className="text-white font-semibold text-lg tracking-wide whitespace-nowrap">
-                Alif Cyber Solution
-              </span>
+              <span className="text-white font-semibold text-lg">Alif Cyber Solution</span>
             </Link>
           </div>
 
-          {/* Kanan: Avatar */}
           {user && (
             <div className="relative flex items-center gap-2">
               <div className="relative">
@@ -108,97 +87,93 @@ export default function NavbarManagement() {
                     user?.photoURL ||
                     "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                   }
-                  alt="User"
                   width={40}
                   height={40}
-                  onClick={() => {
-                    toast.loading("Membuka profil...");
-                    setTimeout(() => {
-                      router.push(`/management/staff/${user?.uid}`);
-                      toast.dismiss();
-                    }, 400);
-                  }}
-                  className="rounded-full border border-blue-500 shadow-sm cursor-pointer hover:scale-105 hover:border-blue-400 transition-transform"
+                  alt="User"
+                  onClick={() => router.push(`/management/profile/${user.uid}`)}
+                  className="rounded-full border border-blue-500 cursor-pointer hover:scale-105 transition"
                   unoptimized
                 />
                 <span
                   className={`absolute -bottom-1 -right-1 text-[10px] font-semibold px-2 py-[2px] rounded-full ${
-                    user?.role === "owner"
+                    role === ROLES.OWNER
                       ? "bg-yellow-400 text-black"
-                      : user?.role === "manager"
+                      : role === ROLES.MANAGER
                       ? "bg-blue-500 text-white"
                       : "bg-gray-500 text-white"
                   }`}
                 >
-                  {user?.role?.[0]?.toUpperCase()}
+                  {role?.[0]?.toUpperCase()}
                 </span>
               </div>
+
               <div className="hidden md:flex flex-col text-right">
-                <span className="text-gray-200 font-medium">{user?.name}</span>
-                <span className="text-xs text-blue-400 capitalize">{user?.role}</span>
+                <span className="text-gray-100 font-medium">
+                  {user?.displayName || "User"}
+                </span>
+                <span className="text-xs text-blue-400 capitalize">{role}</span>
               </div>
             </div>
           )}
         </div>
       </nav>
 
-      {/* 🔹 Sidebar Animasi dari Kiri */}
+      {/* SIDEBAR */}
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Background Overlay */}
+            {/* BACKDROP — FIX: KECILKAN OPACITY DAN Z-INDEX */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
+              animate={{ opacity: 0.45 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 bg-black z-[998]"
+              className="fixed inset-0 bg-black z-[40]"
             />
 
-            {/* Panel Sidebar */}
+            {/* SIDEBAR PANEL */}
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.35, ease: "easeOut" }}
-              className="fixed top-0 left-0 h-full w-[25%] min-w-[280px] bg-[#0f172a]/95 backdrop-blur-2xl border-r border-blue-800 z-[999] flex flex-col"
+              className="fixed top-0 left-0 h-full w-[260px] bg-[#0f172a] border-r border-blue-800 z-[50] flex flex-col shadow-xl"
             >
-              {/* Header Profile */}
               <div className="flex justify-between items-center px-6 py-4 border-b border-blue-800">
                 <h2 className="text-white font-semibold text-lg">Navigasi</h2>
-                <button onClick={() => setMenuOpen(false)} className="text-gray-300 hover:text-white">
+                <button onClick={() => setMenuOpen(false)} className="text-gray-200 hover:text-white">
                   <X size={24} />
                 </button>
               </div>
 
-              {/* Profile Section */}
               {user && (
                 <div className="flex flex-col items-center text-center px-6 py-6 border-b border-blue-800">
                   <img
                     src={
-                      user?.photoURL ||
+                      user.photoURL ||
                       "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                     }
-                    alt="Profile"
-                    className="w-28 h-28 rounded-full border-4 border-blue-400 object-cover shadow-lg mb-3"
+                    className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover shadow-lg mb-3"
+                    alt="avatar"
                   />
-                  <h2 className="text-lg font-bold text-white">{user?.name}</h2>
+                  <h2 className="text-white text-lg font-bold">{user.displayName}</h2>
+
                   <p
                     className={`mt-1 px-3 py-1 rounded-full text-sm font-semibold capitalize ${
-                      user?.role === "owner"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : user?.role === "manager"
-                        ? "bg-blue-100 text-blue-800"
+                      role === ROLES.OWNER
+                        ? "bg-yellow-100 text-yellow-700"
+                        : role === ROLES.MANAGER
+                        ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {user?.role || "Staff"}
+                    {role}
                   </p>
                 </div>
               )}
 
-              {/* Menu Navigasi */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+              {/* MENU */}
+              <div className="flex-1 px-5 py-4 space-y-2 overflow-y-auto">
                 {menuItems.map((item) => {
                   const active = pathname === item.href;
                   return (
@@ -208,8 +183,8 @@ export default function NavbarManagement() {
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                         active
-                          ? "bg-blue-600/40 text-white font-semibold border-l-4 border-blue-400"
-                          : "text-gray-300 hover:bg-blue-500/10 hover:text-white"
+                          ? "bg-blue-600 text-white border-l-4 border-blue-400"
+                          : "text-gray-200 hover:bg-blue-500"
                       }`}
                     >
                       {item.icon}
@@ -218,18 +193,16 @@ export default function NavbarManagement() {
                   );
                 })}
               </div>
-              {user && (
-                <div className="border-t border-blue-800 px-6 py-4 flex items-center justify-end">
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 bg-red-500/10 hover:bg-red-600/20 text-red-400 hover:text-red-500 px-4 py-2 rounded-lg transition"
-                    title="Loguot"
-                  >
-                    <span className="text-sm font-medium hidden md:inline">Loguot</span>
-                    <LogOut size={20} />
-                  </button>
-                </div>
-              )}
+
+              <div className="border-t border-blue-800 px-6 py-4 flex items-center justify-end">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-red-500/10 hover:bg-red-600/20 text-red-400 px-4 py-2 rounded-lg transition"
+                >
+                  Logout
+                  <LogOut size={20} />
+                </button>
+              </div>
             </motion.div>
           </>
         )}

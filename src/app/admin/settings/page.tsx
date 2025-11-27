@@ -6,58 +6,50 @@ import useAuth from "@/hooks/useAuth";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
-import { BarChart3, Users, Building2, Database, LogOut, Settings } from "lucide-react";
+import { Users, Database, LogOut, Settings, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/firebaseConfig";
 import { collection, query, where, getCountFromServer, getDocs } from "firebase/firestore";
 
-export default function AdminDashboard() {
+export default function Admin() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
-  
-  // Stats
+
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
-  const [totalCabang, setTotalCabang] = useState<number | null>(null);
   const [totalRequests, setTotalRequests] = useState<number | null>(null);
   const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
 
+  // ⛔ Redirect jika bukan admin
   useEffect(() => {
     if (!loading && role !== ROLES.ADMIN) {
-      router.push("/unauthorized");
+      router.replace("/unauthorized");
     }
   }, [role, loading, router]);
 
+  // 🔢 Ambil statistik Firestore
   useEffect(() => {
-    // fetch counts from Firestore
     const fetchStats = async () => {
       setStatsLoading(true);
       setStatsError(null);
+
       try {
-        // total users
-        const usersCountSnap = await getCountFromServer(query(collection(db, "users")));
-        setTotalUsers(usersCountSnap.data().count ?? 0);
+        const usersSnap = await getCountFromServer(query(collection(db, "users")));
+        setTotalUsers(usersSnap.data().count);
 
-        // service requests
-        const reqCountSnap = await getCountFromServer(query(collection(db, "service_requests")));
-        setTotalRequests(reqCountSnap.data().count ?? 0);
+        const reqSnap = await getCountFromServer(query(collection(db, "service_requests")));
+        setTotalRequests(reqSnap.data().count);
 
-        // pending approvals (users where approved == false)
-        const pendingSnap = await getCountFromServer(query(collection(db, "users"), where("approved", "==", false)));
-        setPendingApprovals(pendingSnap.data().count ?? 0);
+        const pendingSnap = await getCountFromServer(
+          query(collection(db, "users"), where("approved", "==", false))
+        );
+        setPendingApprovals(pendingSnap.data().count);
 
-        // distinct cabang from service_requests (derive from documents)
-        const reqDocs = await getDocs(collection(db, "service_requests"));
-        const cabangSet = new Set<string>();
-        reqDocs.forEach((d) => {
-          const data = d.data() as any;
-          if (data?.cabang) cabangSet.add(String(data.cabang));
-        });
-        setTotalCabang(cabangSet.size);
+        await getDocs(collection(db, "service_requests"));
       } catch (err: any) {
-        console.error("Failed to fetch admin stats", err);
-        setStatsError(err?.message || "Gagal memuat data");
+        setStatsError("Gagal memuat statistik.");
+        console.error(err);
       } finally {
         setStatsLoading(false);
       }
@@ -79,35 +71,35 @@ export default function AdminDashboard() {
       title: "Manajemen Pengguna",
       description: "Kelola role, persetujuan, dan data staff",
       icon: <Users size={32} className="text-blue-500" />,
-      href: "/admin-dashboard/users",
+      href: "/admin/users",
       color: "from-blue-50 to-blue-100",
-    },
-    {
-      title: "Manajemen Cabang",
-      description: "Kelola data cabang dan lokasi",
-      icon: <Building2 size={32} className="text-green-500" />,
-      href: "/admin-dashboard/cabang",
-      color: "from-green-50 to-green-100",
     },
     {
       title: "Database",
       description: "Backup, restore, dan analisis data",
       icon: <Database size={32} className="text-purple-500" />,
-      href: "/admin-dashboard/database",
+      href: "/admin/database",
       color: "from-purple-50 to-purple-100",
     },
     {
       title: "Audit Log",
       description: "Lihat history aktivitas dan perubahan sistem",
       icon: <LogOut size={32} className="text-orange-500" />,
-      href: "/admin-dashboard/logs",
+      href: "/admin/logs",
       color: "from-orange-50 to-orange-100",
     },
     {
+      title: "Role & Permission Management",
+      description: "Atur hak akses dan peran pengguna (RBAC lengkap)",
+      icon: <ShieldCheck size={32} className="text-green-500" />,
+      href: "/admin/rbac",
+      color: "from-green-50 to-green-100",
+    },
+    {
       title: "Pengaturan Sistem",
-      description: "Konfigurasi aplikasi dan preferensi",
-      icon: <Settings size={32} className="text-red-500" />,
-      href: "/admin-dashboard/settings",
+      description: "Konfigurasi logo, tema, notifikasi, dan maintenance mode",
+      icon: <SlidersHorizontal size={32} className="text-red-500" />,
+      href: "/admin/settings",
       color: "from-red-50 to-red-100",
     },
   ];
@@ -133,25 +125,21 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
               <p className="text-gray-500 text-sm">Total Pengguna</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {statsLoading ? "—" : totalUsers ?? 0}
+                {statsLoading ? "—" : totalUsers}
               </p>
             </div>
-            <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-              <p className="text-gray-500 text-sm">Total Cabang</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {statsLoading ? "—" : totalCabang ?? 0}
-              </p>
-            </div>
+
             <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
               <p className="text-gray-500 text-sm">Service Requests</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {statsLoading ? "—" : totalRequests ?? 0}
+                {statsLoading ? "—" : totalRequests}
               </p>
             </div>
+
             <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
               <p className="text-gray-500 text-sm">Pending Approval</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {statsLoading ? "—" : pendingApprovals ?? 0}
+                {statsLoading ? "—" : pendingApprovals}
               </p>
             </div>
           </div>
@@ -160,9 +148,11 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {adminMenus.map((menu, idx) => (
               <Link key={idx} href={menu.href}>
-                <div className={`bg-gradient-to-br ${menu.color} rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 cursor-pointer transform hover:scale-105`}>
+                <div
+                  className={`bg-gradient-to-br ${menu.color} rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 cursor-pointer transform hover:scale-105`}
+                >
                   <div className="flex items-center justify-between mb-4">
-                    <div>{menu.icon}</div>
+                    {menu.icon}
                     <span className="text-2xl text-gray-400">→</span>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{menu.title}</h3>
@@ -178,9 +168,6 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition">
                 ➕ Tambah Pengguna Baru
-              </button>
-              <button className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition">
-                ➕ Tambah Cabang
               </button>
               <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition">
                 💾 Backup Database

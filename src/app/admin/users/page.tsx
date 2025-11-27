@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
         <NavbarSwitcher />
 
         <div className="max-w-7xl mx-auto px-6 py-10">
-          <Link href="/admin-dashboard" className="flex items-center text-blue-600 mb-4">
+          <Link href="/admin" className="flex items-center text-blue-600 mb-4">
             <ArrowLeft size={20} />
             <span className="ml-2">Kembali</span>
           </Link>

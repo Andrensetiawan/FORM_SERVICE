@@ -98,7 +98,7 @@ export default function FormService() {
     if (!validateForm()) return;
 
     try {
-      const newTrackNumber = await generateTrackNumber(formData.cabang);
+      const newTrackNumber = await generateTrackNumber();
 
       const dataToSave = {
         ...formData,

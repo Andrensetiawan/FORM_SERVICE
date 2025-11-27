@@ -358,6 +358,17 @@ export default function ServiceDetailPage() {
     );
   }
 
+  if (!serviceData) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] text-white">
+        <NavbarSwitcher />
+        <div className="pt-24 max-w-4xl mx-auto p-6">
+          <p className="text-red-400">Data service tidak ditemukan.</p>
+        </div>
+      </div>
+    );
+  }
+
   const isSaving = saving;
 
   return (

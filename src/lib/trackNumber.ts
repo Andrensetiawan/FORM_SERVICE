@@ -3,18 +3,17 @@ import { db } from "./firebaseConfig";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
 // Fungsi generate nomor tracking tanpa index Firestore
-export const generateTrackNumber = async (cabang: string): Promise<string> => {
-  // Tentukan prefix berdasarkan cabang
-  const prefix = cabang === "Alifcyber Solution" ? "ACS" : "HC";
+export const generateTrackNumber = async (): Promise<string> => {
+  // Single global prefix (no cabang)
+  const prefix = "TNS";
 
-  // Ambil semua dokumen dengan cabang yang sama (tanpa orderBy)
-  const q = query(collection(db, "service_requests"), where("cabang", "==", cabang));
+  // Ambil semua dokumen service_requests untuk menghitung jumlah
+  const q = query(collection(db, "service_requests"));
   const querySnapshot = await getDocs(q);
 
-  // Hitung total dokumen di cabang itu
   const totalDocs = querySnapshot.size;
   const newNumber = totalDocs + 1;
 
   // Return format nomor tracking baru
-  return `${prefix}-TNS${newNumber}`;
+  return `${prefix}-${String(newNumber).padStart(5, "0")}`;
 };

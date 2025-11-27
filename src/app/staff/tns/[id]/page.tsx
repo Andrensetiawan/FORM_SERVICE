@@ -11,18 +11,32 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { useRouter } from "next/navigation";
+import useAuth from "@/hooks/useAuth";
 import PhotoUpload from "@/app/components/PhotoUpload";
 import EditFields from "@/app/components/EditFields";
 import { motion } from "framer-motion";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { ROLES } from "@/lib/roles";
 
 export default function DetailServicePage({ params }: { params: { id: string } }) {
   const id = params.id;
   const router = useRouter();
+  const { user, role, loading: authLoading } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false); // 🔹 Tambah state edit mode
+
+  // 🔒 Proteksi role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) router.push("/login");
+      else if (![ROLES.STAFF, ROLES.MANAGER, ROLES.OWNER, ROLES.ADMIN].includes(role as any)) {
+        router.push("/unauthorized");
+      }
+    }
+  }, [user, role, authLoading, router]);
 
   // Load data Firestore
   useEffect(() => {
@@ -100,139 +114,149 @@ export default function DetailServicePage({ params }: { params: { id: string } }
       </div>
     );
 
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-900 text-gray-300">
+        Memuat otentikasi...
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <NavbarSwitcher/>
-    
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
-      >
-        {/* HEADER */}
-        <div className="bg-blue-700 text-white px-8 py-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Work Order #{data.track_number || data.id}
-            </h1>
-            <p className="text-sm text-blue-100">
-              Terakhir diperbarui:{" "}
-              {data.last_updated_at
-                ? new Date(data.last_updated_at.seconds * 1000).toLocaleString()
-                : "-"}
+    <ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.MANAGER, ROLES.OWNER, ROLES.ADMIN]}>
+      <div>
+        <NavbarSwitcher/>
+
+      <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+        >
+          {/* HEADER */}
+          <div className="bg-blue-700 text-white px-8 py-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Work Order #{data.track_number || data.id}
+              </h1>
+              <p className="text-sm text-blue-100">
+                Terakhir diperbarui:{" "}
+                {data.last_updated_at
+                  ? new Date(data.last_updated_at.seconds * 1000).toLocaleString()
+                  : "-"}
+              </p>
+            </div>
+            <span
+              className={`px-4 py-1.5 text-sm font-semibold rounded-full shadow-sm ${
+                data.status === "Selesai"
+                  ? "bg-green-600"
+                  : data.status === "Proses"
+                  ? "bg-yellow-500"
+                  : "bg-gray-400"
+              }`}
+            >
+              {data.status || "Belum Ditentukan"}
+            </span>
+          </div>
+
+          {/* BODY */}
+          <div className="p-8 space-y-10">
+            {/* CUSTOMER */}
+            <Card title="🧑 Data Customer">
+              <Grid2Col>
+                <Info label="Nama" value={data.nama} />
+                <Info label="No HP" value={data.no_hp} />
+                <Info label="Email" value={data.email} />
+                <Info label="Alamat" value={data.alamat} />
+              </Grid2Col>
+            </Card>
+
+            {/* DEVICE */}
+            <Card title="💻 Data Perangkat">
+              <Grid2Col>
+                <Info label="Merk" value={data.merk} />
+                <Info label="Tipe" value={data.tipe} />
+                <Info label="Serial Number" value={data.serial_number} />
+                <Info label="Jenis Perangkat" value={(data.jenis_perangkat || []).join(", ")} />
+                <Info label="Keluhan" value={data.keluhan} />
+                <Info label="Spesifikasi Teknis" value={data.spesifikasi_teknis} />
+                <Info label="Garansi" value={data.garansi ? "✅ Ya" : "❌ Tidak"} />
+                <Info label="Keterangan Garansi" value={data.keterangan_garansi} />
+              </Grid2Col>
+            </Card>
+
+            {/* EDIT STATUS */}
+            <Card title="⚙️ Status & Pengerjaan">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-medium text-gray-700">
+                    {isEditing ? "Mode Edit Aktif" : "Tampilan Baca"}
+                  </h3>
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className={`px-4 py-2 rounded-md text-white font-medium transition-all shadow-sm ${
+                      isEditing ? "bg-gray-600 hover:bg-gray-700" : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                  >
+                    {isEditing ? "Batal" : "Edit"}
+                  </button>
+                </div>
+
+                {/* Komponen Input */}
+                <EditFields
+                  initial={data}
+                  onSave={handleSave}
+                  disabled={!isEditing} // 🔹 penting
+                />
+
+                {saving && (
+                  <p className="text-sm text-blue-500 mt-2 animate-pulse">
+                    Menyimpan data...
+                  </p>
+                )}
+              </div>
+            </Card>
+
+            {/* FOTO */}
+            <Card title="📸 Dokumentasi Pekerjaan">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <PhotoSection
+                  title="Foto Pengambilan"
+                  field="foto_pengambilan_customer"
+                  urls={data.foto_pengambilan_customer}
+                  onUpload={(url) =>
+                    handlePhotoComplete("foto_pengambilan_customer", url)
+                  }
+                />
+                <PhotoSection
+                  title="Foto Penerimaan"
+                  field="foto_penerimaan_customer"
+                  urls={data.foto_penerimaan_customer}
+                  onUpload={(url) =>
+                    handlePhotoComplete("foto_penerimaan_customer", url)
+                  }
+                />
+              </div>
+            </Card>
+          </div>
+
+          {/* FOOTER */}
+          <div className="bg-gray-50 px-8 py-5 flex justify-between items-center border-t">
+            <button
+              onClick={() => router.back()}
+              className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-md transition-all shadow-sm"
+            >
+              ⬅ Kembali
+            </button>
+            <p className="text-sm text-gray-500">
+              © {new Date().getFullYear()} Hibatillah Service Center
             </p>
           </div>
-          <span
-            className={`px-4 py-1.5 text-sm font-semibold rounded-full shadow-sm ${
-              data.status === "Selesai"
-                ? "bg-green-600"
-                : data.status === "Proses"
-                ? "bg-yellow-500"
-                : "bg-gray-400"
-            }`}
-          >
-            {data.status || "Belum Ditentukan"}
-          </span>
-        </div>
-
-        {/* BODY */}
-        <div className="p-8 space-y-10">
-          {/* CUSTOMER */}
-          <Card title="🧑 Data Customer">
-            <Grid2Col>
-              <Info label="Nama" value={data.nama} />
-              <Info label="No HP" value={data.no_hp} />
-              <Info label="Email" value={data.email} />
-              <Info label="Alamat" value={data.alamat} />
-            </Grid2Col>
-          </Card>
-
-          {/* DEVICE */}
-          <Card title="💻 Data Perangkat">
-            <Grid2Col>
-              <Info label="Merk" value={data.merk} />
-              <Info label="Tipe" value={data.tipe} />
-              <Info label="Serial Number" value={data.serial_number} />
-              <Info label="Jenis Perangkat" value={(data.jenis_perangkat || []).join(", ")} />
-              <Info label="Keluhan" value={data.keluhan} />
-              <Info label="Spesifikasi Teknis" value={data.spesifikasi_teknis} />
-              <Info label="Garansi" value={data.garansi ? "✅ Ya" : "❌ Tidak"} />
-              <Info label="Keterangan Garansi" value={data.keterangan_garansi} />
-            </Grid2Col>
-          </Card>
-
-          {/* EDIT STATUS */}
-          <Card title="⚙️ Status & Pengerjaan">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-medium text-gray-700">
-                  {isEditing ? "Mode Edit Aktif" : "Tampilan Baca"}
-                </h3>
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`px-4 py-2 rounded-md text-white font-medium transition-all shadow-sm ${
-                    isEditing ? "bg-gray-600 hover:bg-gray-700" : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  {isEditing ? "Batal" : "Edit"}
-                </button>
-              </div>
-
-              {/* Komponen Input */}
-              <EditFields
-                initial={data}
-                onSave={handleSave}
-                disabled={!isEditing} // 🔹 penting
-              />
-
-              {saving && (
-                <p className="text-sm text-blue-500 mt-2 animate-pulse">
-                  Menyimpan data...
-                </p>
-              )}
-            </div>
-          </Card>
-
-          {/* FOTO */}
-          <Card title="📸 Dokumentasi Pekerjaan">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <PhotoSection
-                title="Foto Pengambilan"
-                field="foto_pengambilan_customer"
-                urls={data.foto_pengambilan_customer}
-                onUpload={(url) =>
-                  handlePhotoComplete("foto_pengambilan_customer", url)
-                }
-              />
-              <PhotoSection
-                title="Foto Penerimaan"
-                field="foto_penerimaan_customer"
-                urls={data.foto_penerimaan_customer}
-                onUpload={(url) =>
-                  handlePhotoComplete("foto_penerimaan_customer", url)
-                }
-              />
-            </div>
-          </Card>
-        </div>
-
-        {/* FOOTER */}
-        <div className="bg-gray-50 px-8 py-5 flex justify-between items-center border-t">
-          <button
-            onClick={() => router.back()}
-            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-md transition-all shadow-sm"
-          >
-            ⬅ Kembali
-          </button>
-          <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Hibatillah Service Center
-          </p>
-        </div>
-      </motion.div>
-    </main>
-    </div>
+        </motion.div>
+      </main>
+      </div>
+    </ProtectedRoute>
   );
 }
 
