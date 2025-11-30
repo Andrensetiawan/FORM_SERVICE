@@ -49,9 +49,13 @@ export default function CabangDetailPage({ params }: Props) {
       setCabang(cabangData);
 
       // get staff
-      const staffSnap = await getDocs(
-        query(collection(db, "users"), where("cabang", "==", cabangData.name))
-      );
+     const staffSnap = await getDocs(
+  query(
+    collection(db, "users"),
+    where("cabang", "==", cabangData.id)
+  )
+);
+
 
       const arr: any[] = [];
       staffSnap.forEach((s) => arr.push({ uid: s.id, ...s.data() }));
@@ -68,9 +72,14 @@ export default function CabangDetailPage({ params }: Props) {
   }, [id]);
 
   // protect route
-  if (!loading && role !== ROLES.ADMIN) {
-    return <ProtectedRoute allowedRoles={[ROLES.ADMIN]} />;
-  }
+ if (!loading && role !== ROLES.ADMIN) {
+  return (
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+      <></>
+    </ProtectedRoute>
+  );
+}
+
 
   // ================================================================
   // PROMOTE STAFF → MANAGER
