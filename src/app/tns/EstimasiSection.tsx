@@ -19,7 +19,7 @@ interface Props {
   handleSave: () => void;
   addRow: () => void;
   removeRow: (id: string) => void;
-  handleChange: (id: string, field: any, value: string) => void;
+  handleChange: (id: string, field: string, value: string | number) => void;
 }
 
 export default function EstimasiSection({
@@ -33,6 +33,13 @@ export default function EstimasiSection({
   removeRow,
   handleChange,
 }: Props) {
+  // Convert angka tanpa leading zero & pastikan number
+  const parseNumber = (value: string) => {
+    if (value === "" || value === null) return 0;
+    const cleanNumber = parseInt(value.replace(/^0+/, "")) || 0;
+    return cleanNumber < 0 ? 0 : cleanNumber;
+  };
+
   return (
     <section className="bg-gray-800/70 border border-gray-700 rounded-xl p-4 space-y-4">
       <div className="flex justify-between items-center">
@@ -63,16 +70,8 @@ export default function EstimasiSection({
                   <input
                     className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm"
                     value={r.item}
-                    onChange={(e) => handleChange(r.id, "item", e.target.value)}
-                  />
-                </td>
-                <td className="p-2 border border-gray-700">
-                  <input
-                    className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-right"
-                    type="number"
-                    value={r.harga}
                     onChange={(e) =>
-                      handleChange(r.id, "harga", e.target.value)
+                      handleChange(r.id, "item", e.target.value)
                     }
                   />
                 </td>
@@ -80,8 +79,24 @@ export default function EstimasiSection({
                   <input
                     className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-right"
                     type="number"
+                    min={0}
+                    value={r.harga}
+                    inputMode="numeric"
+                    onChange={(e) =>
+                      handleChange(r.id, "harga", parseNumber(e.target.value))
+                    }
+                  />
+                </td>
+                <td className="p-2 border border-gray-700">
+                  <input
+                    className="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-right"
+                    type="number"
+                    min={0}
                     value={r.qty}
-                    onChange={(e) => handleChange(r.id, "qty", e.target.value)}
+                    inputMode="numeric"
+                    onChange={(e) =>
+                      handleChange(r.id, "qty", parseNumber(e.target.value))
+                    }
                   />
                 </td>
                 <td className="p-2 border border-gray-700 text-right">
@@ -98,6 +113,7 @@ export default function EstimasiSection({
               </tr>
             ))}
           </tbody>
+
           <tfoot>
             <tr>
               <td colSpan={3} className="p-2 border border-gray-700 text-right">

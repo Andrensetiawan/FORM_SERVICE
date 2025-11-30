@@ -22,6 +22,7 @@ import EstimasiSection from "@/app/tns/EstimasiSection";
 import SignatureSection from "@/app/tns/SignatureSection";
 import PhotoUploadSection from "@/app/tns/PhotoUploadSection";
 
+
 type EstimasiItem = {
   id: string;
   item: string;
@@ -43,6 +44,11 @@ export default function ServiceDetailPage() {
   const { user, role, loading } = useAuth();
 
   const [loadingData, setLoadingData] = useState(true);
+  // ========= TAMBAHKAN INI =============
+const [errorMsg, setErrorMsg] = useState<string | null>(null);
+const [successMsg, setSuccessMsg] = useState<string | null>(null);
+// =====================================
+
   const [saving, setSaving] = useState(false);
   const [serviceData, setServiceData] = useState<any | null>(null);
 
@@ -223,14 +229,31 @@ export default function ServiceDetailPage() {
 
   const totalEstimasi = estimasiItems.reduce((a, b) => a + (b.total || 0), 0);
 
-  const handleChange = (id: string, field: any, value: string) =>
-    setEstimasiItems((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, [field]: Number(value), total: r.qty * r.harga }
-          : r
-      )
-    );
+  const handleChange = (
+  id: string,
+  field: string,
+  value: string | number
+) => {
+  setEstimasiItems((prev) =>
+    prev.map((r) =>
+      r.id === id
+        ? {
+            ...r,
+            [field]: field === "item" ? value : Number(value),
+            total:
+              field === "item"
+                ? r.total
+                : field === "harga"
+                ? Number(value) * r.qty
+                : field === "qty"
+                ? Number(value) * r.harga
+                : r.total,
+          }
+        : r
+    )
+  );
+};
+
 
   if (loading || loadingData) return <div className="text-gray-200 p-10">Loading…</div>;
 
@@ -270,31 +293,54 @@ export default function ServiceDetailPage() {
           />
 
           {/* ➤ Foto */}
-          <div className="grid md:grid-cols-2 gap-4">
+          {/* 📸 Foto */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Foto Serah Terima */}
             <PhotoUploadSection
-              type="handover"
+              docId={serviceData.id}
+              field="handover_photo_url"
               title="Foto Serah Terima"
-              handleUpload={handleUploadPhoto}
-              imageUrl={handoverPhotoUrl}
-              saving={saving}
+              existingUrl={serviceData.handover_photo_url}
+              statusLog={statusLog}
+              user={user}
+              serviceData={serviceData} // ⬅ WAJIB ADA
+              setStatus={setStatus}
+              setErrorMsg={setErrorMsg}
+              setSuccessMsg={setSuccessMsg}
             />
+               {/* Foto Pengambilan */}
             <PhotoUploadSection
-              type="pickup"
-              title="Foto Pengambilan"
-              handleUpload={handleUploadPhoto}
-              imageUrl={pickupPhotoUrl}
-              saving={saving}
+              docId={serviceData.id}
+              field="handover_photo_url"
+              title="📸 Foto Pengambilan"
+              existingUrl={serviceData.handover_photo_url}
+              statusLog={statusLog}
+              user={user}
+              serviceData={serviceData} // ⬅ WAJIB ADA
+              setStatus={setStatus}
+              setErrorMsg={setErrorMsg}
+              setSuccessMsg={setSuccessMsg}
             />
-          </div>
 
-          {/* ➤ Signature */}
-          <SignatureSection
-            signatureUrl={signatureUrl}
-            saving={saving}
-            signatureRef={signatureRef}
-            handleClear={() => signatureRef.current?.clear()}
-            handleSave={saveSignature}
-          />
+
+
+       
+        </div>
+
+        {/* ✍️ Signature */}
+        <SignatureSection
+          docId={serviceData.id}
+          existingSignature={serviceData.customer_signature_url}
+          statusLog={statusLog}
+          user={user}
+          setStatus={setStatus}
+          setErrorMsg={setErrorMsg}
+          setSuccessMsg={setSuccessMsg}
+        />
+
+
+
+
         </div>
       </div>
     </ProtectedRoute>
