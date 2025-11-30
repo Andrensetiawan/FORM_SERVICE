@@ -1,26 +1,19 @@
-import { db } from "./firebaseConfig";
+import { db } from "@/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { UserRole } from "@/lib/roles";
 
-export async function createLog({
-  uid,
-  role,
-  action,
-  target = "",
-  detail = {},
-}: {
+export interface LogEntry {
   uid: string;
-  role: string;
+  role: UserRole | "unknown";
   action: string;
   target?: string;
   detail?: any;
-}) {
+}
+
+export async function createLog(entry: LogEntry) {
   try {
     await addDoc(collection(db, "logs"), {
-      uid,
-      role,
-      action,
-      target,
-      detail,
+      ...entry,
       timestamp: serverTimestamp(),
     });
   } catch (err) {

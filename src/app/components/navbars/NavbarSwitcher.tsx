@@ -6,7 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
 import NavbarStaff from "./NavbarStaff";
-import NavbarManagement from "./NavbarManagement";
+import NavbarManager from "./NavbarManager";
 import NavbarOwner from "./NavbarOwner";
 import NavbarAdmin from "./NavbarAdmin";
 import NavbarPublic from "./NavbarPublic";
@@ -67,7 +67,7 @@ export default function NavbarSwitcher() {
       return <NavbarOwner />;
 
     case "manager":
-      return <NavbarManagement />;
+      return <NavbarManager />;
 
     case "staff":
       return <NavbarStaff />;

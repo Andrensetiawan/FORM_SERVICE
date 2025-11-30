@@ -188,10 +188,6 @@ export default function StaffManagementPage() {
                         }
                         alt="Avatar"
                         className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover shadow-sm"
-                        onError={(e) => {
-                          const target = e.target;
-                          target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                        }}
                       />
                     </div>
 

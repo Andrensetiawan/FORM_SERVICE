@@ -60,12 +60,12 @@ export default function NavbarManagement() {
   const menuItems = [
     // hanya owner atau admin yang melihat menu Pending Approval
     ...(user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
-      ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/management/pending-users" }]
+      ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/manager/pending-users" }]
       : []),
-    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/management/staff" },
-    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/management/laporan" },
+    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/manager/staff" },
+    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/manager/laporan" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
-    { name: "Status Service", icon: <Wrench size={18} />, href: "/management" },
+    { name: "Status Service", icon: <Wrench size={18} />, href: "/manager" },
   ];
 
   return (
@@ -114,7 +114,7 @@ export default function NavbarManagement() {
                   onClick={() => {
                     toast.loading("Membuka profil...");
                     setTimeout(() => {
-                      router.push(`/management/staff/${user?.uid}`);
+                      router.push(`/${user?.uid}`);
                       toast.dismiss();
                     }, 400);
                   }}

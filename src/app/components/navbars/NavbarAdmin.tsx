@@ -113,7 +113,7 @@ export default function NavbarAdmin() {
                 onClick={() => {
                   toast.loading("Membuka profil...");
                   setTimeout(() => {
-                    router.push(`/admin/profile/${user?.uid}`);
+                    router.push(`/${user?.uid}`);
                     toast.dismiss();
                   }, 400);
                 }}

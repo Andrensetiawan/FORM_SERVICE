@@ -43,15 +43,15 @@ export default function NavbarManagement() {
           {
             name: "Pending Approval",
             icon: <Users size={18} />,
-            href: "/management/pending-users",
+            href: "/manager/pending-users",
           },
         ]
       : []),
 
-    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/management/staff" },
-    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/management/laporan" },
+    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/manager/staff" },
+    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/manager/laporan" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
-    { name: "Status Service", icon: <Wrench size={18} />, href: "/management" },
+    { name: "Status Service", icon: <Wrench size={18} />, href: "/manager" },
   ];
 
   return (
@@ -67,7 +67,7 @@ export default function NavbarManagement() {
               <Menu size={26} />
             </button>
 
-            <Link href="/management" className="flex items-center gap-3 hover:opacity-90 transition">
+            <Link href="/manager" className="flex items-center gap-3 hover:opacity-90 transition">
               <Image
                 src="/logo-ico.png"
                 width={40}
@@ -90,7 +90,7 @@ export default function NavbarManagement() {
                   width={40}
                   height={40}
                   alt="User"
-                  onClick={() => router.push(`/management/profile/${user.uid}`)}
+                  onClick={() => router.push(`/${user.uid}`)}
                   className="rounded-full border border-blue-500 cursor-pointer hover:scale-105 transition"
                   unoptimized
                 />

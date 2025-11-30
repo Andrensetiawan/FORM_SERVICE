@@ -78,7 +78,6 @@ export default function NavbarStaff() {
   const menuItems = [
     { name: "Home", icon: <Home size={18} />, href: "/staff" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
-    { name: "Status Service", icon: <Wrench size={18} />, href: "/staff" },
     { name: "Contact", icon: <PhoneCall size={18} />, href: "/contact" },
   ];
 
@@ -132,7 +131,7 @@ export default function NavbarStaff() {
                   onClick={() => {
                     toast.loading("Membuka profil...");
                     setTimeout(() => {
-                      router.push(`/staff/profile/${user?.uid}`);
+                      router.push(`/${user?.uid}`);
                       toast.dismiss();
                     }, 400);
                   }}

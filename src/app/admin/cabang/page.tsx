@@ -1,226 +1,353 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { collection, getDocs, query, where, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebaseConfig";
+import { createLog } from "@/lib/log";
 import useAuth from "@/hooks/useAuth";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Trash2, Plus, Search, Users } from "lucide-react";
+import toast from "react-hot-toast";
 import Link from "next/link";
-
-import { db } from "@/lib/firebaseConfig";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  getDocs,
-  query,
-  where,
-  doc,
-} from "firebase/firestore";
-
-import { createLog } from "@/lib/log";
 
 export default function AdminCabangPage() {
   const { user, role, loading } = useAuth();
-  const router = useRouter();
 
-  const [cabangs, setCabangs] = useState<string[]>([]);
+  const [cabangs, setCabangs] = useState<any[]>([]);
+  const [staffMap, setStaffMap] = useState<Record<string, any[]>>({});
+  const [managers, setManagers] = useState<any[]>([]);
   const [loadingCabangs, setLoadingCabangs] = useState(true);
-  const [newCabang, setNewCabang] = useState("");
   const [saving, setSaving] = useState(false);
+  const [newCabang, setNewCabang] = useState("");
+  const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // ================================================================
-  // FETCH CABANGS
-  // ================================================================
+  // ==========================================================
+  // 🔹 FETCH CABANGS
+  // ==========================================================
   const fetchCabangs = useCallback(async () => {
     setLoadingCabangs(true);
     try {
       const snap = await getDocs(collection(db, "cabangs"));
-      const arr: string[] = [];
+      const arr: any[] = [];
+      snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
 
-      snap.forEach((d) => {
-        const data: any = d.data();
-        if (data?.name) arr.push(data.name);
-      });
-
-      setCabangs(arr.sort());
+      arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      setCabangs(arr);
     } catch (err) {
-      console.error("Failed to fetch cabangs:", err);
+      console.error(err);
     } finally {
       setLoadingCabangs(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchCabangs();
-  }, [fetchCabangs]);
+  // ==========================================================
+  // 🔹 FETCH MANAGERS
+  // ==========================================================
+  const fetchManagers = useCallback(async () => {
+    try {
+      const q = query(collection(db, "users"), where("approved", "==", true));
+      const snap = await getDocs(q);
+      const arr: any[] = [];
 
-  // ================================================================
-  // ROLE PROTECTION
-  // ================================================================
-  useEffect(() => {
-    if (!loading && role !== ROLES.ADMIN) {
-      router.push("/unauthorized");
+      snap.forEach((d) => {
+        const raw = d.data() as any;
+        if (String(raw.role).toLowerCase() === "manager") {
+          arr.push({ uid: d.id, name: raw.name, email: raw.email });
+        }
+      });
+
+      setManagers(arr);
+    } catch (err) {
+      console.error(err);
+      setManagers([]);
     }
-  }, [loading, role, router]);
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-gray-600">
-        Memuat...
-      </div>
-    );
-  }
+  // ==========================================================
+  // 🔹 FETCH STAFF PER CABANG (ALL USERS)
+  // ==========================================================
+  const fetchStaffForAllCabangs = useCallback(async (cabangsList: any[]) => {
+    const result: Record<string, any[]> = {};
 
-  // ================================================================
-  // ADD CABANG — FIXED
-  // ================================================================
+    for (const cabang of cabangsList) {
+      try {
+        const snap = await getDocs(
+          query(collection(db, "users"), where("cabang", "==", cabang.name))
+        );
+
+        const staffList: any[] = [];
+        snap.forEach((d) => staffList.push({ uid: d.id, ...d.data() }));
+        result[cabang.id] = staffList;
+      } catch (err) {
+        console.error("Error fetch staff:", err);
+        result[cabang.id] = [];
+      }
+    }
+
+    setStaffMap(result);
+  }, []);
+
+  // ==========================================================
+  // ON LOAD
+  // ==========================================================
+  useEffect(() => {
+    (async () => {
+      await fetchCabangs();
+      await fetchManagers();
+    })();
+  }, [fetchCabangs, fetchManagers]);
+
+  // After cabangs loaded → fetch staff for each cabang
+  useEffect(() => {
+    if (cabangs.length > 0) {
+      fetchStaffForAllCabangs(cabangs);
+    }
+  }, [cabangs, fetchStaffForAllCabangs]);
+
+  // ==========================================================
+  // ADD CABANG
+  // ==========================================================
   const handleAddCabang = async () => {
     const name = newCabang.trim();
-
-    if (!name) return alert("Nama cabang tidak boleh kosong.");
-    if (cabangs.includes(name)) return alert("Cabang sudah ada!");
+    if (!name) return toast.error("Nama cabang tidak boleh kosong");
+    if (cabangs.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return toast.error("Cabang sudah ada");
+    }
 
     setSaving(true);
-
     try {
-      // 1️⃣ Tambah cabang
       await addDoc(collection(db, "cabangs"), {
         name,
+        managerId: "",
+        managerName: "",
+        managerEmail: "",
         createdAt: new Date(),
       });
 
-      // 2️⃣ Save logs
-      createLog({
-        uid: user?.uid ?? "unknown",
+      await createLog({
+        uid: user?.uid ?? "",
         role: role ?? "unknown",
         action: "create_cabang",
         target: name,
       });
 
       setNewCabang("");
-      fetchCabangs();
+      await fetchCabangs();
+      toast.success("Cabang ditambahkan");
     } catch (err) {
-      console.error("Failed to add cabang:", err);
-      alert("Gagal menambah cabang.");
-    } finally {
-      setSaving(false);
+      console.error(err);
+      toast.error("Gagal menambah cabang");
     }
+    setSaving(false);
   };
 
-  // ================================================================
-  // DELETE CABANG
-  // ================================================================
-  const handleDeleteCabang = async (cabangName: string) => {
-    if (!confirm(`Hapus cabang "${cabangName}"?`)) return;
-
-    setDeletingId(cabangName);
+  // ==========================================================
+  // SET MANAGER
+  // ==========================================================
+  const handleSetManager = async (cabang: any, manager: any) => {
+    if (!manager) return;
+    setSaving(true);
 
     try {
-      const qSnap = await getDocs(
-        query(collection(db, "cabangs"), where("name", "==", cabangName))
-      );
-
-      for (const d of qSnap.docs) {
-        await deleteDoc(doc(db, "cabangs", d.id));
-      }
-
-      // LOGGING DELETE
-      createLog({
-        uid: user?.uid ?? "unknown",
-        role: role ?? "unknown",
-        action: "delete_cabang",
-        target: cabangName,
+      await updateDoc(doc(db, "cabangs", cabang.id), {
+        managerId: manager.uid,
+        managerName: manager.name,
+        managerEmail: manager.email,
       });
 
-      fetchCabangs();
+      await updateDoc(doc(db, "users", manager.uid), {
+        role: "manager",
+        cabang: cabang.name,
+      });
+
+      await createLog({
+        uid: user?.uid ?? "",
+        role: role ?? "unknown",
+        action: "assign_manager",
+        detail: `Set manager ${manager.email} for ${cabang.name}`,
+      });
+
+      await fetchCabangs();
+      toast.success("Manager diperbarui");
     } catch (err) {
-      console.error("Failed to delete cabang:", err);
-      alert("Gagal menghapus cabang.");
-    } finally {
-      setDeletingId(null);
+      console.error(err);
+      toast.error("Gagal set manager");
     }
+
+    setSaving(false);
   };
 
-  // ================================================================
-  // UI FINAL
-  // ================================================================
+  // ==========================================================
+  // DELETE CABANG
+  // ==========================================================
+  const handleDeleteCabang = async (name: string) => {
+    if (!confirm(`Hapus cabang ${name}? Semua user akan di-unassign.`)) return;
+
+    setDeletingId(name);
+
+    try {
+      const snap = await getDocs(
+        query(collection(db, "cabangs"), where("name", "==", name))
+      );
+
+      for (const d of snap.docs) {
+        const cId = d.id;
+
+        const usersSnap = await getDocs(
+          query(collection(db, "users"), where("cabang", "==", name))
+        );
+
+        for (const u of usersSnap.docs) {
+          await updateDoc(doc(db, "users", u.id), {
+            cabang: "",
+            role: "staff",
+          });
+        }
+
+        await deleteDoc(doc(db, "cabangs", cId));
+      }
+
+      toast.success("Cabang dihapus");
+      await fetchCabangs();
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal menghapus");
+    }
+
+    setDeletingId(null);
+  };
+
+  // ==========================================================
+  // FILTERING
+  // ==========================================================
+  const filtered = cabangs.filter((c) =>
+    (c.name || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  // ==========================================================
+  // UI
+  // ==========================================================
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
+      <div className="min-h-screen bg-gray-100 pt-16">
         <NavbarSwitcher />
 
-        <div className="w-full max-w-6xl mx-auto px-6 py-12">
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <h1 className="text-4xl font-extrabold mb-4 text-gray-900">
+            🏢 Manajemen Cabang
+          </h1>
 
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">🏢 Manajemen Cabang</h1>
-              <p className="text-gray-600 mt-1">Kelola data cabang dan lokasi</p>
+          {/* Search + Add */}
+          <div className="flex gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-3 text-gray-400" size={18} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari cabang..."
+                className="w-full border rounded-xl px-12 py-3 bg-white text-gray-800"
+              />
             </div>
+
+            <input
+              value={newCabang}
+              onChange={(e) => setNewCabang(e.target.value)}
+              placeholder="Nama cabang baru"
+              className="border px-4 py-3 rounded-xl bg-white text-gray-800"
+            />
 
             <button
               onClick={handleAddCabang}
-              disabled={saving}
-              className={`flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition ${
-                saving ? "opacity-60 cursor-not-allowed" : ""
-              }`}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl flex items-center gap-1"
             >
               <Plus size={20} />
-              {saving ? "Menyimpan..." : "Tambah Cabang"}
             </button>
           </div>
 
           {/* Cabang List */}
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Daftar Cabang</h2>
-
-              <div className="flex items-center gap-2">
-                <input
-                  value={newCabang}
-                  onChange={(e) => setNewCabang(e.target.value)}
-                  placeholder="Nama cabang baru"
-                  className="border px-3 py-2 rounded-md text-sm bg-white text-gray-800"
-                />
-
-                <button
-                  onClick={handleAddCabang}
-                  disabled={saving}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  <Plus size={16} />
-                  {saving ? "..." : "Tambah"}
-                </button>
-              </div>
-            </div>
-
+          <div className="space-y-4">
             {loadingCabangs ? (
-              <div className="py-6 text-center text-gray-500">Memuat cabang...</div>
-            ) : cabangs.length === 0 ? (
-              <div className="py-6 text-center text-gray-500">Belum ada cabang terdaftar.</div>
+              <div className="text-center py-10 text-gray-500">Memuat...</div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">Tidak ada cabang</div>
             ) : (
-              <ul className="space-y-3">
-                {cabangs.map((cabang) => (
-                  <li
-                    key={cabang}
-                    className="flex items-center justify-between border p-3 rounded-md bg-white text-gray-800"
+              filtered.map((cabang) => (
+                <div
+                  key={cabang.id}
+                  className="bg-white p-6 rounded-xl shadow border hover:border-blue-400 transition cursor-pointer"
+                >
+                  <Link href={`/admin/cabang/${cabang.id}`}>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {cabang.name}
+                    </div>
+                  </Link>
+
+                  {/* MANAGER */}
+                  {/* MANAGER INFO */}
+                <div className="mt-2 text-blue-600 font-semibold">
+                  Manager: {cabang.managerName || "-"}{" "}
+                  {cabang.managerEmail ? `(${cabang.managerEmail})` : ""}
+                </div>
+
+                {/* HAPUS MANAGER BUTTON */}
+                {cabang.managerId && (
+                  <button
+                    onClick={() => handleRemoveManager(cabang)}
+                    className="mt-2 text-sm px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition inline-flex items-center gap-2"
                   >
-                    <div className="font-medium">{cabang}</div>
+                    <Trash2 size={16} />
+                    Hapus Manager
+                  </button>
+                )}
+
+                  {/* STAFF */}
+                  <div className="mt-2 text-gray-700">
+                    <Users className="inline-block mr-2" size={18} />
+                    Staff ({staffMap[cabang.id]?.length ?? 0}):
+                  </div>
+
+                  <ul className="text-sm text-gray-600 mt-1 ml-6 list-disc">
+                    {staffMap[cabang.id]?.length > 0 ? (
+                      staffMap[cabang.id].map((s) => (
+                        <li key={s.uid}>
+                          {s.name} ({s.email}) — role: {s.role}
+                        </li>
+                      ))
+                    ) : (
+                      <li>-</li>
+                    )}
+                  </ul>
+
+                  {/* Manager Select */}
+                  <div className="flex justify-between items-center mt-4">
+                    <select
+                      defaultValue={cabang.managerId || ""}
+                      onChange={(e) => {
+                        const m = managers.find((mm) => mm.uid === e.target.value);
+                        if (m) handleSetManager(cabang, m);
+                      }}
+                      className="border px-4 py-2 rounded-xl bg-white text-gray-800"
+                    >
+                      <option value="">Pilih Manager Baru</option>
+                      {managers.map((m) => (
+                        <option key={m.uid} value={m.uid}>
+                          {m.name} - {m.email}
+                        </option>
+                      ))}
+                    </select>
 
                     <button
-                      onClick={() => handleDeleteCabang(cabang)}
-                      disabled={deletingId === cabang}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      onClick={() => handleDeleteCabang(cabang.name)}
+                      className="text-red-600 hover:text-red-800 font-semibold"
                     >
-                      {deletingId === cabang ? "Menghapus..." : "Hapus"}
+                      Hapus Cabang
                     </button>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
