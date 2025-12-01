@@ -84,43 +84,35 @@ export default function CabangDetailPage({ params }: Props) {
   // ================================================================
   // REMOVE MANAGER
   // ================================================================
-  const handleRemoveManager = async (cabangData: any) => {
-    if (!cabangData?.managerId) return;
+    const handleRemoveManager = async (cabangData: any) => {
+      try {
+        await updateDoc(doc(db, "users", cabangData.managerId), {
+          role: "staff",
+          cabang: "",
+        });
 
-    const confirmMsg = confirm(
-      `Hapus Manager dari cabang "${cabangData.name}"?`
-    );
-    if (!confirmMsg) return;
+        await updateDoc(doc(db, "cabangs", cabangData.id), {
+          managerId: "",
+          managerName: "",
+          managerEmail: "",
+        });
 
-    try {
-      await updateDoc(doc(db, "users", cabangData.managerId), {
-        role: "staff",
-        cabang: "",
-      });
+        await createLog({
+          uid: auth.currentUser?.uid ?? "",
+          role: role ?? ROLES.UNKNOWN,
+          action: "remove_manager",
+          detail: `Removed manager from cabang ${cabangData.name}`,
+          target: cabangData.managerId,
+        });
 
-      await updateDoc(doc(db, "cabangs", cabangData.id), {
-        managerId: "",
-        managerName: "",
-        managerEmail: "",
-      });
+        alert("Manager berhasil dihapus!");
+        fetchData();
+      } catch (err) {
+        console.error("ERROR REMOVE MANAGER:", err);
+        alert("Gagal menghapus manager.");
+      }
+    };
 
-      await createLog({
-        uid: auth.currentUser?.uid ?? "",
-        role: role ?? ROLES.UNKNOWN,
-        action: "remove_manager",
-        detail: `Removed manager from cabang ${cabangData.name}`,
-        target: cabangData.managerId,
-      });
-
-
-
-      alert("Manager berhasil dihapus!");
-      fetchData();
-    } catch (err) {
-      console.error("ERROR REMOVE MANAGER:", err);
-      alert("Gagal menghapus manager.");
-    }
-  };
 
   // ================================================================
   // PROMOTE STAFF → MANAGER
