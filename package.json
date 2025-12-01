@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@next/swc-win32-x64-msvc": "^16.0.6",
     "cloudinary": "^2.8.0",
     "firebase": "^12.4.0",
     "framer-motion": "^12.23.24",

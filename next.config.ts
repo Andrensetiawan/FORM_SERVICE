@@ -1,31 +1,17 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
-  // 🔥 Izinkan image remote (Cloudinary, Flaticon, Unsplash, dsb)
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.cloudinary.com", // wildcard cloudinary
-      },
-      {
-        protocol: "https",
-        hostname: "cdn-icons-png.flaticon.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "*.cloudinary.com" },
+      { protocol: "https", hostname: "cdn-icons-png.flaticon.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
 
-  // 🔥 Izinkan Cloudinary + Firebase di CSP
   async headers() {
     return [
       {
@@ -35,45 +21,13 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: `
               default-src 'self';
-
               script-src 'self' 'unsafe-eval' 'unsafe-inline';
-
               style-src 'self' 'unsafe-inline';
-
-              connect-src
-                'self'
-                https://firestore.googleapis.com
-                https://identitytoolkit.googleapis.com
-                https://securetoken.googleapis.com
-                https://firebasestorage.googleapis.com
-                https://firebase.googleapis.com
-                https://res.cloudinary.com
-                https://api.cloudinary.com
-                https://*.cloudinary.com;
-
-              img-src
-                'self'
-                data:
-                blob:
-                https:
-                https://firebasestorage.googleapis.com
-                https://res.cloudinary.com
-                https://*.cloudinary.com
-                https://cdn-icons-png.flaticon.com
-                https://images.unsplash.com;
-
-              media-src
-                'self'
-                blob:
-                data:
-                https://res.cloudinary.com
-                https://*.cloudinary.com;
-
-              frame-src
-                'self'
-                https://*.firebaseapp.com
-                https://accounts.google.com;
-            `.replace(/\s{2,}/g, " "),
+              connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://firebase.googleapis.com https://res.cloudinary.com https://api.cloudinary.com https://*.cloudinary.com;
+              img-src 'self' data: blob: https: https://firebasestorage.googleapis.com https://res.cloudinary.com https://*.cloudinary.com https://cdn-icons-png.flaticon.com https://images.unsplash.com;
+              media-src 'self' blob: data: https://res.cloudinary.com https://*.cloudinary.com;
+              frame-src 'self' https://*.firebaseapp.com https://accounts.google.com;
+            `.replace(/\s+/g, " "),
           },
         ],
       },

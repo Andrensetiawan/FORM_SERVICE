@@ -12,13 +12,12 @@ import {
   updateDoc,
   
 } from "firebase/firestore";
-import { db } from "@/lib/firebaseConfig";
+import { db,auth } from "@/lib/firebaseConfig";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/lib/roles";
 import { createLog } from "@/lib/log";
-import { auth } from "@/lib/firebaseConfig";
 
 
 interface Props {
@@ -84,39 +83,42 @@ export default function CabangDetailPage({ params }: Props) {
   // ================================================================
   // REMOVE MANAGER
   // ================================================================
-   const handleRemoveManager = async (cabangData: any) => {
-      if (!cabangData || !cabangData.managerId) return;
+  const handleRemoveManager = async (cabangData: any) => {
+  console.log("Removing manager...", cabangData); // Debug
 
-      try {
-        // Set user dari manager jadi staff
-        await updateDoc(doc(db, "users", cabangData.managerId), {
-          role: "staff",
-          cabang: "",
-        });
+  if (!cabangData?.managerId) {
+    alert("Cabang belum punya manager.");
+    return;
+  }
 
-        // Reset data manager di cabang
-        await updateDoc(doc(db, "cabangs", cabangData.id), {
-          managerId: "",
-          managerName: "",
-          managerEmail: "",
-        });
+  try {
+    await updateDoc(doc(db, "users", cabangData.managerId), {
+      role: "staff",
+      cabang: "",
+    });
 
-        // Buat log
-        await createLog({
-          uid: auth.currentUser?.uid ?? "",
-          role: role ?? ROLES.UNKNOWN,
-          action: "remove_manager",
-          detail: `Removed manager from cabang ${cabangData.name}`,
-          target: cabangData.managerId,
-        });
+    await updateDoc(doc(db, "cabangs", cabangData.id), {
+      managerId: "",
+      managerName: "",
+      managerEmail: "",
+    });
 
-        alert("Manager berhasil dihapus!");
-        fetchData();
-      } catch (error) {
-        console.error("ERROR REMOVE MANAGER:", error);
-        alert("Gagal menghapus manager.");
-      }
-    };
+    await createLog({
+      uid: auth.currentUser?.uid ?? "",
+      role: role ?? ROLES.UNKNOWN,
+      action: "remove_manager",
+      detail: `Removed manager from ${cabangData.name}`,
+      target: cabangData.managerId,
+    });
+
+    alert("Manager berhasil dihapus!");
+    fetchData();
+  } catch (err) {
+    console.error("ERROR REMOVE MANAGER:", err);
+    alert("Gagal hapus manager.");
+  }
+};
+
 
 
 
