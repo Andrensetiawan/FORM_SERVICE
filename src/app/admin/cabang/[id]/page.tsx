@@ -84,19 +84,24 @@ export default function CabangDetailPage({ params }: Props) {
   // ================================================================
   // REMOVE MANAGER
   // ================================================================
-    const handleRemoveManager = async (cabangData: any) => {
+   const handleRemoveManager = async (cabangData: any) => {
+      if (!cabangData || !cabangData.managerId) return;
+
       try {
+        // Set user dari manager jadi staff
         await updateDoc(doc(db, "users", cabangData.managerId), {
           role: "staff",
           cabang: "",
         });
 
+        // Reset data manager di cabang
         await updateDoc(doc(db, "cabangs", cabangData.id), {
           managerId: "",
           managerName: "",
           managerEmail: "",
         });
 
+        // Buat log
         await createLog({
           uid: auth.currentUser?.uid ?? "",
           role: role ?? ROLES.UNKNOWN,
@@ -107,11 +112,12 @@ export default function CabangDetailPage({ params }: Props) {
 
         alert("Manager berhasil dihapus!");
         fetchData();
-      } catch (err) {
-        console.error("ERROR REMOVE MANAGER:", err);
+      } catch (error) {
+        console.error("ERROR REMOVE MANAGER:", error);
         alert("Gagal menghapus manager.");
       }
     };
+
 
 
   // ================================================================
