@@ -100,7 +100,7 @@ export default function NavbarStaff() {
             )}
 
             <Link
-              href="/"
+              href="/staff"
               className="flex items-center gap-3 hover:opacity-90 transition"
             >
               <Image

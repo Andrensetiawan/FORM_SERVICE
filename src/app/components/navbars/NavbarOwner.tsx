@@ -83,7 +83,7 @@ export default function NavbarManagement() {
             </button>
 
             <Link
-              href="/management"
+              href="/owner"
               className="flex items-center gap-3 hover:opacity-90 transition"
             >
               <Image
