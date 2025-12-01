@@ -40,8 +40,9 @@ export default function SignatureSection({
       const dataUrl = canvas.toDataURL("image/png");
 
       // upload ke Cloudinary
-      const url = await uploadImageToCloudinary(dataUrl);
-      setSignatureUrl(url);
+        const url = await uploadImageToCloudinary(dataUrl, "signatures");
+
+
 
       // update Firestore
       const ref = doc(db, "service_requests", docId);

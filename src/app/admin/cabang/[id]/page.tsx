@@ -10,21 +10,20 @@ import {
   where,
   getDocs,
   updateDoc,
-  
 } from "firebase/firestore";
-import { db,auth } from "@/lib/firebaseConfig";
+import { db, auth } from "@/lib/firebaseConfig";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/lib/roles";
 import { createLog } from "@/lib/log";
+import { Trash2 } from "lucide-react";
 
-
-interface Props {
+export default function CabangDetailPage({
+  params,
+}: {
   params: { id: string };
-}
-
-export default function CabangDetailPage({ params }: Props) {
+}) {
   const { id } = params;
   const { user, role, loading } = useAuth();
   const router = useRouter();
@@ -33,16 +32,13 @@ export default function CabangDetailPage({ params }: Props) {
   const [staff, setStaff] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  // ================================================================
-  // FETCH CABANG + STAFF
-  // ================================================================
   const fetchData = async () => {
     setLoadingData(true);
-
     try {
       const cabangDoc = await getDoc(doc(db, "cabangs", id));
       if (!cabangDoc.exists()) {
         setCabang(null);
+        setLoadingData(false);
         return;
       }
 
@@ -50,10 +46,7 @@ export default function CabangDetailPage({ params }: Props) {
       setCabang(cabangData);
 
       const staffSnap = await getDocs(
-        query(
-          collection(db, "users"),
-          where("cabang", "==", cabangData.id)
-        )
+        query(collection(db, "users"), where("cabang", "==", cabangData.id))
       );
 
       const arr: any[] = [];
@@ -63,7 +56,6 @@ export default function CabangDetailPage({ params }: Props) {
     } catch (err) {
       console.error("Error fetch detail cabang:", err);
     }
-
     setLoadingData(false);
   };
 
@@ -71,7 +63,6 @@ export default function CabangDetailPage({ params }: Props) {
     fetchData();
   }, [id]);
 
-  // Protect Route
   if (!loading && role !== ROLES.ADMIN) {
     return (
       <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
@@ -80,58 +71,44 @@ export default function CabangDetailPage({ params }: Props) {
     );
   }
 
-  // ================================================================
-  // REMOVE MANAGER
-  // ================================================================
   const handleRemoveManager = async (cabangData: any) => {
-  console.log("Removing manager...", cabangData); // Debug
+    if (!cabangData?.managerId) {
+      alert("Tidak ada manager untuk cabang ini.");
+      return;
+    }
 
-  if (!cabangData?.managerId) {
-    alert("Cabang belum punya manager.");
-    return;
-  }
+    try {
+      await updateDoc(doc(db, "users", cabangData.managerId), {
+        role: "staff",
+        cabang: "",
+      });
 
-  try {
-    await updateDoc(doc(db, "users", cabangData.managerId), {
-      role: "staff",
-      cabang: "",
-    });
+      await updateDoc(doc(db, "cabangs", cabangData.id), {
+        managerId: "",
+        managerName: "",
+        managerEmail: "",
+      });
 
-    await updateDoc(doc(db, "cabangs", cabangData.id), {
-      managerId: "",
-      managerName: "",
-      managerEmail: "",
-    });
+      await createLog({
+        uid: auth.currentUser?.uid ?? "",
+        role: role ?? ROLES.UNKNOWN,
+        action: "remove_manager",
+        detail: `Removed manager from cabang ${cabangData.name}`,
+        target: cabangData.managerId,
+      });
 
-    await createLog({
-      uid: auth.currentUser?.uid ?? "",
-      role: role ?? ROLES.UNKNOWN,
-      action: "remove_manager",
-      detail: `Removed manager from ${cabangData.name}`,
-      target: cabangData.managerId,
-    });
+      alert("Manager berhasil dihapus!");
+      fetchData();
+    } catch (err) {
+      console.error("ERROR REMOVE MANAGER:", err);
+      alert("Terjadi kesalahan.");
+    }
+  };
 
-    alert("Manager berhasil dihapus!");
-    fetchData();
-  } catch (err) {
-    console.error("ERROR REMOVE MANAGER:", err);
-    alert("Gagal hapus manager.");
-  }
-};
-
-
-
-
-  // ================================================================
-  // PROMOTE STAFF → MANAGER
-  // ================================================================
   const promoteToManager = async (u: any) => {
     if (!cabang) return;
 
-    const confirmMsg = confirm(
-      `Jadikan ${u.name} sebagai Manager cabang "${cabang.name}"?`
-    );
-    if (!confirmMsg) return;
+    if (!confirm(`Jadikan ${u.name} Manager cabang "${cabang.name}"?`)) return;
 
     try {
       await updateDoc(doc(db, "users", u.uid), {
@@ -154,62 +131,51 @@ export default function CabangDetailPage({ params }: Props) {
 
       await createLog({
         uid: user?.uid ?? "",
-        role: role ?? "unknown",
+        role: role ?? ROLES.UNKNOWN,
         action: "promote_staff_to_manager",
         detail: `Promoted ${u.email} to manager of ${cabang.name}`,
-        target: u.email,
+        target: u.uid,
       });
 
-      alert("Berhasil menjadikan Manager baru!");
+      alert("Berhasil!");
       fetchData();
     } catch (err) {
-      console.error(err);
+      console.error("Error promote:", err);
       alert("Gagal promote manager.");
     }
   };
 
-  // ================================================================
-  // RENDER UI
-  // ================================================================
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
+      <div className="min-h-screen bg-gray-50 pt-16">
         <NavbarSwitcher />
 
         <div className="max-w-4xl mx-auto px-6 py-10">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
-            📍 Detail Cabang
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">
+            Detail Cabang
           </h1>
 
           {loadingData ? (
-            <div className="text-center py-10 text-gray-600 font-semibold">
-              Memuat data cabang...
-            </div>
+            <p>Memuat data...</p>
           ) : !cabang ? (
-            <div className="text-center py-10 text-gray-500">
-              Cabang tidak ditemukan.
-            </div>
+            <p>Cabang tidak ditemukan.</p>
           ) : (
             <>
-              {/* CABANG HEADER */}
-              <div className="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100">
-                <h2 className="text-3xl font-bold text-gray-900">
+              <div className="bg-white p-6 rounded-xl shadow mb-8">
+                <h2 className="text-2xl font-bold text-gray-800">
                   {cabang.name}
                 </h2>
 
-                <p className="mt-3 text-blue-700 font-semibold">
+                <p className="mt-3 text-gray-700 font-medium">
                   Manager:{" "}
                   {cabang.managerName ? (
                     <>
-                      {cabang.managerName}{" "}
-                      <span className="text-gray-600">
-                        ({cabang.managerEmail})
-                      </span>
+                      {cabang.managerName} ({cabang.managerEmail})
                       <button
                         onClick={() => handleRemoveManager(cabang)}
-                        className="ml-3 px-3 py-1 text-xs rounded-md bg-red-200 text-red-700 hover:bg-red-300 transition"
+                        className="ml-3 px-3 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700"
                       >
-                        Hapus Manager
+                        <Trash2 size={14} /> Hapus
                       </button>
                     </>
                   ) : (
@@ -218,61 +184,32 @@ export default function CabangDetailPage({ params }: Props) {
                 </p>
               </div>
 
-              {/* STAFF LIST */}
-              <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">
-                  👥 Staff Cabang ({staff.length})
-                </h3>
+              <div className="bg-white p-6 rounded-xl shadow">
+                <h3 className="text-xl font-bold mb-4">Staff Cabang</h3>
 
                 {staff.length === 0 ? (
-                  <p className="text-gray-500">Belum ada staff.</p>
+                  <p>Belum ada staff.</p>
                 ) : (
-                  <div className="space-y-4">
-                    {staff.map((s) => {
-                      const isOnline =
-                        s.lastActive &&
-                        Date.now() - s.lastActive.toMillis() < 1000 * 60 * 5;
+                  staff.map((s) => (
+                    <div
+                      key={s.uid}
+                      className="flex justify-between items-center border-b py-3"
+                    >
+                      <div>
+                        <p className="font-semibold">{s.name}</p>
+                        <p className="text-sm text-gray-600">{s.email}</p>
+                      </div>
 
-                      return (
-                        <div
-                          key={s.uid}
-                          className="flex justify-between items-center border-b pb-4"
+                      {s.role !== "manager" && (
+                        <button
+                          onClick={() => promoteToManager(s)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
                         >
-                          <div>
-                            <p className="font-semibold text-gray-900 text-lg">
-                              {s.name}
-                            </p>
-                            <p className="text-sm text-gray-600">{s.email}</p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Role:{" "}
-                              <span className="font-semibold text-gray-700">
-                                {s.role}
-                              </span>
-                            </p>
-
-                            <span
-                              className={`mt-2 inline-block px-2 py-1 text-xs rounded-lg ${
-                                isOnline
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-200 text-gray-600"
-                              }`}
-                            >
-                              {isOnline ? "Online" : "Offline"}
-                            </span>
-                          </div>
-
-                          {s.role !== "manager" && (
-                            <button
-                              onClick={() => promoteToManager(s)}
-                              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition"
-                            >
-                              Promote → Manager
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                          Promote → Manager
+                        </button>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             </>

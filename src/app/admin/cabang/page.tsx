@@ -8,7 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
-import { Trash2, Plus, Search, Users } from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -24,16 +24,12 @@ export default function AdminCabangPage() {
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // ==========================================================
-  // 🔹 FETCH CABANGS
-  // ==========================================================
   const fetchCabangs = useCallback(async () => {
     setLoadingCabangs(true);
     try {
       const snap = await getDocs(collection(db, "cabangs"));
       const arr: any[] = [];
       snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
-
       arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       setCabangs(arr);
     } catch (err) {
@@ -43,22 +39,17 @@ export default function AdminCabangPage() {
     }
   }, []);
 
-  // ==========================================================
-  // 🔹 FETCH MANAGERS
-  // ==========================================================
   const fetchManagers = useCallback(async () => {
     try {
       const q = query(collection(db, "users"), where("approved", "==", true));
       const snap = await getDocs(q);
       const arr: any[] = [];
-
       snap.forEach((d) => {
         const raw = d.data() as any;
         if (String(raw.role).toLowerCase() === "manager") {
           arr.push({ uid: d.id, name: raw.name, email: raw.email });
         }
       });
-
       setManagers(arr);
     } catch (err) {
       console.error(err);
@@ -66,18 +57,13 @@ export default function AdminCabangPage() {
     }
   }, []);
 
-  // ==========================================================
-  // 🔹 FETCH STAFF PER CABANG (ALL USERS)
-  // ==========================================================
   const fetchStaffForAllCabangs = useCallback(async (cabangsList: any[]) => {
     const result: Record<string, any[]> = {};
-
     for (const cabang of cabangsList) {
       try {
         const snap = await getDocs(
           query(collection(db, "users"), where("cabang", "==", cabang.name))
         );
-
         const staffList: any[] = [];
         snap.forEach((d) => staffList.push({ uid: d.id, ...d.data() }));
         result[cabang.id] = staffList;
@@ -86,13 +72,9 @@ export default function AdminCabangPage() {
         result[cabang.id] = [];
       }
     }
-
     setStaffMap(result);
   }, []);
 
-  // ==========================================================
-  // ON LOAD
-  // ==========================================================
   useEffect(() => {
     (async () => {
       await fetchCabangs();
@@ -100,16 +82,12 @@ export default function AdminCabangPage() {
     })();
   }, [fetchCabangs, fetchManagers]);
 
-  // After cabangs loaded → fetch staff for each cabang
   useEffect(() => {
     if (cabangs.length > 0) {
       fetchStaffForAllCabangs(cabangs);
     }
   }, [cabangs, fetchStaffForAllCabangs]);
 
-  // ==========================================================
-  // ADD CABANG
-  // ==========================================================
   const handleAddCabang = async () => {
     const name = newCabang.trim();
     if (!name) return toast.error("Nama cabang tidak boleh kosong");
@@ -144,9 +122,6 @@ export default function AdminCabangPage() {
     setSaving(false);
   };
 
-  // ==========================================================
-  // SET MANAGER
-  // ==========================================================
   const handleSetManager = async (cabang: any, manager: any) => {
     if (!manager) return;
     setSaving(true);
@@ -180,26 +155,16 @@ export default function AdminCabangPage() {
     setSaving(false);
   };
 
-  // ==========================================================
-  // DELETE CABANG
-  // ==========================================================
   const handleDeleteCabang = async (name: string) => {
     if (!confirm(`Hapus cabang ${name}? Semua user akan di-unassign.`)) return;
-
     setDeletingId(name);
 
     try {
-      const snap = await getDocs(
-        query(collection(db, "cabangs"), where("name", "==", name))
-      );
-
+      const snap = await getDocs(query(collection(db, "cabangs"), where("name", "==", name)));
       for (const d of snap.docs) {
         const cId = d.id;
 
-        const usersSnap = await getDocs(
-          query(collection(db, "users"), where("cabang", "==", name))
-        );
-
+        const usersSnap = await getDocs(query(collection(db, "users"), where("cabang", "==", name)));
         for (const u of usersSnap.docs) {
           await updateDoc(doc(db, "users", u.id), {
             cabang: "",
@@ -220,16 +185,10 @@ export default function AdminCabangPage() {
     setDeletingId(null);
   };
 
-  // ==========================================================
-  // FILTERING
-  // ==========================================================
   const filtered = cabangs.filter((c) =>
     (c.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // ==========================================================
-  // UI
-  // ==========================================================
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
       <div className="min-h-screen bg-gray-100 pt-16">
@@ -240,7 +199,6 @@ export default function AdminCabangPage() {
             🏢 Manajemen Cabang
           </h1>
 
-          {/* Search + Add */}
           <div className="flex gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-3 text-gray-400" size={18} />
@@ -261,13 +219,13 @@ export default function AdminCabangPage() {
 
             <button
               onClick={handleAddCabang}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl flex items-center gap-1"
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl flex items-center gap-1 disabled:opacity-50"
             >
               <Plus size={20} />
             </button>
           </div>
 
-          {/* Cabang List */}
           <div className="space-y-4">
             {loadingCabangs ? (
               <div className="text-center py-10 text-gray-500">Memuat...</div>
@@ -285,25 +243,11 @@ export default function AdminCabangPage() {
                     </div>
                   </Link>
 
-                  {/* MANAGER */}
-                  {/* MANAGER INFO */}
-                <div className="mt-2 text-blue-600 font-semibold">
-                  Manager: {cabang.managerName || "-"}{" "}
-                  {cabang.managerEmail ? `(${cabang.managerEmail})` : ""}
-                </div>
+                  <div className="mt-2 text-blue-600 font-semibold">
+                    Manager: {cabang.managerName || "-"}{" "}
+                    {cabang.managerEmail ? `(${cabang.managerEmail})` : ""}
+                  </div>
 
-                {/* HAPUS MANAGER BUTTON */}
-                {cabang.managerId && (
-                  <button
-                    onClick={() => handleRemoveManager(cabang)}
-                    className="mt-2 text-sm px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition inline-flex items-center gap-2"
-                  >
-                    <Trash2 size={16} />
-                    Hapus Manager
-                  </button>
-                )}
-
-                  {/* STAFF */}
                   <div className="mt-2 text-gray-700">
                     <Users className="inline-block mr-2" size={18} />
                     Staff ({staffMap[cabang.id]?.length ?? 0}):
@@ -321,7 +265,6 @@ export default function AdminCabangPage() {
                     )}
                   </ul>
 
-                  {/* Manager Select */}
                   <div className="flex justify-between items-center mt-4">
                     <select
                       defaultValue={cabang.managerId || ""}
