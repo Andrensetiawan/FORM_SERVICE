@@ -11,10 +11,9 @@ export default function NavbarPublic() {
   const pathname = usePathname();
 
   const menuItems = [
-    { name: "Home", icon: <Home size={18} />, href: "/" },
-    { name: "Form Service", icon: <FileText size={18} />, href: "/forms/service" },
+    { name: "Home", icon: <Home size={18} />, href: "https://alifcybersolution.my.id/" },
     { name: "Status Service", icon: <Wrench size={18} />, href: "/status" },
-    { name: "Contact", icon: <PhoneCall size={18} />, href: "/contact" },
+    { name: "Contact", icon: <PhoneCall size={18} />, href: "https://alifcybersolution.my.id/contact/" },
   ];
 
   return (
@@ -22,7 +21,7 @@ export default function NavbarPublic() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* === Brand === */}
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="https://alifcybersolution.my.id" className="flex items-center gap-3">
             <Image
               src="/logo-ico.png"
               alt="Logo"

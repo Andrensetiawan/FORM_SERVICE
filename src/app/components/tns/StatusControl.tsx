@@ -16,6 +16,7 @@ type Props = {
   handleUpdateStatus: () => Promise<void>;
   formatDateTime: (ts: any) => string;
   statusLog: StatusLog[];
+  isReadOnly?: boolean; // New prop
 };
 
 export default function StatusControl({
@@ -25,6 +26,7 @@ export default function StatusControl({
   handleUpdateStatus,
   formatDateTime,
   statusLog,
+  isReadOnly = false, // Default to not read-only
 }: Props) {
   return (
     <section className="bg-[#0f1c33] border border-blue-900/30 rounded-xl p-6 space-y-5 shadow-lg">
@@ -32,30 +34,34 @@ export default function StatusControl({
         Status Service
       </h3>
 
-      <p className="text-sm text-gray-400 -mt-3">Ubah status dan simpan sebagai log:</p>
+      {!isReadOnly && (
+        <>
+          <p className="text-sm text-gray-400 -mt-3">Ubah status dan simpan sebagai log:</p>
+          <div className="flex justify-between items-center gap-3">
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              disabled={isSaving || isReadOnly}
+              className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm w-56 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="pending">1. Diagnosa/Pending</option>
+              <option value="process">2. Proses Pengerjaan</option>
+              <option value="waiting_approval">3. Menunggu Konfirmasi</option>
+              <option value="ready">4. Siap Diambil</option>
+              <option value="done">5. Selesai</option>
+              <option value="cancel">9. Batal</option>
+            </select>
 
-      <div className="flex justify-between items-center gap-3">
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm w-56"
-        >
-          <option value="pending">1. Diagnosa/Pending</option>
-          <option value="process">2. Proses Pengerjaan</option>
-          <option value="waiting_approval">3. Menunggu Konfirmasi</option>
-          <option value="ready">4. Siap Diambil</option>
-          <option value="done">5. Selesai</option>
-          <option value="cancel">9. Batal</option>
-        </select>
-
-        <button
-          disabled={isSaving}
-          onClick={handleUpdateStatus}
-          className="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold disabled:opacity-50"
-        >
-          {isSaving ? "Menyimpan..." : "Update"}
-        </button>
-      </div>
+            <button
+              disabled={isSaving || isReadOnly}
+              onClick={handleUpdateStatus}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Menyimpan..." : "Update"}
+            </button>
+          </div>
+        </>
+      )}
 
       <div className="pt-4 border-t border-blue-900/40">
         <p className="text-sm font-semibold text-gray-300 mb-2">Riwayat Status:</p>

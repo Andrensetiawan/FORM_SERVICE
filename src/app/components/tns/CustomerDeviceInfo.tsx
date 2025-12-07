@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { Edit, Save, X } from "lucide-react";
-import TeknisiUdate from "./TeknisiUpdate";
 
 type Props = {
   serviceData: any;
@@ -13,6 +12,7 @@ type Props = {
   onUpdate: (data: any) => void;
   setErrorMsg: (m: string | null) => void;
   setSuccessMsg: (m: string | null) => void;
+  isReadOnly?: boolean; // New prop
 };
 
 // Helper component for input fields
@@ -36,28 +36,23 @@ export default function CustomerDeviceInfo({
   onUpdate,
   setErrorMsg,
   setSuccessMsg,
+  isReadOnly = false, // Default to not read-only
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableData, setEditableData] = useState({
     ...serviceData,
-    teknisi_bertugas: serviceData.teknisi_bertugas || "",
   });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setEditableData({
       ...serviceData,
-      teknisi_bertugas: serviceData.teknisi_bertugas || "",
     });
   }, [serviceData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEditableData((prev: any) => ({ ...prev, [name]: value }));
-  };
-
-  const handleTechnicianSelect = (technicianName: string) => {
-    setEditableData((prev: any) => ({ ...prev, teknisi_bertugas: technicianName }));
   };
 
   const handleUpdate = async () => {
@@ -79,18 +74,15 @@ export default function CustomerDeviceInfo({
   };
   
   const handleCancel = () => {
-    setEditableData({
-      ...serviceData,
-      teknisi_bertugas: serviceData.teknisi_bertugas || "",
-    }); // Revert changes
+    setEditableData({ ...serviceData }); // Revert changes
     setIsEditing(false);
   };
 
   return (
     <section className="grid md:grid-cols-2 gap-6 relative">
       
-      {/* EDIT BUTTON */}
-      {!isEditing && (
+      {/* EDIT BUTTON - now conditional */}
+      {!isReadOnly && !isEditing && (
         <button 
           onClick={() => setIsEditing(true)}
           className="absolute top-0 right-0 mt-4 mr-4 flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded-lg shadow-md transition-colors"

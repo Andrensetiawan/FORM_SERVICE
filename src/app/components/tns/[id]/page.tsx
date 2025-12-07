@@ -8,11 +8,11 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import useAuth from "@/hooks/useAuth";
 import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { ROLES } from "@/lib/roles";
 
 import CustomerDeviceInfo from "@/app/components/tns/CustomerDeviceInfo";
 import StatusControl from "@/app/components/tns/StatusControl";
+import CustomerLog from "@/app/components/tns/CustomerLog";
 import EstimasiSection from "@/app/components/tns/EstimasiSection";
 import MediaUploadSection from "@/app/components/tns/PhotoUploadSection";
 import SignatureSection from "@/app/components/tns/SignatureSection";
@@ -47,8 +47,12 @@ export default function ServiceDetailPage() {
   const [selectedTechnicianName, setSelectedTechnicianName] = useState("");
 
   const docId = (params as any)?.id as string;
-  const isInternal = role !== ROLES.CUSTOMER;
-  const isAdmin = role === ROLES.ADMIN || role === ROLES.MANAGER || role === ROLES.OWNER;
+  
+  // Define roles based on logged-in user, default to false if no user
+  const isInternal = user && role !== ROLES.CUSTOMER;
+  const isAdmin = !!(user && (role === ROLES.ADMIN || role === ROLES.MANAGER || role === ROLES.OWNER));
+  const isPublic = !user;
+
 
   const setSuccessMsg = (msg: string | null) => {
     if (msg) toast.success(msg);
@@ -61,13 +65,10 @@ export default function ServiceDetailPage() {
     setSelectedTechnicianName(technicianName);
   };
 
-  /* Protect page */
+  /* Load data - now runs for everyone */
   useEffect(() => {
-    if (!loading && !user) router.push("/login");
-  }, [loading, user, router]);
+    if (!docId) return;
 
-  /* Load data */
-  useEffect(() => {
     const loadData = async () => {
       try {
         const ref = doc(db, "service_requests", docId);
@@ -75,7 +76,7 @@ export default function ServiceDetailPage() {
 
         if (!snap.exists()) {
           setErrorMsg("Data tidak ditemukan");
-          notFound(); // Call notFound() if document doesn't exist
+          return notFound();
         }
 
         const data = snap.data();
@@ -83,7 +84,11 @@ export default function ServiceDetailPage() {
 
         setStatus(data.status || "pending");
         setStatusLog(data.status_log || []);
-        setSelectedTechnicianName(data.assignedTechnician || "");
+        
+        // Only set technician if it exists
+        if(data.assignedTechnician) {
+            setSelectedTechnicianName(data.assignedTechnician);
+        }
 
         const est: EstimasiItem[] = (data.estimasi_items || []).map((e: any) => ({
           id: String(e.id),
@@ -94,7 +99,6 @@ export default function ServiceDetailPage() {
         }));
         setEstimasiItems(est);
 
-        // Ensure photo URLs are always arrays
         setHandoverPhotoUrl(Array.isArray(data.handover_photo_url) ? data.handover_photo_url : (data.handover_photo_url ? [data.handover_photo_url] : []));
         setPickupPhotoUrl(Array.isArray(data.pickup_photo_url) ? data.pickup_photo_url : (data.pickup_photo_url ? [data.pickup_photo_url] : []));
         setBuktiTransferPhotoUrl(Array.isArray(data.transfer_proof_url) ? data.transfer_proof_url : (data.transfer_proof_url ? [data.transfer_proof_url] : []));
@@ -106,18 +110,18 @@ export default function ServiceDetailPage() {
       }
     };
 
-    if (user) loadData();
-  }, [user, docId]);
+    loadData();
+  }, [docId]);
 
   const formatDateTime = (ts: any) => {
-    if (typeof ts === "number") {
-      return new Date(ts).toLocaleString("id-ID", {
+    if (ts?.seconds) {
+      return new Date(ts.seconds * 1000).toLocaleString("id-ID", {
         dateStyle: "short",
         timeStyle: "short",
       });
     }
-    if (ts?.seconds) {
-      return new Date(ts.seconds * 1000).toLocaleString("id-ID", {
+     if (typeof ts === "number") {
+      return new Date(ts).toLocaleString("id-ID", {
         dateStyle: "short",
         timeStyle: "short",
       });
@@ -131,25 +135,20 @@ export default function ServiceDetailPage() {
 
     try {
       setSaving(true);
-
       const ref = doc(db, "service_requests", docId);
       const snap = await getDoc(ref);
       const data = snap.data();
-
       const safeLog = Array.isArray(data?.status_log) ? data.status_log : [];
-
       const entry = {
         status,
         updatedBy: user?.email || "system",
         updatedAt: Date.now(),
       };
-
       await updateDoc(ref, {
         status,
         updatedAt: serverTimestamp(),
         status_log: [...safeLog, entry],
       });
-
       setStatusLog((prev) => [...prev, entry]);
       setSuccessMsg("Status berhasil diperbarui!");
     } catch (err) {
@@ -161,20 +160,9 @@ export default function ServiceDetailPage() {
   };
 
   /* Estimasi */
-  const addRow = () =>
-    setEstimasiItems((prev) => [
-      ...prev,
-      { id: String(prev.length + 1), item: "", harga: 0, qty: 1, total: 0 },
-    ]);
-
-  const removeRow = (id: string) =>
-    setEstimasiItems((prev) => prev.filter((x) => x.id !== id));
-
-  const handleChange = (
-    id: string,
-    field: "item" | "harga" | "qty",
-    value: string | number
-  ) => {
+  const addRow = () => setEstimasiItems((prev) => [...prev, { id: String(Date.now()), item: "", harga: 0, qty: 1, total: 0 }]);
+  const removeRow = (id: string) => setEstimasiItems((prev) => prev.filter((x) => x.id !== id));
+  const handleChange = (id: string, field: "item" | "harga" | "qty", value: string | number) => {
     setEstimasiItems((prev) =>
       prev.map((x) => {
         if (x.id !== id) return x;
@@ -188,45 +176,32 @@ export default function ServiceDetailPage() {
     );
   };
 
-  const totalEstimasi = estimasiItems.reduce(
-    (sum, x) => sum + (x.total || 0),
-    0
-  );
+  const totalEstimasi = estimasiItems.reduce((sum, x) => sum + (x.total || 0), 0);
 
   useEffect(() => {
     if (serviceData) {
       const dp = serviceData.dp || 0;
       const newTotalBiaya = totalEstimasi - dp;
-      setServiceData((prev: any) => ({
-        ...prev,
-        total_biaya: newTotalBiaya,
-      }));
+      setServiceData((prev: any) => ({ ...prev, total_biaya: newTotalBiaya }));
     }
   }, [totalEstimasi, serviceData?.dp]);
 
   const handleDpChange = (value: number) => {
-    setServiceData((prev: any) => ({
-      ...prev,
-      dp: value,
-    }));
+    setServiceData((prev: any) => ({ ...prev, dp: value, }));
   };
 
   const handleSaveEstimasi = async () => {
     if (!isInternal) return;
-
     try {
       setSaving(true);
-
       const dp = serviceData.dp || 0;
       const newTotalBiaya = totalEstimasi - dp;
-
       await updateDoc(doc(db, "service_requests", docId), {
         estimasi_items: estimasiItems,
         total_biaya: newTotalBiaya,
         dp: dp,
         updatedAt: serverTimestamp(),
       });
-
       setSuccessMsg("Estimasi berhasil disimpan!");
     } catch (err) {
       console.error("handleSaveEstimasi", err);
@@ -237,123 +212,123 @@ export default function ServiceDetailPage() {
   };
 
   const handlePhotoUpdate = (field: string, urls: string[]) => {
-    if (field === "handover_photo_url") {
-      setHandoverPhotoUrl(urls);
-    } else if (field === "pickup_photo_url") {
-      setPickupPhotoUrl(urls);
-    } else if (field === "transfer_proof_url") {
-      setBuktiTransferPhotoUrl(urls);
-    }
+    if (field === "handover_photo_url") setHandoverPhotoUrl(urls);
+    else if (field === "pickup_photo_url") setPickupPhotoUrl(urls);
+    else if (field === "transfer_proof_url") setBuktiTransferPhotoUrl(urls);
   };
 
   const handleInfoUpdate = (updatedData: any) => {
     setServiceData((prev: any) => ({ ...prev, ...updatedData }));
   };
 
-  if (loading || loadingData)
-    return <div className="p-10 text-white">Memuat data…</div>;
+  if (loading || loadingData) return <div className="h-screen w-full flex items-center justify-center bg-[#0d1117] text-white"><h1>Memuat data service...</h1></div>;
+  if (!serviceData) return <div className="h-screen w-full flex items-center justify-center bg-[#0d1117] text-white"><h1>Data service tidak ditemukan.</h1></div>;
+
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-[#0d1117] text-white">
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-        />
+    <div className="min-h-screen bg-[#0d1117] text-white">
+        <Toaster position="top-center" reverseOrder={false} />
         <NavbarSwitcher />
 
         <div className="pt-24 max-w-6xl mx-auto p-6 space-y-8">
-          <h1 className="text-3xl font-bold text-gray-100 mb-4">
-            Service Detail <span className="text-blue-400">TNS: {serviceData?.track_number}</span>
-          </h1>
+            <h1 className="text-3xl font-bold text-gray-100 mb-4">
+                Service Detail <span className="text-blue-400">TNS: {serviceData?.track_number}</span>
+            </h1>
 
-          <CustomerDeviceInfo
-            docId={docId}
-            serviceData={serviceData}
-            formatDateTime={formatDateTime}
-            onUpdate={handleInfoUpdate}
-            setErrorMsg={setErrorMsg}
-            setSuccessMsg={setSuccessMsg}
-          />
-
-          <StatusControl
-            status={status}
-            setStatus={setStatus}
-            statusLog={statusLog}
-            isSaving={saving}
-            handleUpdateStatus={handleUpdateStatus}
-            formatDateTime={formatDateTime}
-          />
-
-          <EstimasiSection
-            estimasiItems={estimasiItems}
-            totalEstimasi={totalEstimasi}
-            dp={serviceData?.dp || 0}
-            onDpChange={handleDpChange}
-            handleSave={handleSaveEstimasi}
-            addRow={addRow}
-            removeRow={removeRow}
-            handleChange={handleChange}
-            isSaving={saving}
-          />
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <MediaUploadSection
-              docId={docId}
-              field="transfer_proof_url"
-              title="Foto Bukti Transfer"
-              existingUrl={buktiTransferPhotoUrl}
-              setErrorMsg={setErrorMsg}
-              setSuccessMsg={setSuccessMsg}
-              onUpdate={(urls) => handlePhotoUpdate("transfer_proof_url", urls)}
-              showCamera={true}
+            <CustomerDeviceInfo
+                docId={docId}
+                serviceData={serviceData}
+                formatDateTime={formatDateTime}
+                onUpdate={handleInfoUpdate}
+                setErrorMsg={setErrorMsg}
+                setSuccessMsg={setSuccessMsg}
+                isReadOnly={isPublic} // Pass read-only state
             />
-            <MediaUploadSection
-              docId={docId}
-              field="handover_photo_url"
-              title="Foto Serah Terima"
-              existingUrl={handoverPhotoUrl}
-              setErrorMsg={setErrorMsg}
-              setSuccessMsg={setSuccessMsg}
-              onUpdate={(urls) => handlePhotoUpdate("handover_photo_url", urls)}
-              showCamera={true}
+            <StatusControl
+                status={status}
+                setStatus={setStatus}
+                statusLog={statusLog}
+                isSaving={saving}
+                handleUpdateStatus={handleUpdateStatus}
+                formatDateTime={formatDateTime}
+                isReadOnly={!isInternal} // Disable for non-internal users
+            />
+            
+            
+            {isInternal && (
+              <>
+                <EstimasiSection
+                  estimasiItems={estimasiItems}
+                  totalEstimasi={totalEstimasi}
+                  dp={serviceData?.dp || 0}
+                  onDpChange={handleDpChange}
+                  handleSave={handleSaveEstimasi}
+                  addRow={addRow}
+                  removeRow={removeRow}
+                  handleChange={handleChange}
+                  isSaving={saving}
+                />
+                <div className="grid md:grid-cols-3 gap-4">
+                  <MediaUploadSection
+                    docId={docId}
+                    field="transfer_proof_url"
+                    title="Foto Bukti Transfer"
+                    existingUrl={buktiTransferPhotoUrl}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                    onUpdate={(urls) => handlePhotoUpdate("transfer_proof_url", urls)}
+                    showCamera={true}
+                  />
+                  <MediaUploadSection
+                    docId={docId}
+                    field="handover_photo_url"
+                    title="Foto Serah Terima"
+                    existingUrl={handoverPhotoUrl}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                    onUpdate={(urls) => handlePhotoUpdate("handover_photo_url", urls)}
+                    showCamera={true}
+                  />
+                  <MediaUploadSection
+                    docId={docId}
+                    field="pickup_photo_url"
+                    title="Foto Pengambilan"
+                    existingUrl={pickupPhotoUrl}
+                    setErrorMsg={setErrorMsg}
+                    setSuccessMsg={setSuccessMsg}
+                    onUpdate={(urls) => handlePhotoUpdate("pickup_photo_url", urls)}
+                    showCamera={true}
+                  />
+                </div>
+                <SignatureSection
+                  docId={docId}
+                  existingSignature={serviceData?.customer_signature_url}
+                  existingSignaturePublicId={serviceData?.customer_signature_public_id}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                />
+                <div className="mt-8 p-6 bg-[#0d1117] border border-gray-700 shadow rounded-2xl">
+                    <h3 className="text-lg font-semibold text-white border-b border-gray-600 pb-2 mb-4">
+                    Penugasan Teknisi (TNS: {serviceData?.track_number})
+                    </h3>
+                    <TeknisiUdate
+                      docId={docId}
+                      currentTechnician={selectedTechnicianName}
+                      onTechnicianSelect={handleSelectTechnician}
+                      isEditing={isAdmin}
+                      setErrorMsg={setErrorMsg}
+                      setSuccessMsg={setSuccessMsg}
+                    />
+                </div>
+              </>
+            )}
+            <CustomerLog
+                docId={docId}
+                setErrorMsg={setErrorMsg}
+                setSuccessMsg={setSuccessMsg}
             />
 
-            <MediaUploadSection
-              docId={docId}
-              field="pickup_photo_url"
-              title="Foto Pengambilan"
-              existingUrl={pickupPhotoUrl}
-              setErrorMsg={setErrorMsg}
-              setSuccessMsg={setSuccessMsg}
-              onUpdate={(urls) => handlePhotoUpdate("pickup_photo_url", urls)}
-              showCamera={true}
-            />
-          </div>
-
-          <SignatureSection
-            docId={docId}
-            existingSignature={serviceData?.customer_signature_url}
-            existingSignaturePublicId={serviceData?.customer_signature_public_id}
-            user={user}
-            setErrorMsg={setErrorMsg}
-            setSuccessMsg={setSuccessMsg}
-          />
         </div>
-        <div className="mt-8 p-6 bg-[#0d1117] border border-gray-700 shadow rounded-2xl">
-            <h3 className="text-lg font-semibold text-white border-b border-gray-600 pb-2 mb-4">
-              Penugasan Teknisi (TNS: {serviceData?.track_number})
-            </h3>
-            <TeknisiUdate
-              docId={docId}
-              currentTechnician={selectedTechnicianName}
-              onTechnicianSelect={handleSelectTechnician}
-              isEditing={isAdmin} // Only admin can edit technician assignment
-              setErrorMsg={setErrorMsg}
-              setSuccessMsg={setSuccessMsg}
-            />
-          </div>
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 }
