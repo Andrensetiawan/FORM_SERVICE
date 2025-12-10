@@ -21,6 +21,7 @@ export const ROLES_CAN_MANAGE_STAFF = [
 export const ROLES_CAN_MANAGE_SYSTEM = [
   ROLES.ADMIN,
   ROLES.OWNER,
+  ROLES.MANAGER,
 ] as const;
 
 // 🔒 TYPE SAH

@@ -42,8 +42,8 @@ export default function ProtectedRoute({
     );
   }
 
-  // 🔑 4. ADMIN = SUPERUSER (BOLEH AKSES SEMUA)
-  if (role === ROLES.ADMIN) {
+  // 🔑 4. ADMIN, OWNER, MANAGER = SUPERUSER (BOLEH AKSES SEMUA)
+  if (role === ROLES.ADMIN || role === ROLES.OWNER || role === ROLES.MANAGER) {
     return <>{children}</>;
   }
 

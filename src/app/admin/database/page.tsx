@@ -39,11 +39,7 @@ export default function AdminDatabasePage() {
     }, 3000); // Hide after 3 seconds
   };
 
-  useEffect(() => {
-    if (!loading && role !== ROLES.ADMIN) {
-      router.push("/unauthorized");
-    }
-  }, [role, loading, router]);
+  
 
   if (loading) {
     return (
@@ -154,7 +150,7 @@ export default function AdminDatabasePage() {
   // ==== UI PAGE (Sudah Rapi & Smooth) ===
   // ======================================
   return (
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
         <NavbarSwitcher />
 

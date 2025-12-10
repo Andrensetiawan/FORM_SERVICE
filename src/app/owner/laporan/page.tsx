@@ -610,7 +610,7 @@ export default function ServiceReportPage() {
                         key={s.id}
                         className="border-b hover:bg-blue-50/30 transition cursor-pointer"
                         onClick={() =>
-                          !isUnknown && router.push(`/manager/laporan/teknisi/${s.id}`)
+                          !isUnknown && router.push(`/owner/laporan/teknisi/${s.id}`)
                         }
                         title={`Klik untuk lihat detail ${s.name}`}
                       >

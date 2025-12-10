@@ -41,11 +41,7 @@ export default function LogsViewerPage() {
   // ROLE PROTECTION (ADMIN ONLY)
   // ============================================================
 
-  useEffect(() => {
-    if (!loading && role !== ROLES.ADMIN) {
-      router.push("/unauthorized");
-    }
-  }, [loading, role, router]);
+  
 
   // ============================================================
   // FETCH LOGS
@@ -152,7 +148,7 @@ export default function LogsViewerPage() {
   // ============================================================
 
   return (
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <NavbarSwitcher />
 
       <div className="min-h-screen bg-gray-100 px-6 py-24">

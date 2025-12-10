@@ -190,7 +190,7 @@ export default function AdminCabangPage() {
   );
 
   return (
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <div className="min-h-screen bg-gray-100 pt-16">
         <NavbarSwitcher />
 

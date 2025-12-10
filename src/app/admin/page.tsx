@@ -85,7 +85,7 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!loading && role === ROLES.ADMIN) {
+    if (!loading && (role === ROLES.ADMIN || role === ROLES.OWNER || role === ROLES.MANAGER)) {
       fetchStats();
     }
   }, [loading, role, fetchStats]);
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <NavbarSwitcher />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">

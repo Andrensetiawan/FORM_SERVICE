@@ -63,9 +63,9 @@ export default function CabangDetailPage({
     fetchData();
   }, [id]);
 
-  if (!loading && role !== ROLES.ADMIN) {
+  if (!loading && role !== ROLES.ADMIN && role !== ROLES.OWNER && role !== ROLES.MANAGER) {
     return (
-      <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+      <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
         <></>
       </ProtectedRoute>
     );
@@ -152,7 +152,7 @@ export default function CabangDetailPage({
   };
 
   return (
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <div className="min-h-screen bg-gray-50 pt-16">
         <NavbarSwitcher />
 

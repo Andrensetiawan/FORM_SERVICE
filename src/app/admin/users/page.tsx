@@ -19,7 +19,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import toast from "react-hot-toast";
-import { createLog } from "@/lib/log"; // sesuai konfirmasi kamu
+import { createLog } from "@/lib/log";
 
 // -----------------------------
 // Types
@@ -28,9 +28,10 @@ type UserRow = {
   id: string;
   name: string;
   email: string;
-  role: string; // always string (we set default)
+  role: string;
   online: boolean;
   cabang: string;
+  division: string; // Ditambahkan
   createdAt: Date | null;
   lastActive: Date | null;
 };
@@ -40,6 +41,7 @@ type ModifiedRecord = Record<
   {
     role?: string;
     cabang?: string;
+    division?: string; // Ditambahkan
   }
 >;
 
@@ -58,6 +60,9 @@ export default function AdminUsersPage() {
 
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterCabang, setFilterCabang] = useState<string>("all");
+  const [filterDivision, setFilterDivision] = useState<string>("all"); // Ditambahkan
+
+  const divisionOptions = ["IT", "finance", "admin", "sales", "GA", "teknisi"]; // Ditambahkan
 
   // -----------------------------
   // fetch users (approved true)
@@ -77,7 +82,8 @@ export default function AdminUsersPage() {
           email: raw.email ?? "-",
           role: (raw.role ?? "user").toLowerCase(),
           online: raw.online ?? false,
-          cabang: raw.cabang ?? "-", // ensure string
+          cabang: raw.cabang ?? "-",
+          division: raw.division ?? "-", // Ditambahkan
           createdAt: raw.createdAt instanceof Timestamp ? raw.createdAt.toDate() : null,
           lastActive: raw.lastActive instanceof Timestamp ? raw.lastActive.toDate() : null,
         });
@@ -97,7 +103,7 @@ export default function AdminUsersPage() {
   // -----------------------------
   const fetchCabang = async () => {
     try {
-      const snap = await getDocs(collection(db, "cabangs")); // sesuai struktur Firestore kamu
+      const snap = await getDocs(collection(db, "cabangs"));
       const arr: string[] = [];
       snap.forEach((d) => {
         const data = d.data() as any;
@@ -116,7 +122,7 @@ export default function AdminUsersPage() {
   }, []);
 
   // -----------------------------
-  // save changes (role + cabang)
+  // save changes (role + cabang + division)
   // -----------------------------
   const saveChanges = async () => {
     if (Object.keys(modified).length === 0) {
@@ -132,17 +138,16 @@ export default function AdminUsersPage() {
 
         const changes = modified[uid];
 
-        // use fallback to oldUser values so we always write string
         const newRole = changes.role ?? oldUser.role;
         const newCabang = changes.cabang ?? oldUser.cabang;
+        const newDivision = changes.division ?? oldUser.division; // Ditambahkan
 
-        // update firestore (only fields we want)
         await updateDoc(doc(db, "users", uid), {
           role: newRole,
           cabang: newCabang,
+          division: newDivision, // Ditambahkan
         });
 
-        // LOG ROLE
         if (changes.role && changes.role !== oldUser.role) {
           createLog({
             uid: user?.uid || "",
@@ -153,13 +158,22 @@ export default function AdminUsersPage() {
           });
         }
 
-        // LOG CABANG
         if (changes.cabang && changes.cabang !== oldUser.cabang) {
           createLog({
             uid: user?.uid || "",
             role: role || "unknown",
             action: "change_branch",
             detail: `from ${oldUser.cabang} → ${changes.cabang}`,
+            target: oldUser.email || "",
+          });
+        }
+
+        if (changes.division && changes.division !== oldUser.division) {
+          createLog({
+            uid: user?.uid || "",
+            role: role || "unknown",
+            action: "change_division",
+            detail: `from ${oldUser.division} → ${changes.division}`,
             target: oldUser.email || "",
           });
         }
@@ -184,7 +198,6 @@ export default function AdminUsersPage() {
 
     try {
       await deleteDoc(doc(db, "users", id));
-
       createLog({
         uid: user?.uid || "",
         role: role || "unknown",
@@ -192,8 +205,6 @@ export default function AdminUsersPage() {
         detail: `Delete user ${email}`,
         target: email || "",
       });
-
-
       toast.success("Pengguna dihapus.");
       fetchUsers();
     } catch (err) {
@@ -216,14 +227,15 @@ export default function AdminUsersPage() {
   const filteredUsers = users.filter((u) => {
     const matchRole = filterRole === "all" || u.role === filterRole;
     const matchCabang = filterCabang === "all" || u.cabang === filterCabang;
-    return matchRole && matchCabang;
+    const matchDivision = filterDivision === "all" || u.division === filterDivision; // Ditambahkan
+    return matchRole && matchCabang && matchDivision;
   });
 
   // -----------------------------
   // render
   // -----------------------------
   return (
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <div className="min-h-screen bg-gray-50 pt-16">
         <NavbarSwitcher />
 
@@ -263,6 +275,22 @@ export default function AdminUsersPage() {
                 ))}
               </select>
             </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-gray-700 mb-1">Filter Divisi</label>
+              <select
+                value={filterDivision}
+                onChange={(e) => setFilterDivision(e.target.value)}
+                className="border border-gray-300 px-3 py-2 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              >
+                <option value="all">Semua</option>
+                {divisionOptions.map((d, i) => (
+                  <option key={i} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* SAVE BUTTON */}
@@ -286,6 +314,7 @@ export default function AdminUsersPage() {
                   <th className="py-3 px-4 text-left">User</th>
                   <th className="py-3 px-4">Role</th>
                   <th className="py-3 px-4">Cabang</th>
+                  <th className="py-3 px-4">Divisi</th>
                   <th className="py-3 px-4">Created</th>
                   <th className="py-3 px-4">Last Login</th>
                   <th className="py-3 px-4 text-center">Aksi</th>
@@ -295,7 +324,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {loadingUsers ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-600 text-sm">
+                    <td colSpan={7} className="text-center py-8 text-gray-600 text-sm">
                       Memuat pengguna...
                     </td>
                   </tr>
@@ -347,6 +376,29 @@ export default function AdminUsersPage() {
                           {cabangList.map((c, idx) => (
                             <option key={idx} value={c}>
                               {c}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <select
+                          defaultValue={u.division}
+                          onChange={(e) =>
+                            setModified((prev) => ({
+                              ...prev,
+                              [u.id]: {
+                                ...prev[u.id],
+                                division: e.target.value,
+                              },
+                            }))
+                          }
+                          className="border rounded-lg px-3 py-1 bg-white"
+                        >
+                          <option value="-">-</option>
+                          {divisionOptions.map((d, idx) => (
+                            <option key={idx} value={d}>
+                              {d}
                             </option>
                           ))}
                         </select>

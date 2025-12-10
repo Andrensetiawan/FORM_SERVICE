@@ -59,11 +59,11 @@ export default function NavbarManagement() {
 
   const menuItems = [
     // hanya owner atau admin yang melihat menu Pending Approval
-    ...(user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
-      ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/manager/pending-users" }]
+    ...(user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN || user?.role === ROLES.MANAGER
+      ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/owner/pending-users" }]
       : []),
-    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/manager/staff" },
-    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/manager/laporan" },
+    { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/owner/staff" },
+    { name: "Laporan", icon: <FileBarChart size={18} />, href: "/owner/laporan" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
     { name: "Status Service", icon: <Wrench size={18} />, href: "/manager" },
   ];
