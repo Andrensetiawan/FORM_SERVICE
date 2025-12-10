@@ -5,8 +5,8 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import useAuth from "@/hooks/useAuth";
 import Link from "next/link";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { ROLES } from "@/lib/roles";
 
 type ServiceRequest = {
@@ -436,7 +436,7 @@ export default function StaffPage() {
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <Link
-                              href={`/components/tns/${item.id}`}
+                              href={`/tns/${item.id}`}
                               className="status-link"
                             >
                               {item.track_number || `WO${index + 1}`}

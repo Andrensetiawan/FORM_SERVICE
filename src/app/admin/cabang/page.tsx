@@ -5,8 +5,8 @@ import { collection, getDocs, query, where, addDoc, updateDoc, doc, deleteDoc } 
 import { db } from "@/lib/firebaseConfig";
 import { createLog } from "@/lib/log";
 import useAuth from "@/hooks/useAuth";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
 import { Plus, Search, Users } from "lucide-react";
 import toast from "react-hot-toast";

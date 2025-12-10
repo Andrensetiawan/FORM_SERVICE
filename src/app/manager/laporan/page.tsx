@@ -18,7 +18,7 @@ import {
 import { db } from "@/lib/firebaseConfig";
 import { collection, getDocs, query, Timestamp } from "firebase/firestore";
 import { Wrench, CheckCircle, Clock, User } from "lucide-react";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import { useRouter } from "next/navigation";
 
 // =======================

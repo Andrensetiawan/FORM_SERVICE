@@ -16,7 +16,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import toast from "react-hot-toast";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 
 export default function PendingUsersPage() {
   const { user, role, loading } = useAuth();

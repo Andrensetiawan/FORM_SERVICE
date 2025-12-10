@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Upload, X } from "lucide-react";
+import useAuth from "@/hooks/useAuth"; // Import useAuth
 
 type Props = {
   docId: string;
@@ -17,6 +18,7 @@ export default function PhotoUpload({
   label = "📸 Upload Foto",
   onUploadComplete 
 }: Props) {
+  const { user } = useAuth(); // Get user from auth hook
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -55,17 +57,27 @@ export default function PhotoUpload({
       toast.error("Pilih file dulu");
       return;
     }
+    if (!user) {
+      toast.error("Anda harus login untuk upload.");
+      return;
+    }
 
     try {
       setUploading(true);
 
+      const token = await user.getIdToken();
+
       // Convert to FormData
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("folderPath", `${folderName}/${docId}`); // Kirim folder path
 
-      // Upload to our API route
+      // Upload to our API route with Authorization header
       const response = await fetch("/api/upload", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 

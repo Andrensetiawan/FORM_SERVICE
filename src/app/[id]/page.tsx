@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import toast, { Toaster } from "react-hot-toast";
 import { Upload, Trash2, ArrowLeft, Mail } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
-import TeknisiUdate from "../components/tns/TeknisiUpdate";
+import TeknisiUdate from "@/components/tns/TeknisiUpdate";
+import { createLog } from "@/lib/log";
+import { UserRole } from "@/lib/roles";
 
 // Define a type for the user data
 type UserData = {
@@ -84,12 +86,26 @@ export default function ProfilePage() {
 
   // ============================= SAVE =============================
   const handleSave = async () => {
+    if (!user) {
+      toast.error("Anda harus login untuk menyimpan.");
+      return;
+    }
     setSaving(true);
     try {
-      await updateDoc(doc(db, "users", id as string), {
+      const payload = {
         ...data,
         teknisi_bertugas: selectedTechnicianName,
+      };
+      await updateDoc(doc(db, "users", id as string), payload);
+      
+      await createLog({
+        uid: user.uid,
+        role: userRole as UserRole,
+        action: "update_user_profile",
+        target: id as string,
+        detail: payload,
       });
+
       toast.success("Perubahan berhasil disimpan!");
     } catch {
       toast.error("Gagal menyimpan");
@@ -102,21 +118,47 @@ export default function ProfilePage() {
   const handleUploadPhoto = async (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!user) {
+      toast.error("Anda harus login untuk mengupload foto.");
+      return;
+    }
 
     setUploading(true);
     try {
       toast.loading("Mengunggah foto...");
+      const token = await user.getIdToken();
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      formData.append("folderPath", `avatars/${id}`); // Menambahkan folder path untuk avatar
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
       const d = await res.json();
       toast.dismiss();
-      if (!d.secure_url) throw new Error();
+      if (!res.ok || !d.secure_url) {
+        throw new Error(d.error || "Upload gagal");
+      }
       await updateDoc(doc(db, "users", id as string), { photoURL: d.secure_url });
+
+      await createLog({
+        uid: user.uid,
+        role: userRole as UserRole,
+        action: "update_user_photo",
+        target: id as string,
+        detail: { newPhotoUrl: d.secure_url },
+      });
+
       setData((prev) => (prev ? { ...prev, photoURL: d.secure_url } : null));
       toast.success("Foto berhasil diupdate!");
-    } catch {
-      toast.error("Upload gagal");
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error(err.message || "Upload gagal");
     } finally {
       setUploading(false);
     }
@@ -124,8 +166,21 @@ export default function ProfilePage() {
 
   // ============================= DELETE FOTO =============================
   const handleDeletePhoto = async () => {
+    if (!user) {
+      toast.error("Anda harus login untuk menghapus foto.");
+      return;
+    }
     if (!confirm("Hapus foto?")) return;
+
     await updateDoc(doc(db, "users", id as string), { photoURL: "" });
+
+    await createLog({
+      uid: user.uid,
+      role: userRole as UserRole,
+      action: "delete_user_photo",
+      target: id as string,
+    });
+
     setData((prev) => (prev ? { ...prev, photoURL: "" } : null));
     toast.success("Foto dihapus");
   };

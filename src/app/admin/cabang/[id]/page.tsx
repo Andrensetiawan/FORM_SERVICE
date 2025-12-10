@@ -12,8 +12,8 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebaseConfig";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/lib/roles";
 import { createLog } from "@/lib/log";

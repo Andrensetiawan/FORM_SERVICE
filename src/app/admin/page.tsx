@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
 import Link from "next/link";
 
@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 
 export default function AdminDashboard() {
-  const { role, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const router = useRouter();
 
   // ============================================
@@ -43,13 +43,8 @@ export default function AdminDashboard() {
   const [statsError, setStatsError] = useState<string | null>(null);
 
   // ============================================
-  // REDIRECT JIKA BUKAN ADMIN
+  // STATE
   // ============================================
-  useEffect(() => {
-    if (!loading && role !== ROLES.ADMIN) {
-      router.push("/unauthorized");
-    }
-  }, [loading, role, router]);
 
   // ============================================
   // FETCH STATS (Optimized)

@@ -9,7 +9,7 @@ import {
   Bell,
   Info
 } from "lucide-react";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 
 const tiles = [
   {

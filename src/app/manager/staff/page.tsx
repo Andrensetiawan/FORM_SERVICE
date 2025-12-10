@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { UserCog, Trash2, Save } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import Image from "next/image";
 import Link from "next/link";
 import { ROLES } from "@/lib/roles";

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, forwardRef } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { Trash2, FileUp, Camera, CameraOff, Loader2 } from "lucide-react";
+import useAuth from "@/hooks/useAuth"; // Import useAuth
 
 // --- EXPORTED TYPE ---
 export interface MediaItem {
@@ -59,7 +60,7 @@ const MediaUploadSection = forwardRef(({
   setErrorMsg,
   setSuccessMsg,
 }: Props, ref) => {
-
+  const { user } = useAuth(); // Get user from auth hook
   const mode = (items && onItemsChange) ? 'controlled' : 'standalone';
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -114,6 +115,11 @@ const MediaUploadSection = forwardRef(({
     const itemToDelete = mediaItems.find(item => item.id === id);
     if (!itemToDelete) return;
 
+    if (!user) {
+      setErrorMsg?.("Anda harus login untuk menghapus file.");
+      return;
+    }
+
     // If it's a new file not yet uploaded, just remove from state
     if (itemToDelete.file || itemToDelete.url.startsWith("data:") || itemToDelete.url.startsWith("blob:")) {
         if (itemToDelete.url.startsWith("blob:")) {
@@ -132,9 +138,13 @@ const MediaUploadSection = forwardRef(({
         throw new Error("Tidak dapat menemukan public_id dari URL.");
       }
 
+      const token = await user.getIdToken();
       const res = await fetch('/api/delete-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ public_id }),
       });
 

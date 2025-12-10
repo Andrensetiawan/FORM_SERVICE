@@ -1,4 +1,4 @@
-import { MediaItem } from "@/app/components/tns/PhotoUploadSection";
+import { MediaItem } from "@/components/tns/PhotoUploadSection";
 
 // Helper to get Cloudinary preset from field name
 export const getPreset = (field: string) => {

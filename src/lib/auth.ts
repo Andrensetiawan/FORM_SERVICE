@@ -12,7 +12,7 @@ export async function signInWithGoogle() {
   const snap = await getDoc(userRef);
   if (!snap.exists()) {
     // default role: staff? atau customer? -> set sesuai kebijakan
-    await setDoc(userRef, { role: "staff", twoFactorEnabled: false }, { merge: true });
+    await setDoc(userRef, { role: "pending", twoFactorEnabled: false }, { merge: true });
   }
   return user;
 }

@@ -101,14 +101,22 @@ export default function SignatureSection({
        setPublicId(null);
        return;
     }
+    if (!user) {
+      setErrorMsg?.("Anda harus login untuk menghapus tanda tangan.");
+      return;
+    }
 
     try {
       setDeleting(true);
       setErrorMsg?.(null);
       
+      const token = await user.getIdToken();
       const res = await fetch('/api/delete-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ public_id: publicId })
       });
 

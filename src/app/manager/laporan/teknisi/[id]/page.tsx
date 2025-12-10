@@ -15,7 +15,7 @@ import {
   Cell,
 } from "recharts";
 import { CheckCircle, Clock, Wrench } from "lucide-react";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 
 type ServiceDoc = {
   id?: string;

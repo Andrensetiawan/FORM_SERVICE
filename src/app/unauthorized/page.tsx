@@ -2,8 +2,27 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
+import useAuth from "@/hooks/useAuth";
+import { ROLES } from "@/lib/roles";
 
 export default function UnauthorizedPage() {
+  const { role } = useAuth();
+
+  const getDashboardUrl = () => {
+    switch (role) {
+      case ROLES.ADMIN:
+        return "/admin";
+      case ROLES.OWNER:
+        return "/owner";
+      case ROLES.MANAGER:
+        return "/manager";
+      case ROLES.STAFF:
+        return "/staff";
+      default:
+        return "/";
+    }
+  };
+
   return (
     <div className="h-screen w-full flex flex-col justify-center items-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-6">
       <motion.div
@@ -24,15 +43,15 @@ export default function UnauthorizedPage() {
 
         <div className="mt-8 flex flex-col gap-3">
           <Link
-            href="/"
-            className="w-full py-2 rounded-lg font-semibold bg-red-500/90 hover:bg-red-600 transition"
+            href={getDashboardUrl()}
+            className="w-full text-center py-2 rounded-lg font-semibold bg-red-500/90 hover:bg-red-600 transition"
           >
             Kembali ke Dashboard
           </Link>
 
           <Link
-            href="/"
-            className="w-full py-2 rounded-lg font-semibold border border-gray-600 hover:bg-gray-700 transition"
+            href="/login"
+            className="w-full text-center py-2 rounded-lg font-semibold border border-gray-600 hover:bg-gray-700 transition"
           >
             Login Ulang
           </Link>

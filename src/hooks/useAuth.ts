@@ -197,7 +197,7 @@ export default function useAuth() {
       await setDoc(doc(db, "users", newUser.uid), {
         uid: newUser.uid,
         email: newUser.email,
-        role: ROLES.STAFF,
+        role: ROLES.PENDING,
         approved: false,
         online: false,
         createdAt: serverTimestamp(),

@@ -3,6 +3,7 @@ export const ROLES = {
   OWNER: "owner",
   MANAGER: "manager",
   STAFF: "staff",
+  PENDING: "pending",
   TECHNICIAN: "technician",
   CUSTOMER: "customer",
   UNKNOWN :"unknown"

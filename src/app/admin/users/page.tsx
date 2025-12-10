@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import { ROLES } from "@/lib/roles";
 import { Trash2 } from "lucide-react";
 import { db } from "@/lib/firebaseConfig";

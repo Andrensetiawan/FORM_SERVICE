@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import InputField from "@/app/components/inputfield";
-import FormSection from "@/app/components/formsection";
-import NavbarSwitcher from "@/app/components/navbars/NavbarSwitcher";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
+import InputField from "@/components/inputfield";
+import FormSection from "@/components/formsection";
+import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { db } from "@/lib/firebaseConfig";
 import {
   collection,

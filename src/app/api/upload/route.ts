@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import admin from "@/lib/firebaseAdminConfig";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,6 +12,22 @@ cloudinary.config({
 
 export async function POST(request: Request) {
   try {
+    // === START: FIREBASE AUTHENTICATION ===
+    const authorization = request.headers.get("Authorization");
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized: No token provided" }, { status: 401 });
+    }
+    
+    const token = authorization.split("Bearer ")[1];
+    
+    try {
+      await admin.auth().verifyIdToken(token);
+    } catch (error) {
+      console.error("Firebase auth error:", error);
+      return NextResponse.json({ error: "Unauthorized: Invalid token" }, { status: 401 });
+    }
+    // === END: FIREBASE AUTHENTICATION ===
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const folderPath = formData.get("folderPath") as string | null;
