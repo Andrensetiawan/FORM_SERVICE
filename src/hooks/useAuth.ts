@@ -29,6 +29,17 @@ import { createLog } from "@/lib/log";
 import { ROLES, UserRole } from "@/lib/roles";
 import { isRoleRequiringApproval } from "@/lib/roleHelpers";
 
+interface CustomUser {
+  uid: string;
+  email: string | null;
+  emailVerified: boolean;
+  role: UserRole;
+  cabang?: string; // Make optional as it might not be present for all roles
+  approved: boolean;
+  online: boolean;
+  firebaseUser: User;
+}
+
 // ==================================================
 // Ambil dokumen user berdasarkan UID
 // ==================================================
@@ -58,7 +69,7 @@ const fetchUserDoc = async (uid: string) => {
 // Main Hook
 // ==================================================
 export default function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<CustomUser | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -102,7 +113,17 @@ export default function useAuth() {
       return;
     }
 
-    setUser(currentUser);
+    const customUser: CustomUser = {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      emailVerified: currentUser.emailVerified,
+      role: userRole,
+      cabang: data.cabang, // Assuming 'cabang' exists in userDoc.data
+      approved: data.approved,
+      online: data.online,
+      firebaseUser: currentUser,
+    };
+    setUser(customUser);
     setRole(userRole);
 
     updateDoc(doc(db, "users", currentUser.uid), {
@@ -150,6 +171,18 @@ export default function useAuth() {
         return null;
       }
 
+      const customUser: CustomUser = {
+        uid: u.uid,
+        email: u.email,
+        emailVerified: u.emailVerified,
+        role: userRole,
+        cabang: userDoc.data.cabang, // Assuming 'cabang' exists in userDoc.data
+        approved: userDoc.data.approved,
+        online: userDoc.data.online,
+        firebaseUser: u,
+      };
+      setUser(customUser); // Set the internal state
+
       toast.success("Login berhasil!");
 
       createLog({
@@ -169,7 +202,7 @@ export default function useAuth() {
           : "/staff";
 
       window.location.href = redirect;
-      return u;
+      return customUser;
     } catch (err) {
       console.error(err);
       toast.error("Login gagal.");
@@ -226,8 +259,25 @@ export default function useAuth() {
     await auth.currentUser.reload();
 
     if (auth.currentUser.emailVerified) {
-      toast.success("Email sudah diverifikasi!");
-      setUser(auth.currentUser);
+      const userDoc = await fetchUserDoc(auth.currentUser.uid);
+      if (userDoc) {
+        const data = userDoc.data;
+        const userRole = (data.role as string).toLowerCase() as UserRole;
+        const customUser: CustomUser = {
+          uid: auth.currentUser.uid,
+          email: auth.currentUser.email,
+          emailVerified: auth.currentUser.emailVerified,
+          role: userRole,
+          cabang: data.cabang,
+          approved: data.approved,
+          online: data.online,
+          firebaseUser: auth.currentUser,
+        };
+        toast.success("Email sudah diverifikasi!");
+        setUser(customUser);
+      } else {
+        toast.error("Gagal memuat data pengguna setelah verifikasi.");
+      }
     } else {
       toast.error("Email belum diverifikasi!");
     }

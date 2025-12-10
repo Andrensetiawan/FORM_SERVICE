@@ -20,7 +20,7 @@ import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 type ServiceDoc = {
   id?: string;
   status?: string;
-  assignedTo?: string;
+  assignedTechnician?: string;
   createdAt?: any;
   closedAt?: any;
 };
@@ -37,6 +37,12 @@ export default function TechnicianDetailPage() {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState<ServiceDoc[]>([]);
   const [techInfo, setTechInfo] = useState<UserDoc | null>(null);
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30); // Default to last 30 days
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // ======================
   // 🔹 Fetch Data Firestore
@@ -45,7 +51,15 @@ export default function TechnicianDetailPage() {
     const fetchData = async () => {
       try {
         // Ambil semua servis milik teknisi ini
-        const q = query(collection(db, "service_requests"), where("assignedTo", "==", id));
+        const startTimestamp = Timestamp.fromDate(new Date(startDate));
+        const endTimestamp = Timestamp.fromDate(new Date(new Date(endDate).setHours(23, 59, 59, 999))); // Include end of the day
+
+        const q = query(
+          collection(db, "service_requests"),
+          where("assignedTechnician", "==", id),
+          where("createdAt", ">=", startTimestamp),
+          where("createdAt", "<=", endTimestamp)
+        );
         const snap = await getDocs(q);
         const docs: ServiceDoc[] = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as ServiceDoc[];
         setServices(docs);
@@ -63,7 +77,7 @@ export default function TechnicianDetailPage() {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, startDate, endDate]);
 
   // ======================
   // 🔸 Hitung Statistik
@@ -73,6 +87,7 @@ export default function TechnicianDetailPage() {
     let pending = 0;
     let totalDur = 0;
     let durCount = 0;
+    let lastActivityTimestamp: number | null = null;
 
     services.forEach((s) => {
       const status = (s.status || "").toLowerCase();
@@ -89,6 +104,17 @@ export default function TechnicianDetailPage() {
           ? new Date(s.closedAt)
           : null;
 
+      if (created) {
+        if (!lastActivityTimestamp || created.getTime() > lastActivityTimestamp) {
+          lastActivityTimestamp = created.getTime();
+        }
+      }
+      if (closed) {
+        if (!lastActivityTimestamp || closed.getTime() > lastActivityTimestamp) {
+          lastActivityTimestamp = closed.getTime();
+        }
+      }
+
       if (status.includes("done") || status.includes("selesai")) {
         done++;
         if (created && closed) {
@@ -98,11 +124,14 @@ export default function TechnicianDetailPage() {
       } else pending++;
     });
 
+    const totalServices = done + pending;
     const avgMs = durCount > 0 ? totalDur / durCount : 0;
     const avgH = Math.floor(avgMs / (1000 * 60 * 60));
     const avgM = Math.round((avgMs % (1000 * 60 * 60)) / (1000 * 60));
+    const successRate = totalServices > 0 ? (done / totalServices) * 100 : 0;
+    const lastActivityDate = lastActivityTimestamp ? new Date(lastActivityTimestamp).toLocaleDateString("id-ID") : "-";
 
-    return { done, pending, avgH, avgM };
+    return { done, pending, totalServices, avgH, avgM, successRate, lastActivityDate };
   }, [services]);
 
   // ======================
@@ -160,12 +189,45 @@ export default function TechnicianDetailPage() {
               {techInfo?.name || "Nama Tidak Dikenal"}
             </h1>
             <p className="text-gray-500 text-sm">
-              Divisi: <span className="font-medium">{techInfo?.division || "-"}</span>
             </p>
+            <div className="flex flex-col md:flex-row gap-4 mt-4">
+              <div className="flex-1">
+                <label htmlFor="startDate" className="block text-xs font-medium text-gray-500 mb-1">Dari Tanggal:</label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="endDate" className="block text-xs font-medium text-gray-500 mb-1">Sampai Tanggal:</label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Statistik */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="p-5 bg-blue-50 border rounded-xl shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <Wrench className="text-blue-600" />
+                <div>
+                  <p className="text-xs text-gray-500">Total Servis</p>
+                  <p className="text-2xl font-bold text-gray-800">{summary.totalServices}</p>
+                </div>
+              </div>
+            </motion.div>
             <motion.div
               whileHover={{ y: -3 }}
               className="p-5 bg-green-50 border rounded-xl shadow-sm"
@@ -194,10 +256,36 @@ export default function TechnicianDetailPage() {
 
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-blue-50 border rounded-xl shadow-sm"
+              className="p-5 bg-purple-50 border rounded-xl shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <Wrench className="text-blue-600" />
+                <CheckCircle className="text-purple-600" />
+                <div>
+                  <p className="text-xs text-gray-500">% Sukses</p>
+                  <p className="text-2xl font-bold text-gray-800">{summary.successRate.toFixed(0)}%</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="p-5 bg-red-50 border rounded-xl shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <Clock className="text-red-600" />
+                <div>
+                  <p className="text-xs text-gray-500">Aktivitas Terakhir</p>
+                  <p className="text-2xl font-bold text-gray-800">{summary.lastActivityDate}</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -3 }}
+              className="p-5 bg-orange-50 border rounded-xl shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <Wrench className="text-orange-600" />
                 <div>
                   <p className="text-xs text-gray-500">Rata-rata Waktu</p>
                   <p className="text-2xl font-bold text-gray-800">
@@ -209,7 +297,7 @@ export default function TechnicianDetailPage() {
           </div>
 
           {/* Grafik Aktivitas */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow p-5 mb-8">
             <h3 className="font-semibold text-gray-800 mb-3">
               Aktivitas 7 Hari Terakhir
             </h3>
@@ -226,6 +314,42 @@ export default function TechnicianDetailPage() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Daftar Servis */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow p-5">
+            <h3 className="font-semibold text-gray-800 mb-3">Daftar Servis</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Track Number</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dibuat Pada</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ditutup Pada</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {services.map((service) => (
+                    <tr key={service.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{service.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{service.status}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {service.createdAt instanceof Timestamp ? service.createdAt.toDate().toLocaleString() : (service.createdAt ? new Date(service.createdAt).toLocaleString() : '-')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {service.closedAt instanceof Timestamp ? service.closedAt.toDate().toLocaleString() : (service.closedAt ? new Date(service.closedAt).toLocaleString() : '-')}
+                      </td>
+                    </tr>
+                  ))}
+                  {services.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">Tidak ada servis dalam rentang tanggal ini.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

@@ -77,7 +77,7 @@ export default function SignatureSection({
         status_log: arrayUnion({
           status: "signature_saved",
           note: "Tanda tangan customer tersimpan",
-          updatedBy: user?.email,
+          updatedBy: user?.email || "unknown user",
           updatedAt: new Date(),
         }),
       });

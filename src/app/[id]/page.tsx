@@ -8,7 +8,7 @@ import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import toast, { Toaster } from "react-hot-toast";
 import { Upload, Trash2, ArrowLeft, Mail } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
-import TeknisiUdate from "@/components/tns/TeknisiUpdate";
+import TeknisiUpdate from "@/components/tns/TeknisiUpdate";
 import { createLog } from "@/lib/log";
 import { UserRole } from "@/lib/roles";
 
@@ -43,6 +43,16 @@ export default function ProfilePage() {
 
   const setErrorMsg = (msg: string | null) => msg && toast.error(msg);
   const setSuccessMsg = (msg: string | null) => msg && toast.success(msg);
+
+  useEffect(() => {
+    if (isAdmin && data && (data.role === "staff" || data.role === "manager")) {
+      if (data.division !== "teknisi") {
+        handleEdit("division", "teknisi");
+      }
+    }
+  }, [data?.role, isAdmin, data?.division]);
+
+  // ============================= FETCH =============================
 
   // ============================= FETCH =============================
   useEffect(() => {
@@ -126,7 +136,7 @@ export default function ProfilePage() {
     setUploading(true);
     try {
       toast.loading("Mengunggah foto...");
-      const token = await user.getIdToken();
+      const token = await user.firebaseUser.getIdToken();
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folderPath", `avatars/${id}`); // Menambahkan folder path untuk avatar
@@ -208,11 +218,11 @@ export default function ProfilePage() {
       <NavbarSwitcher />
       <Toaster />
 
-      <div className="min-h-screen bg-white py-16 px-6 flex justify-center">
+      <div className="min-h-screen bg-white py-23 px-6 flex justify-center">
         <div className="w-full max-w-5xl">
 
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-4">
-            <ArrowLeft size={20} /> Kembali ke Beranda
+          <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-blue-600 font-medium border border-blue-600 hover:text-blue-700 hover:bg-blue-50 mb-4 px-4 py-2 rounded-lg">
+            <ArrowLeft size={20} /> Kembali
           </button>
 
           <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
@@ -324,21 +334,6 @@ export default function ProfilePage() {
               {saving ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
           </div>
-
-          <div className="mt-8 p-6 bg-white border shadow rounded-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
-              Penugasan Teknisi
-            </h3>
-            <TeknisiUdate
-              docId={id as string}
-              currentTechnician={selectedTechnicianName}
-              onTechnicianSelect={handleSelectTechnician}
-              isEditing={isAdmin}
-              setErrorMsg={setErrorMsg}
-              setSuccessMsg={setSuccessMsg}
-            />
-          </div>
-
         </div>
       </div>
     </>

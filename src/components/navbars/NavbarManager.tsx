@@ -84,7 +84,7 @@ export default function NavbarManagement() {
               <div className="relative">
                 <Image
                   src={
-                    user?.photoURL ||
+                    user?.firebaseUser?.photoURL ||
                     "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                   }
                   width={40}
@@ -108,9 +108,8 @@ export default function NavbarManagement() {
               </div>
 
               <div className="hidden md:flex flex-col text-right">
-                <span className="text-gray-100 font-medium">
-                  {user?.displayName || "User"}
-                </span>
+                                 <span className="text-gray-100 font-medium">
+                                  {user?.firebaseUser?.displayName || "User"}                </span>
                 <span className="text-xs text-blue-400 capitalize">{role}</span>
               </div>
             </div>
@@ -150,13 +149,13 @@ export default function NavbarManagement() {
                 <div className="flex flex-col items-center text-center px-6 py-6 border-b border-blue-800">
                   <img
                     src={
-                      user.photoURL ||
+                      user.firebaseUser.photoURL ||
                       "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                     }
                     className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover shadow-lg mb-3"
                     alt="avatar"
                   />
-                  <h2 className="text-white text-lg font-bold">{user.displayName}</h2>
+                  <h2 className="text-white text-lg font-bold">{user.firebaseUser.displayName}</h2>
 
                   <p
                     className={`mt-1 px-3 py-1 rounded-full text-sm font-semibold capitalize ${

@@ -73,28 +73,6 @@ export default function FormService() {
   }, []);
 
   //=====================================================
-  // AUTO DEFAULT CABANG USER LOGIN
-  //=====================================================
-  useEffect(() => {
-    const fetchUserCabang = async () => {
-      if (!user) return;
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const d = snap.data() as any;
-          if (d.cabang) {
-            setFormData((prev) => ({ ...prev, cabang: d.cabang }));
-          }
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    fetchUserCabang();
-  }, [user]);
-
-  //=====================================================
   // INPUT HANDLER
   //=====================================================
   const handleInputChange = (

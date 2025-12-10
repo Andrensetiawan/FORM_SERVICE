@@ -17,7 +17,8 @@ type ServiceRequest = {
   nama?: string;
   no_hp?: string;
   tipe?: string;
-  teknisi?: string | null;
+  assignedTechnician?: string | null;
+
   cabang?: string | null;
 };
 
@@ -30,11 +31,13 @@ export default function StaffPage() {
 
   const [filterTeknisi, setFilterTeknisi] = useState("Semua");
   const [filterCabang, setFilterCabang] = useState("Semua");
+
   const [rowsPerPage, setRowsPerPage] = useState<string>("10");
   const [searchText, setSearchText] = useState("");
 
   const [teknisiOptions, setTeknisiOptions] = useState<string[]>([]);
   const [cabangOptions, setCabangOptions] = useState<string[]>([]);
+
 
   // =======================================
   // FETCH DATA FROM FIRESTORE
@@ -42,13 +45,31 @@ export default function StaffPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 1. Fetch all users to create a technician email to division map
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        const technicianDivisionMap = new Map<string, string>();
+
+
+        usersSnapshot.docs.forEach((doc) => {
+          const userData = doc.data() as any;
+          if (userData.role && (userData.role.toLowerCase() === ROLES.STAFF || userData.role.toLowerCase() === ROLES.MANAGER) && userData.email && userData.division) {
+            technicianDivisionMap.set(userData.email, userData.division);
+
+          }
+        });
+
+        // 2. Fetch service requests
         const snap = await getDocs(collection(db, "service_requests"));
         const arr: ServiceRequest[] = snap.docs
           .map((doc) => {
             const dat = doc.data() as any;
+            const assignedTechnicianEmail = dat.assignedTechnician;
+            const assignedTechnicianDivision = assignedTechnicianEmail ? technicianDivisionMap.get(assignedTechnicianEmail) : null;
+
             return {
               ...dat,
               id: doc.id,
+  
             };
           })
           .sort(
@@ -62,12 +83,13 @@ export default function StaffPage() {
         const cabangSet = new Set<string>();
 
         arr.forEach((i) => {
-          if (i.teknisi) teknisiSet.add(i.teknisi);
+          if (i.assignedTechnician) teknisiSet.add(i.assignedTechnician);
           if (i.cabang) cabangSet.add(i.cabang);
         });
 
         setTeknisiOptions(Array.from(teknisiSet));
         setCabangOptions(Array.from(cabangSet));
+
       } catch (error) {
         console.error("❌ Gagal ambil data:", error);
       } finally {
@@ -86,7 +108,7 @@ export default function StaffPage() {
 
     if (filterTeknisi !== "Semua") {
       result = result.filter(
-        (i) => (i.teknisi || "").toLowerCase() === filterTeknisi.toLowerCase()
+        (i) => (i.assignedTechnician || "").toLowerCase() === filterTeknisi.toLowerCase()
       );
     }
 
@@ -98,6 +120,8 @@ export default function StaffPage() {
       );
     }
 
+
+
     if (searchText.trim() !== "") {
       const q = searchText.toLowerCase();
       result = result.filter((i) => {
@@ -107,8 +131,9 @@ export default function StaffPage() {
           i.no_hp,
           i.tipe,
           i.cabang,
-          i.teknisi,
+          i.assignedTechnician, // Changed from i.teknisi
           i.status,
+
         ]
           .join(" ")
           .toLowerCase();
@@ -117,7 +142,7 @@ export default function StaffPage() {
     }
 
     setFiltered(result);
-  }, [filterTeknisi, filterCabang, searchText, data]);
+  }, [filterTeknisi, filterCabang,, searchText, data]);
 
   // =======================================
   // DOWNLOAD CSV (SEMUA DATA)
@@ -153,7 +178,7 @@ export default function StaffPage() {
         item.no_hp ?? "",
         item.tipe ?? "",
         item.cabang ?? "",
-        item.teknisi ?? "",
+        item.assignedTechnician ?? "", // Changed from item.teknisi
       ].map((value) => {
         let v = String(value).replace(/"/g, '""');
         if (v.includes(",")) v = `"${v}"`;
@@ -287,6 +312,8 @@ export default function StaffPage() {
                     ))}
                   </select>
                 </div>
+
+
 
                 {/* Cabang */}
                 <div>
@@ -462,7 +489,7 @@ export default function StaffPage() {
                             {item.cabang || "-"}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            {item.teknisi || "-"}
+                            {item.assignedTechnician || "-"}
                           </td>
                         </tr>
                       );

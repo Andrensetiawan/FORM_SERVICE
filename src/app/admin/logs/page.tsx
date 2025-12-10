@@ -32,6 +32,11 @@ export default function LogsViewerPage() {
 
   const [loadingLogs, setLoadingLogs] = useState(true);
 
+  // State for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [logToDeleteId, setLogToDeleteId] = useState<string | null>(null);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+
   // ============================================================
   // ROLE PROTECTION (ADMIN ONLY)
   // ============================================================
@@ -88,21 +93,58 @@ export default function LogsViewerPage() {
     setFilteredLogs(list);
   }, [filterRole, filterAction, searchText, logs]);
 
+
   // ============================================================
   // DELETE LOGS
   // ============================================================
 
-  const deleteLog = async (id: string) => {
-    if (!confirm("Hapus log ini?")) return;
-    await deleteDoc(doc(db, "logs", id));
-    fetchLogs();
+  const executeDeleteLog = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "logs", id));
+      fetchLogs();
+    } catch (error) {
+      console.error("Error deleting log:", error);
+      // Optionally show a toast notification or error message
+    }
   };
 
-  const deleteAllLogs = async () => {
-    if (!confirm("Hapus SEMUA log? Tidak dapat dikembalikan!")) return;
-    const snap = await getDocs(collection(db, "logs"));
-    snap.forEach(async (d) => await deleteDoc(doc(db, "logs", d.id)));
-    fetchLogs();
+  const executeDeleteAllLogs = async () => {
+    try {
+      const snap = await getDocs(collection(db, "logs"));
+      snap.forEach(async (d) => await deleteDoc(doc(db, "logs", d.id)));
+      fetchLogs();
+    } catch (error) {
+      console.error("Error deleting all logs:", error);
+      // Optionally show a toast notification or error message
+    }
+  };
+
+  const handleDeleteClick = (logId?: string) => {
+    if (logId) {
+      setLogToDeleteId(logId);
+      setIsDeletingAll(false);
+    } else {
+      setLogToDeleteId(null);
+      setIsDeletingAll(true);
+    }
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setShowDeleteModal(false);
+    if (isDeletingAll) {
+      executeDeleteAllLogs();
+    } else if (logToDeleteId) {
+      executeDeleteLog(logToDeleteId);
+    }
+    setLogToDeleteId(null);
+    setIsDeletingAll(false);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setLogToDeleteId(null);
+    setIsDeletingAll(false);
   };
 
   // ============================================================
@@ -128,7 +170,7 @@ export default function LogsViewerPage() {
             </div>
 
             <button
-              onClick={deleteAllLogs}
+              onClick={() => handleDeleteClick()}
               className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg shadow-md font-semibold transition flex items-center gap-2"
             >
               <Trash2 size={18} /> Hapus Semua
@@ -236,7 +278,7 @@ export default function LogsViewerPage() {
                     </div>
 
                     <button
-                      onClick={() => deleteLog(log.id)}
+                      onClick={() => handleDeleteClick(log.id)}
                       className="text-red-600 hover:bg-red-100 p-2 rounded-lg hover:text-red-800 transition"
                     >
                       <Trash2 size={18} />
@@ -249,6 +291,34 @@ export default function LogsViewerPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Penghapusan</h3>
+            <p className="text-gray-700 mb-6">
+              {isDeletingAll
+                ? "Apakah Anda yakin ingin menghapus SEMUA log? Tindakan ini tidak dapat dibatalkan!"
+                : "Apakah Anda yakin ingin menghapus log ini? Tindakan ini tidak dapat dibatalkan."}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-200 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 }

@@ -11,9 +11,9 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
-import ProtectedRoute from "../components/ProtectedRoute";
-import NavbarSwitcher from "../components/navbars/NavbarSwitcher";
-import PhotoUpload from "../components/PhotoUpload";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import NavbarSwitcher from "../../components/navbars/NavbarSwitcher";
+import PhotoUpload from "../../components/PhotoUpload";
 import { motion } from "framer-motion";
 
 export default function UserPage() {

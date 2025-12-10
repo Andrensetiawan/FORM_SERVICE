@@ -89,13 +89,19 @@ export default function CabangDetailPage({
         managerEmail: "",
       });
 
-      await createLog({
-        uid: auth.currentUser?.uid ?? "",
-        role: role ?? ROLES.UNKNOWN,
-        action: "remove_manager",
-        detail: `Removed manager from cabang ${cabangData.name}`,
-        target: cabangData.managerId,
-      });
+            await createLog({
+
+              uid: auth.currentUser?.uid ?? "",
+
+              role: role ?? "unknown",
+
+              action: "remove_manager",
+
+              detail: `Removed manager from cabang ${cabangData.name}`,
+
+              target: cabangData.managerId,
+
+            });
 
       alert("Manager berhasil dihapus!");
       fetchData();
@@ -131,7 +137,7 @@ export default function CabangDetailPage({
 
       await createLog({
         uid: user?.uid ?? "",
-        role: role ?? ROLES.UNKNOWN,
+        role: role ?? "unknown",
         action: "promote_staff_to_manager",
         detail: `Promoted ${u.email} to manager of ${cabang.name}`,
         target: u.uid,

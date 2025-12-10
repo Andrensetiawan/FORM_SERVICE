@@ -65,7 +65,7 @@ export default function PhotoUpload({
     try {
       setUploading(true);
 
-      const token = await user.getIdToken();
+      const token = await user.firebaseUser.getIdToken();
 
       // Convert to FormData
       const formData = new FormData();

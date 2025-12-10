@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -18,6 +18,26 @@ import * as XLSX from "xlsx-js-style";
 export default function AdminDatabasePage() {
   const { role, loading } = useAuth();
   const router = useRouter();
+
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error" | "info">(
+    "info"
+  );
+
+  const showToastMessage = (
+    message: string,
+    type: "success" | "error" | "info"
+  ) => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+
+    setTimeout(() => {
+      setShowToast(false);
+      setToastMessage("");
+    }, 3000); // Hide after 3 seconds
+  };
 
   useEffect(() => {
     if (!loading && role !== ROLES.ADMIN) {
@@ -63,10 +83,10 @@ export default function AdminDatabasePage() {
       a.click();
       a.remove();
 
-      alert("✅ Backup JSON berhasil diunduh!");
+      showToastMessage("✅ Backup JSON berhasil diunduh!", "success");
     } catch (err) {
       console.error(err);
-      alert("❌ Backup gagal!");
+      showToastMessage("❌ Backup gagal!", "error");
     }
   };
 
@@ -88,10 +108,10 @@ export default function AdminDatabasePage() {
         }
       }
 
-      alert("✅ Restore JSON sukses!");
+      showToastMessage("✅ Restore JSON sukses!", "success");
     } catch (err) {
       console.error(err);
-      alert("❌ Restore gagal! File tidak valid.");
+      showToastMessage("❌ Restore gagal! File tidak valid.", "error");
     }
   };
 
@@ -123,10 +143,10 @@ export default function AdminDatabasePage() {
         `FormService-Backup-${new Date().toISOString().slice(0, 10)}.xlsx`
       );
 
-      alert("📊 Export Excel berhasil!");
+      showToastMessage("📊 Export Excel berhasil!", "success");
     } catch (err) {
       console.error(err);
-      alert("❌ Gagal export ke Excel!");
+      showToastMessage("❌ Gagal export ke Excel!", "error");
     }
   };
 
@@ -218,6 +238,18 @@ export default function AdminDatabasePage() {
               Modul analisis database akan menyusul di versi berikutnya.
             </p>
           </div>
+
+          {showToast && (
+            <div
+              className={`fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white font-semibold transition-all duration-300 ${
+                toastType === "success" ? "bg-green-500" : ""
+              } ${toastType === "error" ? "bg-red-500" : ""} ${
+                toastType === "info" ? "bg-blue-500" : ""
+              }`}
+            >
+              {toastMessage}
+            </div>
+          )}
         </div>
       </div>
     </ProtectedRoute>
