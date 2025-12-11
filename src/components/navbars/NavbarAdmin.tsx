@@ -15,6 +15,7 @@ import {
   Settings,
   BarChart3,
   Home,
+  Trash2,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -61,6 +62,7 @@ export default function NavbarAdmin() {
     { name: "Dashboard", icon: <Home size={18} />, href: "/admin" },
     { name: "Pending Approval", icon: <Home size={18} />, href: "/admin/pending-users" },
     {name: "Manajemen Cabang",icon: <Building2 size={18} />,href: "/admin/cabang",},
+    { name: "Hapus TNS", icon: <Trash2 size={18} />, href: "/admin/hapus_tns" },
     { name: "Pengguna", icon: <Users size={18} />, href: "/admin/users" },
     { name: "Database", icon: <Database size={18} />, href: "/admin/database" },
     { name: "Audit Log", icon: <BarChart3 size={18} />, href: "/admin/logs" },
