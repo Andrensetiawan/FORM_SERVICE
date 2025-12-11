@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { db } from "@/lib/firebaseConfig";
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -31,6 +32,7 @@ export default function ServiceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user, role, loading } = useAuth();
+  const auth = getAuth();
 
   const [serviceData, setServiceData] = useState<any>(null);
   const [status, setStatus] = useState("pending");
@@ -328,6 +330,7 @@ export default function ServiceDetailPage() {
                   existingSignaturePublicId={serviceData?.customer_signature_public_id}
                   setErrorMsg={setErrorMsg}
                   setSuccessMsg={setSuccessMsg}
+                  user={auth.currentUser}
                 />
                 <div className="mt-8 p-6 bg-[#0d1117] border border-gray-700 shadow rounded-2xl">
                     <h3 className="text-lg font-semibold text-white border-b border-gray-600 pb-2 mb-4">
