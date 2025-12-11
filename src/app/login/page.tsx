@@ -84,11 +84,11 @@ export default function login() {
         if (role === ROLES.STAFF) {
           router.push("/staff");
         } else if (role === ROLES.MANAGER) {
-          router.push("/management");
+          router.push("/manager");
         } else if (role === ROLES.OWNER) {
-          router.push("/owner-dashboard");
+          router.push("/owner");
         } else if (role === ROLES.ADMIN) {
-          router.push("/admin-dashboard");
+          router.push("/admin");
         } else {
           toast.error("Role tidak dikenali. Hubungi admin.");
           router.push("/");
