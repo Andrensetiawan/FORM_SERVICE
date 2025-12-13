@@ -37,6 +37,8 @@ interface CustomUser {
   cabang?: string; // Make optional as it might not be present for all roles
   approved: boolean;
   online: boolean;
+  photoURL?: string;
+  displayName?: string;
   firebaseUser: User;
 }
 
@@ -121,6 +123,8 @@ export default function useAuth() {
       cabang: data.cabang, // Assuming 'cabang' exists in userDoc.data
       approved: data.approved,
       online: data.online,
+      photoURL: data.photoURL,
+      displayName: data.displayName,
       firebaseUser: currentUser,
     };
     setUser(customUser);
@@ -179,6 +183,8 @@ export default function useAuth() {
         cabang: userDoc.data.cabang, // Assuming 'cabang' exists in userDoc.data
         approved: userDoc.data.approved,
         online: userDoc.data.online,
+        photoURL: userDoc.data.photoURL,
+        displayName: userDoc.data.displayName,
         firebaseUser: u,
       };
       setUser(customUser); // Set the internal state
@@ -271,6 +277,8 @@ export default function useAuth() {
           cabang: data.cabang,
           approved: data.approved,
           online: data.online,
+          photoURL: data.photoURL,
+          displayName: data.displayName,
           firebaseUser: auth.currentUser,
         };
         toast.success("Email sudah diverifikasi!");
