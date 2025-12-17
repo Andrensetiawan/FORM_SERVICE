@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  #print-area {
+    position: absolute;
+    inset: 0;
+    padding: 24px;
+  }
+}
+
