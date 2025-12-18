@@ -299,6 +299,7 @@ export default function useAuth() {
   };
 
   const logout = async () => {
+    setLoading(true);
     try {
       if (auth.currentUser) {
         updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -318,6 +319,7 @@ export default function useAuth() {
     } catch (err) {
       console.error(err);
       toast.error("Logout gagal.");
+      setLoading(false);
     }
   };
 
