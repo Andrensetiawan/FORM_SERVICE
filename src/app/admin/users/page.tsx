@@ -214,16 +214,27 @@ export default function AdminUsersPage() {
     }
   };
 
-  const rejectUser = async (id: string) => {
-    if (!confirm("Anda yakin ingin menolak dan menghapus pengguna ini?")) return;
+  const handleDelete = async (id: string, email: string) => {
+    const actionText = users.find(u => u.id === id)?.approved ? "menghapus" : "menolak";
+    if (!confirm(`Anda yakin ingin ${actionText} pengguna ${email}?`)) return;
 
     setActionLoading(id);
     try {
       await deleteDoc(doc(db, "users", id));
-      toast.success("Pengguna ditolak dan berhasil dihapus.");
+      
+      createLog({
+        uid: adminUser?.uid || "",
+        role: currentAdminRole || "unknown",
+        action: "delete_user",
+        detail: `Deleted user ${email}`,
+        target: email || "",
+      });
+
+      toast.success("Pengguna berhasil dihapus.");
       await fetchUsers(); // Refetch all users
-    } catch {
-      toast.error("Gagal menolak pengguna.");
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Gagal menghapus pengguna.");
     } finally {
       setActionLoading(null);
     }
@@ -361,7 +372,7 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="bg-gray-50 p-4 rounded-b-2xl mt-auto">
                           <div className="text-xs text-gray-500 mb-3"><p>Created: {u.createdAt ? u.createdAt.toLocaleDateString() : "-"}</p><p>Last Active: {u.lastActive ? u.lastActive.toLocaleString() : "Never"}</p></div>
-                          <button onClick={() => rejectUser(u.id, u.email)} className="w-full flex items-center justify-center gap-2 text-sm text-red-600 font-semibold hover:bg-red-100 p-2 rounded-lg transition-colors"><Trash2 size={14} />Hapus Pengguna</button>
+                          <button onClick={() => handleDelete(u.id, u.email)} className="w-full flex items-center justify-center gap-2 text-sm text-red-600 font-semibold hover:bg-red-100 p-2 rounded-lg transition-colors"><Trash2 size={14} />Hapus Pengguna</button>
                         </div>
                       </>
                     ) : (
@@ -392,7 +403,7 @@ export default function AdminUsersPage() {
                           </div>
                         </div>
                         <div className="bg-gray-50 p-3 grid grid-cols-2 gap-3">
-                          <button onClick={() => rejectUser(u.id)} disabled={actionLoading === u.id} className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold text-red-600 bg-red-100 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50"><UserX size={16} />{actionLoading === u.id ? "..." : "Tolak"}</button>
+                          <button onClick={() => handleDelete(u.id, u.email)} disabled={actionLoading === u.id} className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold text-red-600 bg-red-100 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50"><UserX size={16} />{actionLoading === u.id ? "..." : "Tolak"}</button>
                           <button onClick={() => approveUser(u.id)} disabled={actionLoading === u.id} className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:bg-gray-400"><UserCheck size={16} />{actionLoading === u.id ? "..." : "Setujui"}</button>
                         </div>
                       </>
