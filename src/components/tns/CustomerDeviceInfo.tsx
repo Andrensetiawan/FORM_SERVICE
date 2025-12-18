@@ -100,10 +100,6 @@ export default function CustomerDeviceInfo({
     setIsEditing(false);
     };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
     return (
       <section className="grid md:grid-cols-2 gap-6 relative">
       
@@ -147,13 +143,6 @@ export default function CustomerDeviceInfo({
             </button>
           </>
         )}
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 text-sm bg-gray-600 hover:bg-gray-700 text-white font-semibold py-1 px-3 rounded-lg shadow-md transition-colors"
-        >
-          <Printer size={14} />
-          Cetak/Unduh
-        </button>
       </div>
 
       {/* ============================

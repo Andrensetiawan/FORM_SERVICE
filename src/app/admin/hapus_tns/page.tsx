@@ -9,9 +9,18 @@ import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ROLES } from "@/lib/roles";
 
+const getTime = (t: any) => {
+  if (!t) return 0;
+  if (typeof t === "number") return t;
+  if (t._seconds) return t._seconds;
+  if (t.seconds) return t.seconds;
+  if (t.toDate) return Math.floor(t.toDate().getTime() / 1000);
+  return 0;
+};
+
 type ServiceRequest = {
   id: string;
-  timestamp?: { seconds: number };
+  timestamp?: { seconds: number; _seconds?: number };
   track_number?: string;
   status?: string;
   nama?: string;
@@ -99,9 +108,7 @@ export default function StaffPage() {
   
             };
           })
-          .sort(
-            (a, b) => (b.timestamp?.seconds ?? 0) - (a.timestamp?.seconds ?? 0)
-          );
+          .sort((a, b) => getTime(b.timestamp) - getTime(a.timestamp));
 
         setData(arr);
         setFiltered(arr);
@@ -110,7 +117,7 @@ export default function StaffPage() {
         const cabangSet = new Set<string>();
 
         arr.forEach((i) => {
-          if (i.assignedTechnician) teknisiSet.add(i.assignedTechnician);
+          if (i.assignedTechnician) teknisiSet.add(String(i.assignedTechnician).trim().toLowerCase());
           if (i.cabang) cabangSet.add(i.cabang);
         });
 
@@ -135,7 +142,7 @@ export default function StaffPage() {
 
     if (filterTeknisi !== "Semua") {
       result = result.filter(
-        (i) => (i.assignedTechnician || "").toLowerCase() === filterTeknisi.toLowerCase()
+        (i) => String(i.assignedTechnician || "").trim().toLowerCase() === filterTeknisi.trim().toLowerCase()
       );
     }
 
@@ -190,12 +197,17 @@ export default function StaffPage() {
     rows.push(headers.join(","));
 
     data.forEach((item) => {
-      const tanggal = item.timestamp?.seconds
-        ? new Date(item.timestamp.seconds * 1000).toLocaleString("id-ID", {
-            dateStyle: "short",
-            timeStyle: "short",
-          })
-        : "";
+      const tanggal =
+        item.timestamp && typeof item.timestamp === "object"
+          ? new Date(
+              ((item.timestamp as any)._seconds ??
+                (item.timestamp as any).seconds ??
+                0) * 1000
+            ).toLocaleString("id-ID", {
+              dateStyle: "short",
+              timeStyle: "short",
+            })
+          : "";
 
       const cols = [
         tanggal,
@@ -502,14 +514,17 @@ export default function StaffPage() {
                             item.status.slice(1).toLowerCase()
                           : "-";
 
-                      const tanggal = item.timestamp?.seconds
-                        ? new Date(
-                            item.timestamp.seconds * 1000
-                          ).toLocaleString("id-ID", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })
-                        : "-";
+                      const tanggal =
+                        item.timestamp && typeof item.timestamp === "object"
+                          ? new Date(
+                              ((item.timestamp as any)._seconds ??
+                                (item.timestamp as any).seconds ??
+                                0) * 1000
+                            ).toLocaleString("id-ID", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            })
+                          : "-";
 
                       return (
                         <tr key={item.id} className="table-body-row">

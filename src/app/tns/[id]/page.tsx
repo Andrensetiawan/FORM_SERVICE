@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/lib/firebaseConfig";
 import toast, { Toaster } from 'react-hot-toast';
+import { Printer } from "lucide-react"; // Import Printer icon
 
 import useAuth from "@/hooks/useAuth";
 import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
@@ -260,6 +261,10 @@ export default function ServiceDetailPage() {
     setServiceData((prev: any) => ({ ...prev, ...updatedData }));
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (loading || loadingData) return <div className="h-screen w-full flex items-center justify-center bg-[#0d1117] text-white"><h1>Memuat data service...</h1></div>;
   if (!serviceData) return <div className="h-screen w-full flex items-center justify-center bg-[#0d1117] text-white"><h1>Data service tidak ditemukan.</h1></div>;
 
@@ -271,9 +276,18 @@ export default function ServiceDetailPage() {
 
         <div className="pt-24 max-w-6xl mx-auto p-6 space-y-8">
             {/* The main interactive content */}
-              <h1 className="text-3xl font-bold text-gray-100 mb-4">
-                  Service Detail <span className="text-blue-400">: {serviceData?.track_number}</span>
-              </h1>
+              <div className="flex justify-between items-center mb-4">
+                <h1 className="text-3xl font-bold text-gray-100">
+                    Service Detail <span className="text-blue-400">: {serviceData?.track_number}</span>
+                </h1>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 text-sm bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors print:hidden"
+                >
+                  <Printer size={16} />
+                  Cetak/Unduh
+                </button>
+              </div>
 
               <CustomerDeviceInfo
                   docId={docId}

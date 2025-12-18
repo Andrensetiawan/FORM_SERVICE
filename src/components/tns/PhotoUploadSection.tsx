@@ -76,6 +76,7 @@ const MediaUploadSection = forwardRef(({
   const [cameraActive, setCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [previewingImage, setPreviewingImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (mode === 'standalone') {
@@ -282,7 +283,7 @@ const MediaUploadSection = forwardRef(({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {mediaItems.map((item) => (
                 <div key={item.id} className="relative group">
-                    {item.type === 'image' ? <img src={item.url} alt="Lampiran" className={`${imageHeightClass} w-full rounded object-cover bg-black`} /> : <video src={item.url} className={`${imageHeightClass} w-full rounded object-cover bg-black`} controls />}
+                    {item.type === 'image' ? <img src={item.url} alt="Lampiran" onClick={() => setPreviewingImage(item.url)} className={`${imageHeightClass} w-full rounded object-cover bg-black cursor-pointer`} /> : <video src={item.url} className={`${imageHeightClass} w-full rounded object-cover bg-black`} controls />}
                     <button onClick={() => deleteMedia(item.id)} disabled={deletingId === item.id || disabled} className="absolute top-1 right-1 p-1 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 disabled:cursor-not-allowed"><Trash2 size={12} /></button>
                     {deletingId === item.id && <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md"><Loader2 className="animate-spin text-white"/></div>}
                 </div>
@@ -297,6 +298,26 @@ const MediaUploadSection = forwardRef(({
             )}
             </div>
         )}
+
+      {previewingImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+          onClick={() => setPreviewingImage(null)}
+        >
+          <img 
+            src={previewingImage} 
+            alt="Preview" 
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+          />
+          <button 
+            onClick={() => setPreviewingImage(null)}
+            className="absolute top-4 right-4 text-white text-3xl font-bold"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
