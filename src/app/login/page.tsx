@@ -64,22 +64,15 @@ export default function login() {
           return;
         }
 
-        const q = query(collection(db, "users"), where("uid", "==", user.uid));
-        const snaps = await getDocs(q);
+        const role = user.role;
+        const approved = user.approved;
 
-        if (snaps.empty) {
-          toast.error("Akun tidak ditemukan di database.");
+        if (role === ROLES.PENDING || (role === ROLES.STAFF && !approved)) {
+          router.push("/pending-approval");
           return;
         }
 
-        const data = snaps.docs[0].data() as Record<string, any>;
-        const role = data.role ?? "";
-        const approved = data.approved ?? true;
-
-        if (role === "staff" && !approved) {
-          toast.error("Akun kamu belum disetujui oleh Manager atau Admin. Mohon tunggu konfirmasi.");
-          return;
-        }
+        toast.success("Login berhasil!");
 
         if (role === ROLES.STAFF) {
           router.push("/staff");
@@ -94,9 +87,11 @@ export default function login() {
           router.push("/");
         }
       } else if (mode === "register") {
-        await register(email, password, confirmPassword);
-        toast.success("Pendaftaran berhasil! Silakan verifikasi email Anda.");
-        // router.push("/verify-email");
+        const user = await register(email, password, confirmPassword);
+        if (user) {
+          toast.success("Pendaftaran berhasil! Silakan verifikasi email Anda.");
+          // router.push("/verify-email");
+        }
       } else if (mode === "forgot") {
         await forgotPassword(email);
         toast.success("Link reset password telah dikirim jika email terdaftar.");
@@ -179,9 +174,9 @@ export default function login() {
             : "Lupa Password 🔑"}
         </h1>
 
-        <p className="text-center text-gray-500 mb-8 text-sm">
+        <p className="text-center text-gray-500 mb-8 text-base font-bold">
           {mode === "login"
-            ? "Masuk untuk melanjutkan ke dashboard"
+            ? "PT.Alif Cyber Solution"
             : mode === "register"
             ? "Daftar untuk akses aplikasi"
             : "Masukkan email untuk reset password"}

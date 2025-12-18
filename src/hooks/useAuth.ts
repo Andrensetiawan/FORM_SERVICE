@@ -189,8 +189,7 @@ export default function useAuth() {
       };
       setUser(customUser); // Set the internal state
 
-      toast.success("Login berhasil!");
-
+      
       createLog({
         uid: u.uid,
         role: userRole,
@@ -198,16 +197,6 @@ export default function useAuth() {
         target: email,
       });
 
-      const redirect =
-        userRole === ROLES.ADMIN
-          ? "/admin"
-          : userRole === ROLES.OWNER
-          ? "/owner"
-          : userRole === ROLES.MANAGER
-          ? "/manager"
-          : "/staff";
-
-      window.location.href = redirect;
       return customUser;
     } catch (err) {
       console.error(err);
@@ -224,13 +213,20 @@ export default function useAuth() {
     password: string,
     confirmPassword: string
   ) => {
-    if (password !== confirmPassword)
-      return toast.error("Password tidak cocok!");
+    if (password !== confirmPassword) {
+      toast.error("Password tidak cocok!");
+      // Early return for this specific validation error
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const newUser = result.user;
 
       await setDoc(doc(db, "users", newUser.uid), {
@@ -243,12 +239,12 @@ export default function useAuth() {
       });
 
       await sendEmailVerification(newUser);
-      toast.success("Akun dibuat! Cek email verifikasi.");
+
+      // Return the new user object on success
       return newUser;
     } catch (err) {
-      console.error(err);
-      toast.error("Registrasi gagal.");
-      return null;
+      // Re-throw the error to be handled by the calling component
+      throw err;
     } finally {
       setLoading(false);
     }
