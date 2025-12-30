@@ -16,8 +16,8 @@ type Props = {
   handleUpdateStatus: () => Promise<void>;
   formatDateTime: (ts: any) => string;
   statusLog: StatusLog[];
-  isReadOnly?: boolean; // New prop
-  className?: string; // Allow external classes
+  isReadOnly?: boolean;
+  className?: string;
 };
 
 export default function StatusControl({
@@ -27,24 +27,24 @@ export default function StatusControl({
   handleUpdateStatus,
   formatDateTime,
   statusLog,
-  isReadOnly = false, // Default to not read-only
-  className, // Destructure className
+  isReadOnly = false,
+  className,
 }: Props) {
   return (
-    <section className={`bg-[#0f1c33] border border-blue-900/30 rounded-xl p-6 space-y-5 shadow-lg ${className}`}>
-      <h3 className="text-xl font-bold text-blue-400 border-b border-blue-900/50 pb-2">
+    <section className={`space-y-5 ${className}`}>
+      <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">
         Status Service
       </h3>
 
       {!isReadOnly && (
         <>
-          <p className="text-sm text-gray-400 -mt-3">Ubah status dan simpan sebagai log:</p>
+          <p className="text-sm text-gray-600 -mt-3">Ubah status dan simpan sebagai log:</p>
           <div className="flex justify-between items-center gap-3">
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               disabled={isSaving || isReadOnly}
-              className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm w-56 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm w-56 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="pending">1. Diagnosa/Pending</option>
               <option value="process">2. Proses Pengerjaan</option>
@@ -65,37 +65,63 @@ export default function StatusControl({
         </>
       )}
 
-      <div className="pt-4 border-t border-blue-900/40">
-        <p className="text-sm font-semibold text-gray-300 mb-2">Riwayat Status:</p>
+      <div className="pt-4 border-t border-gray-200">
+        <p className="text-sm font-semibold text-gray-700 mb-2">
+          {isReadOnly ? "Status Terakhir:" : "Riwayat Status:"}
+        </p>
 
         {!statusLog?.length ? (
           <p className="text-gray-500 text-sm italic">Belum ada log status.</p>
+        ) : isReadOnly ? (
+          (() => {
+            const latestLog = statusLog.slice().reverse()[0];
+            return (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                <p className="text-gray-500 text-xs mb-1">
+                  [{formatDateTime(latestLog.updatedAt)}]
+                </p>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1
+                    ${
+                      latestLog.status === "pending" ? "bg-yellow-100 text-yellow-800"
+                      : latestLog.status === "process" ? "bg-blue-100 text-blue-800"
+                      : latestLog.status === "ready" ? "bg-teal-100 text-teal-800"
+                      : latestLog.status === "done" ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                    }
+                  `}
+                >
+                  {latestLog.status}
+                </span>
+                {latestLog.note && <p className="text-gray-800 mt-1">{latestLog.note}</p>}
+                <p className="text-gray-500 text-xs mt-1">Oleh: {latestLog.updatedBy || "-"}</p>
+              </div>
+            );
+          })()
         ) : (
           <div className="max-h-56 overflow-y-auto pr-2">
             <ul className="space-y-3 text-sm">
               {statusLog.slice().reverse().map((log, idx) => (
-                <li key={idx} className="bg-[#101b33] border border-blue-900/40 rounded-lg px-4 py-3">
-                  <p className="text-gray-400 text-xs mb-1">
+                <li key={idx} className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                  <p className="text-gray-500 text-xs mb-1">
                     [{formatDateTime(log.updatedAt)}]
                   </p>
 
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1
                       ${
-                        log.status === "pending"
-                          ? "bg-yellow-500/20 text-yellow-300"
-                          : log.status === "process"
-                          ? "bg-blue-500/20 text-blue-300"
-                          : log.status === "ready"
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-gray-500/20 text-gray-300"
+                        log.status === "pending" ? "bg-yellow-100 text-yellow-800"
+                        : log.status === "process" ? "bg-blue-100 text-blue-800"
+                        : log.status === "ready" ? "bg-teal-100 text-teal-800"
+                        : log.status === "done" ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
                       }
                     `}
                   >
                     {log.status}
                   </span>
 
-                  {log.note && <p className="text-gray-300 mt-1">{log.note}</p>}
+                  {log.note && <p className="text-gray-800 mt-1">{log.note}</p>}
                   <p className="text-gray-500 text-xs mt-1">Oleh: {log.updatedBy || "-"}</p>
                 </li>
               ))}

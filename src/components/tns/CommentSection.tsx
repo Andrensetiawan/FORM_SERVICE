@@ -54,23 +54,23 @@ export default function CommentSection({
   };
 
   return (
-    <section className="bg-[#0f1c33] border border-blue-900/30 rounded-xl p-6 space-y-4 shadow-lg">
-      <h3 className="text-xl font-bold text-red-400">Komentar & Histori Customer</h3>
+    <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4 shadow-lg">
+      <h3 className="text-xl font-bold text-red-500">Komentar & Histori Customer</h3>
 
       <div className="space-y-2">
         {comments?.map((c: any, i: number) => (
-          <div key={i} className="bg-[#081226] p-3 rounded">
-            <div className="text-xs text-gray-400">{c.author} • {c.createdAt?.seconds ? new Date(c.createdAt.seconds*1000).toLocaleString("id-ID") : "-"}</div>
-            <div className="mt-1 text-sm text-gray-200">{c.body}</div>
+          <div key={i} className="bg-gray-100 p-3 rounded">
+            <div className="text-xs text-gray-500">{c.author} • {c.createdAt?.seconds ? new Date(c.createdAt.seconds*1000).toLocaleString("id-ID") : "-"}</div>
+            <div className="mt-1 text-sm text-gray-800">{c.body}</div>
           </div>
         ))}
       </div>
 
       {canComment && (
         <div className="mt-3">
-          <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full bg-gray-900 p-2 rounded" rows={3} placeholder="Tulis balasan atau catatan di sini..." />
+          <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full bg-gray-50 border border-gray-300 p-2 rounded" rows={3} placeholder="Tulis balasan atau catatan di sini..." />
           <div className="flex justify-end mt-2">
-            <button disabled={sending} onClick={handleSend} className="px-4 py-2 bg-blue-600 rounded">{sending ? "Mengirim..." : "Kirim Komentar"}</button>
+            <button disabled={sending} onClick={handleSend} className="px-4 py-2 bg-blue-600 text-white rounded">{sending ? "Mengirim..." : "Kirim Komentar"}</button>
           </div>
         </div>
       )}

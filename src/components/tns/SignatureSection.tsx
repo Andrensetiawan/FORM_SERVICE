@@ -2,9 +2,9 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
-import { doc, updateDoc, arrayUnion, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
-import { X, Check, Trash2, Edit, Save } from "lucide-react";
+import { X, Save, Trash2 } from "lucide-react";
 
 type Props = {
   docId: string;
@@ -13,7 +13,7 @@ type Props = {
   user?: any;
   setErrorMsg?: (m: string | null) => void;
   setSuccessMsg?: (m: string | null) => void;
-  className?: string; // Allow external classes
+  className?: string;
 };
 
 export default function SignatureSection({
@@ -23,7 +23,7 @@ export default function SignatureSection({
   user,
   setErrorMsg,
   setSuccessMsg,
-  className, // Destructure className
+  className,
 }: Props) {
   const sigRef = useRef<SignatureCanvas | null>(null);
   const [saving, setSaving] = useState(false);
@@ -38,11 +38,8 @@ export default function SignatureSection({
 
   const uploadToCloudinary = async (dataUrl: string) => {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const preset = process.env.NEXT_PUBLIC_SIGNATURE_PRESET; // Use a specific preset for signatures
-    
-    if (!preset) {
-      throw new Error("Cloudinary signature preset is not configured.");
-    }
+    const preset = process.env.NEXT_PUBLIC_SIGNATURE_PRESET;
+    if (!preset) throw new Error("Cloudinary signature preset is not configured.");
     
     const fd = new FormData();
     fd.append("file", dataUrl);
@@ -53,10 +50,7 @@ export default function SignatureSection({
       body: fd,
     });
     
-    if (!res.ok) {
-      throw new Error("Cloudinary upload failed.");
-    }
-
+    if (!res.ok) throw new Error("Cloudinary upload failed.");
     const data = await res.json();
     return { secure_url: data.secure_url as string, public_id: data.public_id as string };
   };
@@ -98,7 +92,6 @@ export default function SignatureSection({
   const handleDelete = async () => {
     if (!publicId) {
        setErrorMsg?.("Tidak ada tanda tangan untuk dihapus.");
-       // Also clear frontend in case of inconsistent state
        setPreview(null);
        setPublicId(null);
        return;
@@ -107,18 +100,13 @@ export default function SignatureSection({
       setErrorMsg?.("Anda harus login untuk menghapus tanda tangan.");
       return;
     }
-
     try {
       setDeleting(true);
       setErrorMsg?.(null);
-      
       const token = await user.getIdToken();
       const res = await fetch('/api/delete-image', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ public_id: publicId })
       });
 
@@ -148,14 +136,13 @@ export default function SignatureSection({
   const handleClear = () => sigRef.current?.clear();
 
   return (
-    <section className={`bg-[#0f1c33] border border-blue-900/30 rounded-xl p-6 space-y-4 shadow-lg ${className}`}>
-      <h3 className="text-xl font-bold text-yellow-400">Tanda Tangan Digital (Persetujuan)</h3>
+    <section className={`space-y-4 ${className}`}>
+      <h3 className="text-lg font-semibold text-blue-600">Tanda Tangan Digital (Persetujuan)</h3>
 
       {preview ? (
-        // === VIEW WHEN SIGNATURE IS SAVED ===
-        <div className="space-y-4">
-            <p className="text-sm text-gray-400">Tanda tangan sudah tersimpan:</p>
-            <div className="h-40 bg-black/20 rounded flex items-center justify-center p-2 border border-blue-800">
+        <div className="space-y-4 text-center">
+            <p className="text-sm text-gray-600">Tanda tangan sudah tersimpan:</p>
+            <div className="h-40 bg-gray-100 rounded flex items-center justify-center p-2 border border-gray-300">
               <img src={preview} className="h-full object-contain" alt="Saved Signature" />
             </div>
             <button 
@@ -163,50 +150,28 @@ export default function SignatureSection({
               disabled={deleting}
               className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:bg-red-400"
             >
-              {deleting ? (
-                <>
-                  <span className="animate-spin text-xl">⏳</span>
-                  <span>Menghapus...</span>
-                </>
-              ) : (
-                <>
-                  <Trash2 size={18} />
-                  <span>Hapus & Ulangi Tanda Tangan</span>
-                </>
-              )}
+              {deleting ? "Menghapus..." : <><Trash2 size={18} /> Hapus & Ulangi Tanda Tangan</>}
             </button>
         </div>
       ) : (
-        // === VIEW WHEN EDITING SIGNATURE ===
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <p className="text-sm text-gray-400">Silakan tanda tangan di area bawah ini:</p>
-            <div className="h-40 bg-black/20 rounded-lg border border-blue-800">
-              <SignatureCanvas ref={sigRef} canvasProps={{ className: "w-full h-full" }} penColor="white" />
+            <p className="text-sm text-gray-600">Silakan tanda tangan di area bawah ini:</p>
+            <div className="h-40 bg-gray-100 rounded-lg border border-gray-300">
+              <SignatureCanvas ref={sigRef} canvasProps={{ className: "w-full h-full" }} penColor="black" />
             </div>
-
             <div className="flex items-center gap-2 pt-2">
               <button 
                 onClick={handleSave} 
                 disabled={saving} 
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:bg-blue-400"
               >
-                {saving ? (
-                  <>
-                    <span className="animate-spin text-xl">⏳</span>
-                    <span>Menyimpan...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save size={18} />
-                    <span>Simpan Tanda Tangan</span>
-                  </>
-                )}
+                {saving ? "Menyimpan..." : <><Save size={18} /> Simpan Tanda Tangan</>}
               </button>
               <button 
                 onClick={handleClear} 
                 disabled={saving}
-                className="p-2 text-gray-400 hover:text-white hover:bg-red-600/50 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                 title="Hapus tanda tangan di kanvas"
               >
                 <X size={20} />
@@ -215,13 +180,52 @@ export default function SignatureSection({
           </div>
           
           <div className="space-y-2">
-             <p className="text-sm text-gray-400">Dengan menandatangani, Anda menyetujui syarat dan ketentuan yang berlaku.</p>
-             <div className="prose prose-sm text-gray-300 bg-blue-900/20 p-3 rounded-lg border border-blue-800">
-                <ul className="text-gray-300">
-                  <li>Saya adalah pemilik sah dari perangkat yang diserahkan.</li>
-                  <li>Saya menyetujui estimasi biaya perbaikan yang diberikan.</li>
-                  <li>Saya memahami bahwa ada risiko dalam proses perbaikan.</li>
-                </ul>
+             <p className="text-sm text-gray-600">Dengan menandatangani, Anda menyetujui:</p>
+             <div className="prose prose-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <ol className="text-gray-700 list-decimal pl-5">
+                  <li>
+                    <em>Perbaikan sesuai kemampuan teknisi:</em> Perbaikan
+                    dilakukan sesuai kapasitas, ilmu, dan pengalaman teknisi.
+                  </li>
+                  <li>
+                    <em>Risiko kerusakan bisa bertambah:</em> Jika kondisi
+                    kerusakan berubah/bertambah parah saat diperbaiki, itu di
+                    luar tanggung jawab penyedia layanan.
+                  </li>
+                  <li>
+                    <em>Perbaikan setelah persetujuan:</em> Estimasi waktu
+                    dan biaya diinformasikan terlebih dahulu, perbaikan
+                    dilakukan setelah disetujui pelanggan.
+                  </li>
+                  <li>
+                    <em>Tidak bisa batal sepihak:</em> Perbaikan tidak bisa
+                    dibatalkan jika sudah dikonfirmasi.
+                  </li>
+                  <li>
+                    <em>Barang tidak diambil 30 hari:</em> Penyedia layanan
+                    tidak bertanggung jawab jika barang tidak diambil dalam 30
+                    hari setelah konfirmasi selesai, termasuk risiko force
+                    majeure.
+                  </li>
+                  <li>
+                    <em>Data & software tanggung jawab pelanggan:</em> Data,
+                    dokumen, dan aplikasi adalah tanggung jawab pelanggan.
+                  </li>
+                  <li>
+                    <em>Risiko kehilangan data:</em> Kehilangan/kerusakan
+                    data saat perbaikan bukan tanggung jawab teknisi, pelanggan
+                    dianggap sudah backup.
+                  </li>
+                  <li>
+                    <em>Biaya pembatalan:</em> Cancel fee berkisar
+                    Rp50.000 – Rp100.000.
+                  </li>
+                  <li>
+                    <em>Garansi terbatas:</em> Garansi hanya untuk kerusakan
+                    yang sama, batal jika segel rusak, barang cacat/terbakar,
+                    atau akibat kelalaian pemakaian.
+                  </li>
+                </ol>
              </div>
           </div>
         </div>

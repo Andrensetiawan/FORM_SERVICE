@@ -5,10 +5,10 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import PendingUsers from "@/components/pending-users";
 import { ROLES } from "@/lib/roles";
 
-export default function ManagerPendingUsersPage() {
+export default function OwnerPendingUsersPage() {
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
-      <div>
+      <div className="min-h-screen bg-gray-100">
         <NavbarSwitcher />
         <PendingUsers />
       </div>

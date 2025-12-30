@@ -4,39 +4,30 @@ import React, { useEffect, useRef, useState, forwardRef } from "react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { Trash2, FileUp, Camera, CameraOff, Loader2 } from "lucide-react";
-import useAuth from "@/hooks/useAuth"; // Import useAuth
+import useAuth from "@/hooks/useAuth";
 
-// --- EXPORTED TYPE ---
 export interface MediaItem {
   id: string;
   url: string;
   type: "image" | "video";
-  file?: File; 
+  file?: File;
 }
 
-// --- PROPS ---
 type Props = {
   title?: string;
   size?: "normal" | "small";
   showCamera?: boolean;
-
-  // Standalone Mode props
   docId?: string;
   field?: string;
   existingUrl?: string | string[];
   onUpdate?: (urls: string[]) => void;
-
-  // Controlled Mode props
   items?: MediaItem[];
   onItemsChange?: (items: MediaItem[]) => void;
-  
-  // Common
   setErrorMsg?: (m: string | null) => void;
   setSuccessMsg?: (m: string | null) => void;
-  disabled?: boolean; // New prop for disabling the section
+  disabled?: boolean;
 };
 
-// Helper to extract Public ID from Cloudinary URL
 const getPublicIdFromUrl = (url: string): string | null => {
     try {
         const regex = /upload\/(?:v\d+\/)?([^\.]+)/;
@@ -48,7 +39,7 @@ const getPublicIdFromUrl = (url: string): string | null => {
     }
 };
 
-const MediaUploadSection = forwardRef(({
+const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
   title = "Lampiran",
   size = "normal",
   showCamera = true,
@@ -61,8 +52,8 @@ const MediaUploadSection = forwardRef(({
   setErrorMsg,
   setSuccessMsg,
   disabled = false,
-}: Props, ref) => {
-  const { user } = useAuth(); // Get user from auth hook
+}, ref) => {
+  const { user } = useAuth();
   const mode = (items && onItemsChange) ? 'controlled' : 'standalone';
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -123,7 +114,6 @@ const MediaUploadSection = forwardRef(({
       return;
     }
 
-    // If it's a new file not yet uploaded, just remove from state
     if (itemToDelete.file || itemToDelete.url.startsWith("data:") || itemToDelete.url.startsWith("blob:")) {
         if (itemToDelete.url.startsWith("blob:")) {
             URL.revokeObjectURL(itemToDelete.url);
@@ -133,7 +123,6 @@ const MediaUploadSection = forwardRef(({
         return;
     }
 
-    // If it's an uploaded file, delete from Cloudinary
     setDeletingId(id);
     try {
       const public_id = getPublicIdFromUrl(itemToDelete.url);
@@ -144,22 +133,14 @@ const MediaUploadSection = forwardRef(({
       const token = await user.firebaseUser.getIdToken();
       const res = await fetch('/api/delete-image', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ public_id }),
       });
 
       const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Gagal menghapus file dari cloud.");
-      }
+      if (!res.ok || !data.success) throw new Error(data.message || "Gagal menghapus file dari cloud.");
       
       setSuccessMsg?.("File berhasil dihapus dari cloud.");
-      
-      // Update state after successful deletion
       const updated = mediaItems.filter((item) => item.id !== id);
       setMediaItems(updated);
 
@@ -190,6 +171,7 @@ const MediaUploadSection = forwardRef(({
       setCameraActive(false);
     }
   };
+  
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
       (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
@@ -197,8 +179,6 @@ const MediaUploadSection = forwardRef(({
     setCameraActive(false);
   };
 
-
-  // --- STANDALONE MODE LOGIC ---
   const getPreset = () => {
     if(!field) return undefined;
     let preset: string | undefined;
@@ -257,24 +237,24 @@ const MediaUploadSection = forwardRef(({
   const videoHeightClass = size === "small" ? "h-32" : "h-48";
 
   return (
-    <div className={`bg-[#0f1c33] p-4 rounded-xl border border-blue-900/30 shadow-lg ${disabled ? "disabled:cursor-not-allowed" : ""}`}>
-      <h4 className="text-yellow-400 font-semibold mb-3">{title}</h4>
+    <div ref={ref} className={`bg-gray-50 p-4 rounded-xl border border-gray-200 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}>
+      <h4 className="text-gray-700 font-semibold mb-3 text-sm">{title}</h4>
         <div className="flex flex-col items-center">
             {showCamera && (
                 <div className="w-full mb-3 relative">
                     <video ref={videoRef} className={`${videoHeightClass} rounded shadow bg-black w-full object-cover ${cameraActive ? "" : "hidden"}`} playsInline muted />
                     {!cameraActive && (
-                        <div className={`absolute inset-0 flex items-center justify-center bg-black rounded`}>
-                            <p className="text-gray-400">Kamera tidak aktif.</p>
+                        <div className={`absolute inset-0 flex items-center justify-center bg-gray-200 rounded`}>
+                            <p className="text-gray-500 text-xs">Kamera tidak aktif</p>
                         </div>
                     )}
                 </div>
             )}
             <div className="flex flex-wrap justify-center gap-2">
-                {showCamera && <button onClick={capturePhoto} disabled={!cameraActive || disabled} className="px-4 py-2 bg-blue-600 rounded text-xs disabled:bg-gray-500 flex items-center gap-2 disabled:cursor-not-allowed"><Camera size={14}/> Ambil Foto</button>}
-                <button onClick={() => fileInputRef.current?.click()} disabled={disabled} className="px-4 py-2 bg-indigo-600 rounded text-xs flex items-center gap-2 disabled:cursor-not-allowed"><FileUp size={14} /> Pilih File</button>
+                {showCamera && <button onClick={capturePhoto} disabled={!cameraActive || disabled} className="px-4 py-2 bg-blue-600 rounded text-xs text-white flex items-center gap-2 disabled:bg-gray-400"><Camera size={14}/> Ambil Foto</button>}
+                <button onClick={() => fileInputRef.current?.click()} disabled={disabled} className="px-4 py-2 bg-indigo-600 text-white rounded text-xs flex items-center gap-2 disabled:bg-gray-400"><FileUp size={14} /> Pilih File</button>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} multiple accept="image/*,video/*" className="hidden" disabled={disabled} />
-                {showCamera && <button onClick={() => (cameraActive ? stopCamera() : startCamera())} disabled={disabled} className="px-4 py-2 bg-gray-700 rounded text-xs flex items-center gap-2 disabled:cursor-not-allowed">{cameraActive ? <CameraOff size={14}/> : <Camera size={14}/>} {cameraActive ? "Matikan" : "Nyalakan"}</button>}
+                {showCamera && <button onClick={() => (cameraActive ? stopCamera() : startCamera())} disabled={disabled} className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs flex items-center gap-2 disabled:bg-gray-400">{cameraActive ? <CameraOff size={14}/> : <Camera size={14}/>} {cameraActive ? "Matikan" : "Nyalakan"}</button>}
             </div>
         </div>
 
@@ -283,15 +263,15 @@ const MediaUploadSection = forwardRef(({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {mediaItems.map((item) => (
                 <div key={item.id} className="relative group">
-                    {item.type === 'image' ? <img src={item.url} alt="Lampiran" onClick={() => setPreviewingImage(item.url)} className={`${imageHeightClass} w-full rounded object-cover bg-black cursor-pointer`} /> : <video src={item.url} className={`${imageHeightClass} w-full rounded object-cover bg-black`} controls />}
+                    {item.type === 'image' ? <img src={item.url} alt="Lampiran" onClick={() => setPreviewingImage(item.url)} className={`${imageHeightClass} w-full rounded object-cover border border-gray-200 cursor-pointer`} /> : <video src={item.url} className={`${imageHeightClass} w-full rounded object-cover border border-gray-200`} controls />}
                     <button onClick={() => deleteMedia(item.id)} disabled={deletingId === item.id || disabled} className="absolute top-1 right-1 p-1 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 disabled:cursor-not-allowed"><Trash2 size={12} /></button>
-                    {deletingId === item.id && <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md"><Loader2 className="animate-spin text-white"/></div>}
+                    {deletingId === item.id && <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-md"><Loader2 className="animate-spin text-gray-800"/></div>}
                 </div>
                 ))}
             </div>
             {mode === 'standalone' && (
                  <div className="flex justify-center gap-3 mt-3">
-                    <button onClick={saveMedia} disabled={uploading || !hasUnsavedMedia || disabled} className="px-6 py-2 bg-green-600 text-sm rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button onClick={saveMedia} disabled={uploading || !hasUnsavedMedia || disabled} className="px-6 py-2 bg-green-600 text-white text-sm rounded disabled:opacity-50 disabled:cursor-not-allowed">
                         {uploading ? "Menyimpan..." : "Simpan Lampiran"}
                     </button>
                 </div>
@@ -300,21 +280,9 @@ const MediaUploadSection = forwardRef(({
         )}
 
       {previewingImage && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-          onClick={() => setPreviewingImage(null)}
-        >
-          <img 
-            src={previewingImage} 
-            alt="Preview" 
-            className="max-w-[90vw] max-h-[90vh] object-contain"
-          />
-          <button 
-            onClick={() => setPreviewingImage(null)}
-            className="absolute top-4 right-4 text-white text-3xl font-bold"
-          >
-            &times;
-          </button>
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50" onClick={() => setPreviewingImage(null)}>
+          <img src={previewingImage} alt="Preview" className="max-w-[90vw] max-h-[90vh] object-contain" />
+          <button onClick={() => setPreviewingImage(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">&times;</button>
         </div>
       )}
 

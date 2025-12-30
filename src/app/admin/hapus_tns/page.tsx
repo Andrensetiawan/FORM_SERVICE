@@ -266,70 +266,78 @@ export default function StaffPage() {
       ]}
     >
       <>
-        {/* CSS KHUSUS HALAMAN INI (SAMA PERSIS DENGAN HTML) */}
+        {/* CSS KHUSUS HALAMAN INI (VERSI TERANG) */}
         <style jsx global>{`
           body {
-            background-color: #101727;
-            color: #e2e8f0;
+            background-color: #f8f9fa;
+            color: #212529;
           }
           .card {
-            background-color: #1e293b;
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
-            border: 1px solid #2d3748;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
           }
           .input-dark,
           .select-dark {
-            background-color: #2d3748;
-            border-color: #4a5568;
-            color: #e2e8f0;
+            background-color: #ffffff;
+            border-color: #ced4da;
+            color: #495057;
+          }
+          .input-dark:focus,
+          .select-dark:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
           }
           .table-header {
-            background-color: #1f324d;
-            color: #cbd5e0;
-            border-bottom: 2px solid #3b82f6;
+            background-color: #f1f3f5;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
           }
-          .table-body-row:nth-child(odd) {
-            background-color: #1a2434;
+          .table-body-row {
+             border-bottom: 1px solid #e9ecef;
           }
           .table-body-row:nth-child(even) {
-            background-color: #1e293b;
+            background-color: #f8f9fa;
           }
           .table-body-row:hover {
-            background-color: #2a3d53;
+            background-color: #e9ecef;
             transition: background-color 0.2s;
           }
           .status-done {
-            background-color: #10b981;
-            color: #064e3b;
+            background-color: #d4edda;
+            color: #155724;
             font-weight: 700;
           }
           .status-pending {
-            background-color: #f59e0b;
-            color: #78350f;
+            background-color: #fff3cd;
+            color: #856404;
             font-weight: 700;
           }
           .status-link {
-            color: #60a5fa;
+            color: #007bff;
             font-weight: 600;
             text-decoration: none;
+          }
+          .status-link:hover {
+            text-decoration: underline;
           }
         `}</style>
 
         <NavbarSwitcher />
 
         {isModalOpen && itemToDelete && (
-          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4 border border-gray-700">
-              <h3 className="text-xl font-bold text-white mb-4">Konfirmasi Penghapusan</h3>
-              <p className="text-gray-300 mb-6">
-                Apakah Anda yakin ingin menghapus TNS dengan nomor lacak: <strong className="font-bold text-yellow-400">{itemToDelete.track_number || itemToDelete.id}</strong>?
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4 border">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Penghapusan</h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus TNS dengan nomor lacak: <strong className="font-bold text-red-600">{itemToDelete.track_number || itemToDelete.id}</strong>?
                 <br />
-                <span className="text-sm text-gray-400">Tindakan ini tidak dapat dibatalkan.</span>
+                <span className="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan.</span>
               </p>
               <div className="flex justify-end space-x-4">
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   Batal
                 </button>
@@ -347,12 +355,12 @@ export default function StaffPage() {
         <main className="min-h-screen p-4 sm:p-8">
           <div className="max-w-7xl mx-auto pt-10">
             <h2 className="text-2xl sm:text-3xl font-bold mb-6">
-              Daftar Service Request
+              Hapus Service Request
             </h2>
 
             {/* FILTER CARD */}
             <div className="card p-4 sm:p-6 rounded-xl mb-4 space-y-4">
-              <h3 className="text-lg font-semibold text-blue-300 border-b border-blue-900/50 pb-2">
+              <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">
                 Filter Data
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -472,7 +480,7 @@ export default function StaffPage() {
             <div className="card rounded-xl overflow-x-auto">
               <table
                 id="service-table"
-                className="min-w-full divide-y divide-blue-800/30"
+                className="min-w-full divide-y divide-gray-200"
               >
                 <thead className="table-header text-xs uppercase tracking-wider">
                   <tr>
@@ -489,13 +497,13 @@ export default function StaffPage() {
                 </thead>
                 <tbody
                   id="table-body"
-                  className="divide-y divide-blue-800/30 text-sm"
+                  className="divide-y divide-gray-200 text-sm"
                 >
                   {displayData.length === 0 ? (
                     <tr>
                       <td
                         colSpan={9}
-                        className="p-4 text-center text-gray-400"
+                        className="p-4 text-center text-gray-500"
                       >
                         Tidak ada data yang cocok dengan kriteria pencarian
                         Anda.
@@ -541,7 +549,7 @@ export default function StaffPage() {
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-lg shadow-black/20 ${statusClass}`}
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${statusClass}`}
                             >
                               {statusText}
                             </span>

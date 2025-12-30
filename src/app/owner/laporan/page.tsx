@@ -370,21 +370,21 @@ export default function ServiceReportPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="min-h-screen p-6 md:p-10 bg-gradient-to-b from-gray-50 to-white"
+        className="min-h-screen p-6 md:p-10 bg-gray-100 text-gray-800"
       >
         <div className="max-w-7xl mx-auto">
           {/* Header + Filter Periode */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                 <Wrench className="text-blue-600" /> Laporan Servis
               </h1>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-600 text-sm">
                 Ringkasan aktivitas servis berdasarkan periode waktu
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 backdrop-blur-md bg-blue-50/50 border border-blue-100 rounded-xl p-1 shadow-inner">
+            <div className="flex flex-wrap gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
               <button
                 onClick={() => {
                   const today = new Date();
@@ -394,8 +394,8 @@ export default function ServiceReportPage() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   selectedPeriod === "today"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-blue-700 hover:bg-blue-100/60 backdrop-blur-sm"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Hari Ini
@@ -405,7 +405,7 @@ export default function ServiceReportPage() {
                   const now = new Date();
                   const firstDayOfWeek = new Date(
                     now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))
-                  ); // Adjust for Sunday being 0, Monday being 1
+                  );
                   const lastDayOfWeek = new Date(
                     now.setDate(now.getDate() - now.getDay() + 7)
                   );
@@ -415,8 +415,8 @@ export default function ServiceReportPage() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   selectedPeriod === "week"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-blue-700 hover:bg-blue-100/60 backdrop-blur-sm"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Minggu Ini
@@ -430,8 +430,8 @@ export default function ServiceReportPage() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   selectedPeriod === "month"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-blue-700 hover:bg-blue-100/60 backdrop-blur-sm"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Bulan Ini
@@ -444,8 +444,8 @@ export default function ServiceReportPage() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   selectedPeriod === "all"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-blue-700 hover:bg-blue-100/60 backdrop-blur-sm"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Semua
@@ -483,31 +483,31 @@ export default function ServiceReportPage() {
                 label: "Total Servis",
                 value: summary.total,
                 icon: <Wrench className="text-blue-600" />,
-                bg: "bg-blue-50",
+                bg: "bg-blue-100",
               },
               {
                 label: "Servis Selesai",
                 value: summary.done,
                 icon: <CheckCircle className="text-green-600" />,
-                bg: "bg-green-50",
+                bg: "bg-green-100",
               },
               {
                 label: "Servis Pending",
                 value: summary.pending,
                 icon: <Clock className="text-yellow-600" />,
-                bg: "bg-yellow-50",
+                bg: "bg-yellow-100",
               },
             ].map((item, i) => (
               <motion.div
                 key={i}
                 whileHover={{ y: -4 }}
-                className="p-5 bg-white border rounded-xl shadow"
+                className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-3 rounded-lg ${item.bg}`}>{item.icon}</div>
                   <div>
                     <div className="text-xs text-gray-500">{item.label}</div>
-                    <div className="text-2xl font-bold text-gray-800">{item.value}</div>
+                    <div className="text-2xl font-bold text-gray-900">{item.value}</div>
                   </div>
                 </div>
               </motion.div>
@@ -516,7 +516,7 @@ export default function ServiceReportPage() {
 
           {/* Grafik */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="col-span-2 bg-white border rounded-xl p-4 shadow">
+            <div className="col-span-2 bg-white border border-gray-200 rounded-xl p-4 shadow-md">
               <h3 className="font-semibold text-gray-800 mb-3">Servis per Staff</h3>
               <div style={{ height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -524,7 +524,7 @@ export default function ServiceReportPage() {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={160} />
                     <Tooltip />
-                    <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 6, 6]}>
+                    <Bar dataKey="value" fill="#007bff" radius={[6, 6, 6, 6]}>
                       <LabelList dataKey="value" position="right" fill="#1e3a8a" />
                     </Bar>
                   </BarChart>
@@ -532,7 +532,7 @@ export default function ServiceReportPage() {
               </div>
             </div>
 
-            <div className="bg-white border rounded-xl p-4 shadow">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-md">
               <h3 className="font-semibold text-gray-800 mb-3">Status Servis</h3>
               <div style={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -565,7 +565,7 @@ export default function ServiceReportPage() {
 
               <select
                 onChange={(e) => setDivisionFilter(e.target.value)}
-                className="border border-blue-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-300 outline-none"
+                className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-300 outline-none"
               >
                 <option value="all">Semua Divisi</option>
                 {/* auto generate berdasarkan data user */}
@@ -582,7 +582,7 @@ export default function ServiceReportPage() {
             </div>
 
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-gray-500 border-b">
+              <thead className="text-left text-xs text-gray-500 border-b-2 border-gray-200">
                 <tr>
                   <th className="pb-2">Teknisi</th>
                   <th className="pb-2">Divisi</th>
@@ -608,7 +608,7 @@ export default function ServiceReportPage() {
                     return (
                       <tr
                         key={s.id}
-                        className="border-b hover:bg-blue-50/30 transition cursor-pointer"
+                        className="border-b border-gray-200 hover:bg-gray-100 transition cursor-pointer"
                         onClick={() =>
                           !isUnknown && router.push(`/owner/laporan/teknisi/${s.id}`)
                         }

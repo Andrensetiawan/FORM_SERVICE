@@ -157,15 +157,14 @@ export default function StaffManagementPage() {
     <>
       <NavbarSwitcher />
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-16 px-6 md:px-12">
+      <div className="min-h-screen bg-gray-100 py-16 px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <header className="text-center mb-12">
-            <h1 className="text-4xl font-extrabold text-gray-800 mb-2">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
               Daftar Staff
             </h1>
             <p className="text-gray-600">
-              Kelola anggota tim: ubah jabatan lalu tekan{" "}
-              <b>Simpan</b> untuk menyimpan ke database.
+              Kelola anggota tim Anda.
             </p>
           </header>
 
@@ -177,7 +176,7 @@ export default function StaffManagementPage() {
                 <motion.div
                   key={staff.id}
                   whileHover={{ y: -4, scale: 1.02 }}
-                  className="relative bg-gradient-to-b from-white to-blue-50 border border-blue-100 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all text-center"
+                  className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-all text-center"
                 >
                   <div className="flex flex-col items-center">
                     <div className="relative">
@@ -187,7 +186,7 @@ export default function StaffManagementPage() {
                           "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                         }
                         alt="Avatar"
-                        className="w-24 h-24 rounded-full border-4 border-blue-400 object-cover shadow-sm"
+                        className="w-24 h-24 rounded-full border-4 border-blue-500 object-cover shadow-sm"
                       />
                     </div>
 
@@ -199,10 +198,10 @@ export default function StaffManagementPage() {
                     <span
                       className={`px-3 py-1 text-xs font-semibold rounded-full mt-1 ${
                         staff.role === "owner"
-                          ? "bg-yellow-100 text-yellow-700"
+                          ? "bg-yellow-100 text-yellow-800"
                           : staff.role === "manager"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-gray-100 text-gray-800"
                       }`}
                     >
                       {staff.role}
@@ -218,7 +217,7 @@ export default function StaffManagementPage() {
                     <div className="flex justify-center gap-3 mt-5">
                       <button
                         onClick={() => router.push(`/management/staff/${staff.id}`)}
-                        className="px-4 py-2 text-sm font-medium border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition"
+                        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                       >
                         Detail
                       </button>
@@ -226,7 +225,7 @@ export default function StaffManagementPage() {
                       <button
                         onClick={() => deleteStaff(staff.id, staff.email)}
                         disabled={actionId === staff.id}
-                        className="px-4 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-400 rounded-lg transition disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition disabled:opacity-50"
                       >
                         {actionId === staff.id ? "Menghapus..." : "Hapus"}
                       </button>

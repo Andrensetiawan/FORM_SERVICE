@@ -148,7 +148,7 @@ export default function PendingUsers() {
         </header>
 
         {pendingUsers.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl shadow-md">
+          <div className="text-center py-20 bg-white rounded-xl shadow-md border border-gray-200">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}>
               <UserCheck size={60} className="mx-auto text-green-500" />
               <h3 className="mt-4 text-xl font-semibold text-gray-800">Semua Sudah Disetujui</h3>
@@ -165,12 +165,12 @@ export default function PendingUsers() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                  className="bg-white rounded-2xl shadow-lg border border-gray-200 flex flex-col overflow-hidden"
+                  className="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col overflow-hidden"
                 >
                   <div className="p-5 flex-grow">
                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                          <AlertCircle className="text-yellow-500" size={28}/>
+                       <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                          <AlertCircle className="text-yellow-600" size={28}/>
                        </div>
                        <div className="truncate">
                           <p className="font-semibold text-gray-900 truncate" title={u.email}>{u.email}</p>
@@ -189,7 +189,7 @@ export default function PendingUsers() {
                          <select
                            value={approvalData[u.id]?.role || ROLES.STAFF}
                            onChange={(e) => handleApprovalChange(u.id, 'role', e.target.value)}
-                           className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                           className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
                          >
                            <option value={ROLES.STAFF}>Staff</option>
                            <option value={ROLES.MANAGER}>Manager</option>
@@ -202,7 +202,7 @@ export default function PendingUsers() {
                          <select
                            value={approvalData[u.id]?.cabang || ""}
                            onChange={(e) => handleApprovalChange(u.id, 'cabang', e.target.value)}
-                           className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                           className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
                          >
                             <option value="">- Tidak Ditugaskan -</option>
                            {cabangList.map(c => <option key={c} value={c}>{c}</option>)}

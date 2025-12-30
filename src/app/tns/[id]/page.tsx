@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter, notFound } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/lib/firebaseConfig";
 import toast, { Toaster } from 'react-hot-toast';
-import { Printer } from "lucide-react"; // Import Printer icon
+import { Printer } from "lucide-react";
 
 import useAuth from "@/hooks/useAuth";
 import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
@@ -31,34 +31,27 @@ type EstimasiItem = {
 
 export default function ServiceDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { user, role, loading } = useAuth();
   const auth = getAuth();
 
   const [serviceData, setServiceData] = useState<any>(null);
   const [status, setStatus] = useState("pending");
   const [statusLog, setStatusLog] = useState<any[]>([]);
-
   const [estimasiItems, setEstimasiItems] = useState<EstimasiItem[]>([]);
-  
   const [handoverPhotoUrl, setHandoverPhotoUrl] = useState<string[]>([]);
   const [pickupPhotoUrl, setPickupPhotoUrl] = useState<string[]>([]);
   const [buktiTransferPhotoUrl, setBuktiTransferPhotoUrl] = useState<string[]>([]);
-
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-
   const [selectedTechnicians, setSelectedTechnicians] = useState<string[]>([]);
 
   const docId = (params as any)?.id as string;
-  
-  // Define roles based on logged-in user, default to false if no user
+
   const isInternal = user && role !== ROLES.CUSTOMER;
   const isAdminOrManagerOrOwner = !!(user && (role === ROLES.ADMIN || role === ROLES.MANAGER || role === ROLES.OWNER));
   const canAssignTechnician = isAdminOrManagerOrOwner;
   const canEditUnitLogSection = !!(user && (role === ROLES.ADMIN || role === ROLES.MANAGER || role === ROLES.OWNER || role === ROLES.STAFF));
   const isPublic = !user;
-
 
   const setSuccessMsg = (msg: string | null) => {
     if (msg) toast.success(msg);
@@ -71,40 +64,28 @@ export default function ServiceDetailPage() {
     setSelectedTechnicians(technicians);
   };
 
-  /* Load data - now runs for everyone */
   useEffect(() => {
     if (!docId) return;
-
     const loadData = async () => {
+      setLoadingData(true);
       try {
         const ref = doc(db, "service_requests", docId);
         const snap = await getDoc(ref);
-
         if (!snap.exists()) {
           setErrorMsg("Data tidak ditemukan");
           return notFound();
         }
-
         const data = snap.data();
         setServiceData({ id: snap.id, ...data });
-
         setStatus(data.status || "pending");
         setStatusLog(data.status_log || []);
-        
-        // Only set technicians if they exist
-        if(data.assignedTechnicians) {
-            setSelectedTechnicians(Array.isArray(data.assignedTechnicians) ? data.assignedTechnicians : [data.assignedTechnicians]);
+        if (data.assignedTechnicians) {
+          setSelectedTechnicians(Array.isArray(data.assignedTechnicians) ? data.assignedTechnicians : [data.assignedTechnicians]);
         }
-
         const est: EstimasiItem[] = (data.estimasi_items || []).map((e: any) => ({
-          id: String(e.id),
-          item: e.item || "",
-          harga: Number(e.harga) || 0,
-          qty: Number(e.qty) || 0,
-          total: Number(e.total) || 0,
+          id: String(e.id), item: e.item || "", harga: Number(e.harga) || 0, qty: Number(e.qty) || 0, total: Number(e.total) || 0,
         }));
         setEstimasiItems(est);
-
         setHandoverPhotoUrl(Array.isArray(data.handover_photo_url) ? data.handover_photo_url : (data.handover_photo_url ? [data.handover_photo_url] : []));
         setPickupPhotoUrl(Array.isArray(data.pickup_photo_url) ? data.pickup_photo_url : (data.pickup_photo_url ? [data.pickup_photo_url] : []));
         setBuktiTransferPhotoUrl(Array.isArray(data.transfer_proof_url) ? data.transfer_proof_url : (data.transfer_proof_url ? [data.transfer_proof_url] : []));
@@ -115,70 +96,39 @@ export default function ServiceDetailPage() {
         setLoadingData(false);
       }
     };
-
     loadData();
   }, [docId]);
 
   const formatDateTime = (ts: any) => {
-    if (!ts) return "-"; // Handle null/undefined timestamp
-
+    if (!ts) return "-";
     let dateValue: number;
-
     if (typeof ts === "object" && (ts._seconds || ts.seconds)) {
-      // Firebase Timestamp object (either {seconds, nanoseconds} or {_seconds, _nanoseconds})
-      dateValue = (ts._seconds ?? ts.seconds) * 1000; // Convert to milliseconds
+      dateValue = (ts._seconds ?? ts.seconds) * 1000;
     } else if (typeof ts === "number") {
-      // Raw number timestamp (assume seconds if not specified)
-      dateValue = ts * 1000; // Convert to milliseconds
+      dateValue = ts * 1000;
     } else {
-      return "-"; // Unrecognized timestamp format
-    }
-
-    // Check if the dateValue is valid before creating a Date object
-    if (isNaN(dateValue) || dateValue === 0) {
       return "-";
     }
-
+    if (isNaN(dateValue) || dateValue === 0) return "-";
     try {
-      return new Date(dateValue).toLocaleString("id-ID", {
-        dateStyle: "short",
-        timeStyle: "short",
-      });
+      return new Date(dateValue).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
     } catch (error) {
       console.error("Error formatting date:", error);
       return "-";
     }
   };
 
-  /* Update Status */
   const handleUpdateStatus = async () => {
     if (!isInternal || !user) return;
-
     try {
       setSaving(true);
       const ref = doc(db, "service_requests", docId);
       const snap = await getDoc(ref);
       const data = snap.data();
       const safeLog = Array.isArray(data?.status_log) ? data.status_log : [];
-      const entry = {
-        status,
-        updatedBy: user?.email || "system",
-        updatedAt: Date.now(),
-      };
-      await updateDoc(ref, {
-        status,
-        updatedAt: serverTimestamp(),
-        status_log: [...safeLog, entry],
-      });
-
-      await createLog({
-        uid: user.uid,
-        role: role as UserRole,
-        action: "update_service_status",
-        target: docId,
-        detail: { newStatus: status },
-      });
-
+      const entry = { status, updatedBy: user?.email || "system", updatedAt: Date.now() };
+      await updateDoc(ref, { status, updatedAt: serverTimestamp(), status_log: [...safeLog, entry] });
+      await createLog({ uid: user.uid, role: role as UserRole, action: "update_service_status", target: docId, detail: { newStatus: status } });
       setStatusLog((prev) => [...prev, entry]);
       setSuccessMsg("Status berhasil diperbarui!");
     } catch (err) {
@@ -189,7 +139,6 @@ export default function ServiceDetailPage() {
     }
   };
 
-  /* Estimasi */
   const addRow = () => setEstimasiItems((prev) => [...prev, { id: String(Date.now()), item: "", harga: 0, qty: 1, total: 0 }]);
   const removeRow = (id: string) => setEstimasiItems((prev) => prev.filter((x) => x.id !== id));
   const handleChange = (id: string, field: "item" | "harga" | "qty", value: string | number) => {
@@ -226,22 +175,9 @@ export default function ServiceDetailPage() {
       setSaving(true);
       const dp = serviceData.dp || 0;
       const newTotalBiaya = totalEstimasi - dp;
-      const payload = {
-        estimasi_items: estimasiItems,
-        total_biaya: newTotalBiaya,
-        dp: dp,
-        updatedAt: serverTimestamp(),
-      };
+      const payload = { estimasi_items: estimasiItems, total_biaya: newTotalBiaya, dp: dp, updatedAt: serverTimestamp() };
       await updateDoc(doc(db, "service_requests", docId), payload);
-
-      await createLog({
-        uid: user.uid,
-        role: role as UserRole,
-        action: "update_service_estimation",
-        target: docId,
-        detail: payload,
-      });
-
+      await createLog({ uid: user.uid, role: role as UserRole, action: "update_service_estimation", target: docId, detail: payload });
       setSuccessMsg("Estimasi berhasil disimpan!");
     } catch (err) {
       console.error("handleSaveEstimasi", err);
@@ -261,130 +197,181 @@ export default function ServiceDetailPage() {
     setServiceData((prev: any) => ({ ...prev, ...updatedData }));
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
-  if (loading || loadingData) return <div className="h-screen w-full flex items-center justify-center bg-[#0d1117] text-white"><h1>Memuat data service...</h1></div>;
-  if (!serviceData) return <div className="h-screen w-full flex items-center justify-center bg-[#0d1117] text-white"><h1>Data service tidak ditemukan.</h1></div>;
-
+  if (loading || loadingData) return <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-800"><h1>Memuat data service...</h1></div>;
+  if (!serviceData) return <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-800"><h1>Data service tidak ditemukan.</h1></div>;
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white">
-        <Toaster position="top-center" reverseOrder={false} />
-        <NavbarSwitcher className="print:hidden" />
+    <>
+      <style jsx global>{`
+        body {
+          background-color: #f8f9fa;
+          color: #212529;
+        }
+        .card {
+          background-color: #ffffff;
+          border: 1px solid #dee2e6;
+          border-radius: 0.75rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+        }
+        .status-done { background-color: #d4edda; color: #155724; }
+        .status-pending { background-color: #fff3cd; color: #856404; }
 
-        <div className="pt-24 max-w-6xl mx-auto p-6 space-y-8">
-            {/* The main interactive content */}
-              <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-bold text-gray-100">
-                    Service Detail <span className="text-blue-400">: {serviceData?.track_number}</span>
-                </h1>
-                <button
-                  onClick={handlePrint}
-                  className="flex items-center gap-2 text-sm bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors print:hidden"
-                >
-                  <Printer size={16} />
-                  Cetak/Unduh
-                </button>
-              </div>
+        /* Overrides for child components */
+        .card .bg-\[\#0f1c33\] {
+          background-color: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .card .text-yellow-400 { color: #007bff !important; }
+        .card .text-gray-400 { color: #6c757d !important; }
+        .card .text-white, .card .text-gray-100 { color: #212529 !important; }
+        .card button.text-white { color: #ffffff !important; }
+        .card label.text-white { color: #ffffff !important; }
+        .card span.text-white { color: #ffffff !important; }
+        .card .border-blue-900\/50, .card .border-gray-600, .card .border-gray-700 { border-color: #dee2e6 !important; }
+        .card .bg-blue-900\/50 { background-color: rgba(0, 123, 255, 0.05) !important; }
+        .card .text-emerald-400 { color: #28a745 !important; }
+        .card .bg-\[\#0d1117\] { background-color: transparent !important; }
+      `}</style>
 
-              <CustomerDeviceInfo
-                  docId={docId}
-                  serviceData={serviceData}
-                  formatDateTime={formatDateTime}
-                  onUpdate={handleInfoUpdate}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                  isReadOnly={isPublic} // Pass read-only state
-              />
-            <StatusControl
-                status={status}
-                setStatus={setStatus}
+      <Toaster position="top-center" reverseOrder={false} />
+      <NavbarSwitcher className="print:hidden" />
+      <div className="h-16 print:hidden" />
+
+      <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            Service Detail: <span className="text-blue-600">{serviceData?.track_number}</span>
+          </h1>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors print:hidden"
+          >
+            <Printer size={16} />
+            Cetak/Unduh
+          </button>
+        </div>
+
+        <div className="card">
+          <CustomerDeviceInfo
+            docId={docId}
+            serviceData={serviceData}
+            formatDateTime={formatDateTime}
+            onUpdate={handleInfoUpdate}
+            setErrorMsg={setErrorMsg}
+            setSuccessMsg={setSuccessMsg}
+            isReadOnly={isPublic}
+          />
+        </div>
+        
+        <div className="card">
+          <StatusControl
+            status={status}
+            setStatus={setStatus}
+            isSaving={saving}
+            handleUpdateStatus={handleUpdateStatus}
+            formatDateTime={formatDateTime}
+            statusLog={statusLog}
+            isReadOnly={!isInternal}
+            className="print:hidden"
+          />
+        </div>
+
+        {isInternal && (
+          <>
+            <div className="card">
+              <EstimasiSection
+                estimasiItems={estimasiItems}
+                totalEstimasi={totalEstimasi}
+                dp={serviceData?.dp || 0}
+                onDpChange={handleDpChange}
+                handleSave={handleSaveEstimasi}
+                addRow={addRow}
+                removeRow={removeRow}
+                handleChange={handleChange}
                 isSaving={saving}
-                handleUpdateStatus={handleUpdateStatus}
-                formatDateTime={formatDateTime}
-                statusLog={statusLog}
-                isReadOnly={!isInternal} // Disable for non-internal users
-                className="print:hidden my-8"
-            />              
-              {isInternal && (
-                <>
-                                  <EstimasiSection
-                                    estimasiItems={estimasiItems}
-                                    totalEstimasi={totalEstimasi}
-                                    dp={serviceData?.dp || 0}
-                                    onDpChange={handleDpChange}
-                                    handleSave={handleSaveEstimasi}
-                                    addRow={addRow}
-                                    removeRow={removeRow}
-                                    handleChange={handleChange}
-                                    isSaving={saving}
-                                    className="my-8"
-                                  />
-                  <div className="grid md:grid-cols-3 gap-4 print:hidden my-9">
-                    <MediaUploadSection
-                      docId={docId}
-                      field="transfer_proof_url"
-                      title="Foto Bukti Transfer"
-                      existingUrl={buktiTransferPhotoUrl}
-                      setErrorMsg={setErrorMsg}
-                      setSuccessMsg={setSuccessMsg}
-                      onUpdate={(urls: string[]) => handlePhotoUpdate("transfer_proof_url", urls)}
-                      showCamera={true}
-                    />
-                    <MediaUploadSection
-                      docId={docId}
-                      field="handover_photo_url"
-                      title="Foto Serah Terima"
-                      existingUrl={handoverPhotoUrl}
-                      setErrorMsg={setErrorMsg}
-                      setSuccessMsg={setSuccessMsg}
-                      onUpdate={(urls: string[]) => handlePhotoUpdate("handover_photo_url", urls)}
-                      showCamera={true}
-                    />
-                    <MediaUploadSection
-                      docId={docId}
-                      field="pickup_photo_url"
-                      title="Foto Pengambilan"
-                      existingUrl={pickupPhotoUrl}
-                      setErrorMsg={setErrorMsg}
-                      setSuccessMsg={setSuccessMsg}
-                      onUpdate={(urls: string[]) => handlePhotoUpdate("pickup_photo_url", urls)}
-                      showCamera={true}
-                    />
-                  </div>
-                                  <SignatureSection
-                                    docId={docId}
-                                    existingSignature={serviceData?.customer_signature_url}
-                                    existingSignaturePublicId={serviceData?.customer_signature_public_id}
-                                    setErrorMsg={setErrorMsg}
-                                    setSuccessMsg={setSuccessMsg}
-                                    user={auth.currentUser}
-                                    className="print:hidden my-8"
-                                  />                  <div className="mt-8 p-6 bg-[#0d1117] border border-gray-700 shadow rounded-2xl print:hidden">
-                      <h3 className="text-lg font-semibold text-white border-b border-gray-600 pb-2 mb-4">
-                      Penugasan Teknisi (TNS: {serviceData?.track_number})
-                      </h3>
-                      <TeknisiUpdate
-                        docId={docId}
-                        currentTechnicians={selectedTechnicians}
-                        onTechnicianSelect={handleSelectTechnician}
-                        isEditing={canAssignTechnician}
-                        canEditUnitLog={canEditUnitLogSection}
-                        setErrorMsg={setErrorMsg}
-                        setSuccessMsg={setSuccessMsg}
-                      />
-                  </div>
-                </>
-              )}
-              <CustomerLog
+              />
+            </div>
+
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4 border-b pb-2">Media & Bukti</h3>
+              <div className="grid md:grid-cols-3 gap-6 print:hidden">
+                <MediaUploadSection
                   docId={docId}
+                  field="transfer_proof_url"
+                  title="Foto Bukti Transfer"
+                  existingUrl={buktiTransferPhotoUrl}
                   setErrorMsg={setErrorMsg}
                   setSuccessMsg={setSuccessMsg}
-                  className="print:hidden my-8"
-              />            </div> {/* End of div hiding interactive content */}
+                  onUpdate={(urls: string[]) => handlePhotoUpdate("transfer_proof_url", urls)}
+                  showCamera={true}
+                />
+                <MediaUploadSection
+                  docId={docId}
+                  field="handover_photo_url"
+                  title="Foto Serah Terima"
+                  existingUrl={handoverPhotoUrl}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                  onUpdate={(urls: string[]) => handlePhotoUpdate("handover_photo_url", urls)}
+                  showCamera={true}
+                />
+                <MediaUploadSection
+                  docId={docId}
+                  field="pickup_photo_url"
+                  title="Foto Pengambilan"
+                  existingUrl={pickupPhotoUrl}
+                  setErrorMsg={setErrorMsg}
+                  setSuccessMsg={setSuccessMsg}
+                  onUpdate={(urls: string[]) => handlePhotoUpdate("pickup_photo_url", urls)}
+                  showCamera={true}
+                />
+              </div>
+            </div>
 
-    </div>
+            <div className="card">
+              <SignatureSection
+                docId={docId}
+                existingSignature={serviceData?.customer_signature_url}
+                existingSignaturePublicId={serviceData?.customer_signature_public_id}
+                setErrorMsg={setErrorMsg}
+                setSuccessMsg={setSuccessMsg}
+                user={auth.currentUser}
+                className="print:hidden"
+              />
+            </div>
+            
+            <div className="card">
+              <h3 className="text-lg font-semibold border-b pb-2 mb-4">
+                Penugasan Teknisi (TNS: {serviceData?.track_number})
+              </h3>
+              <TeknisiUpdate
+                docId={docId}
+                currentTechnicians={selectedTechnicians}
+                onTechnicianSelect={handleSelectTechnician}
+                isEditing={canAssignTechnician}
+                canEditUnitLog={canEditUnitLogSection}
+                setErrorMsg={setErrorMsg}
+                setSuccessMsg={setSuccessMsg}
+              />
+            </div>
+          </>
+        )}
+        
+        <div className="card">
+          <CustomerLog
+            docId={docId}
+            setErrorMsg={setErrorMsg}
+            setSuccessMsg={setSuccessMsg}
+            className="print:hidden"
+          />
+        </div>
+      </main>
+    </>
   );
 }

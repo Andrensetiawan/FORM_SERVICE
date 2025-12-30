@@ -192,7 +192,7 @@ export default function TechnicianDetailPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="min-h-screen p-6 md:p-10 bg-gradient-to-b from-gray-50 to-white"
+        className="min-h-screen p-6 md:p-10 bg-gray-100 text-gray-800"
       >
         <div className="max-w-5xl mx-auto">
           {/* Breadcrumb */}
@@ -204,31 +204,32 @@ export default function TechnicianDetailPage() {
           </button>
 
           {/* Header */}
-          <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-gray-100">
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {techInfo?.name || "Nama Tidak Dikenal"}
             </h1>
             <p className="text-gray-500 text-sm">
+              Laporan detail untuk teknisi.
             </p>
             <div className="flex flex-col md:flex-row gap-4 mt-4">
               <div className="flex-1">
-                <label htmlFor="startDate" className="block text-xs font-medium text-gray-500 mb-1">Dari Tanggal:</label>
+                <label htmlFor="startDate" className="block text-xs font-medium text-gray-600 mb-1">Dari Tanggal:</label>
                 <input
                   type="date"
                   id="startDate"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
               </div>
               <div className="flex-1">
-                <label htmlFor="endDate" className="block text-xs font-medium text-gray-500 mb-1">Sampai Tanggal:</label>
+                <label htmlFor="endDate" className="block text-xs font-medium text-gray-600 mb-1">Sampai Tanggal:</label>
                 <input
                   type="date"
                   id="endDate"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
               </div>
             </div>
@@ -238,10 +239,10 @@ export default function TechnicianDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-blue-50 border rounded-xl shadow-sm"
+              className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
             >
               <div className="flex items-center gap-3">
-                <Wrench className="text-blue-600" />
+                <div className="p-2 bg-blue-100 rounded-lg"><Wrench className="text-blue-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500">Total Servis</p>
                   <p className="text-2xl font-bold text-gray-800">{summary.totalServices}</p>
@@ -250,10 +251,10 @@ export default function TechnicianDetailPage() {
             </motion.div>
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-green-50 border rounded-xl shadow-sm"
+              className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
             >
               <div className="flex items-center gap-3">
-                <CheckCircle className="text-green-600" />
+              <div className="p-2 bg-green-100 rounded-lg"><CheckCircle className="text-green-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500">Servis Selesai</p>
                   <p className="text-2xl font-bold text-gray-800">{summary.done}</p>
@@ -263,10 +264,10 @@ export default function TechnicianDetailPage() {
 
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-yellow-50 border rounded-xl shadow-sm"
+              className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
             >
               <div className="flex items-center gap-3">
-                <Clock className="text-yellow-600" />
+              <div className="p-2 bg-yellow-100 rounded-lg"><Clock className="text-yellow-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500">Servis Pending</p>
                   <p className="text-2xl font-bold text-gray-800">{summary.pending}</p>
@@ -276,10 +277,10 @@ export default function TechnicianDetailPage() {
 
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-purple-50 border rounded-xl shadow-sm"
+              className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
             >
               <div className="flex items-center gap-3">
-                <CheckCircle className="text-purple-600" />
+                <div className="p-2 bg-purple-100 rounded-lg"><CheckCircle className="text-purple-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500">% Sukses</p>
                   <p className="text-2xl font-bold text-gray-800">{summary.successRate.toFixed(0)}%</p>
@@ -289,23 +290,23 @@ export default function TechnicianDetailPage() {
 
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-red-50 border rounded-xl shadow-sm"
+              className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
             >
               <div className="flex items-center gap-3">
-                <Clock className="text-red-600" />
+                <div className="p-2 bg-red-100 rounded-lg"><Clock className="text-red-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500">Aktivitas Terakhir</p>
-                  <p className="text-2xl font-bold text-gray-800">{summary.lastActivityDate}</p>
+                  <p className="text-xl font-bold text-gray-800">{summary.lastActivityDate}</p>
                 </div>
               </div>
             </motion.div>
 
             <motion.div
               whileHover={{ y: -3 }}
-              className="p-5 bg-orange-50 border rounded-xl shadow-sm"
+              className="p-5 bg-white border border-gray-200 rounded-xl shadow-md"
             >
               <div className="flex items-center gap-3">
-                <Wrench className="text-orange-600" />
+                <div className="p-2 bg-orange-100 rounded-lg"><Wrench className="text-orange-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500">Rata-rata Waktu</p>
                   <p className="text-2xl font-bold text-gray-800">
@@ -317,7 +318,7 @@ export default function TechnicianDetailPage() {
           </div>
 
           {/* Grafik Aktivitas */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow p-5 mb-8">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-md p-5 mb-8">
             <h3 className="font-semibold text-gray-800 mb-3">
               Aktivitas 7 Hari Terakhir
             </h3>
@@ -327,9 +328,9 @@ export default function TechnicianDetailPage() {
                   <XAxis dataKey="day" />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="count" fill="#007bff" radius={[8, 8, 0, 0]}>
                     {activityData.map((_, i) => (
-                      <Cell key={i} fill="#3b82f6" />
+                      <Cell key={i} fill="#007bff" />
                     ))}
                   </Bar>
                 </BarChart>
@@ -338,7 +339,7 @@ export default function TechnicianDetailPage() {
           </div>
 
           {/* Daftar Servis */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-md p-5">
             <h3 className="font-semibold text-gray-800 mb-3">Daftar Servis</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -352,7 +353,7 @@ export default function TechnicianDetailPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {services.map((service) => (
-                    <tr key={service.id}>
+                    <tr key={service.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{service.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{service.status}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
 
-type ColorKey = 'green' | 'blue' | 'yellow' | 'indigo';
+type ColorKey = 'green' | 'blue' | 'yellow' | 'gray';
 
 interface StatCardProps {
   title: string;
@@ -13,43 +13,39 @@ interface StatCardProps {
   color: ColorKey;
 }
 
-const colorSchemes: Record<ColorKey, { bg: string; text: string; border: string }> = {
+const colorSchemes: Record<ColorKey, { bg: string; text: string }> = {
   green: {
     bg: 'bg-green-100',
-    text: 'text-green-700',
-    border: 'border-green-500',
+    text: 'text-green-800',
   },
   blue: {
     bg: 'bg-blue-100',
-    text: 'text-blue-700',
-    border: 'border-blue-500',
+    text: 'text-blue-800',
   },
   yellow: {
     bg: 'bg-yellow-100',
-    text: 'text-yellow-700',
-    border: 'border-yellow-500',
+    text: 'text-yellow-800',
   },
-  indigo: {
-    bg: 'bg-indigo-100',
-    text: 'text-indigo-700',
-    border: 'border-indigo-500',
+  gray: {
+    bg: 'bg-gray-100',
+    text: 'text-gray-800',
   },
 };
 
 export const StatCard = ({ title, value, subValue, icon, color }: StatCardProps) => {
-  const { bg, text, border } = colorSchemes[color] || colorSchemes.indigo;
+  const { bg, text } = colorSchemes[color] || colorSchemes.gray;
 
   return (
     <motion.div
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300 }}
-      className={`bg-white p-5 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 border-l-4 ${border}`}
+      className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
     >
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</h3>
           <p className="text-3xl font-bold text-gray-900 my-1">{value}</p>
-          <p className={`text-xs ${text.replace('700', '600')} font-medium`}>{subValue}</p>
+          <p className={`text-xs ${text} font-medium`}>{subValue}</p>
         </div>
         <div className={`p-4 rounded-full ${bg} ${text}`}>
           {icon}

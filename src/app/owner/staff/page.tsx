@@ -243,49 +243,57 @@ export default function StaffPage() {
         {/* CSS KHUSUS HALAMAN INI (SAMA PERSIS DENGAN HTML) */}
         <style jsx global>{`
           body {
-            background-color: #101727;
-            color: #e2e8f0;
+            background-color: #f8f9fa;
+            color: #212529;
           }
           .card {
-            background-color: #1e293b;
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
-            border: 1px solid #2d3748;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
           }
           .input-dark,
           .select-dark {
-            background-color: #2d3748;
-            border-color: #4a5568;
-            color: #e2e8f0;
+            background-color: #ffffff;
+            border-color: #ced4da;
+            color: #495057;
+          }
+          .input-dark:focus,
+          .select-dark:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
           }
           .table-header {
-            background-color: #1f324d;
-            color: #cbd5e0;
-            border-bottom: 2px solid #3b82f6;
+            background-color: #f1f3f5;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
           }
-          .table-body-row:nth-child(odd) {
-            background-color: #1a2434;
+          .table-body-row {
+             border-bottom: 1px solid #e9ecef;
           }
           .table-body-row:nth-child(even) {
-            background-color: #1e293b;
+            background-color: #f8f9fa;
           }
           .table-body-row:hover {
-            background-color: #2a3d53;
+            background-color: #e9ecef;
             transition: background-color 0.2s;
           }
           .status-done {
-            background-color: #10b981;
-            color: #064e3b;
+            background-color: #d4edda;
+            color: #155724;
             font-weight: 700;
           }
           .status-pending {
-            background-color: #f59e0b;
-            color: #78350f;
+            background-color: #fff3cd;
+            color: #856404;
             font-weight: 700;
           }
           .status-link {
-            color: #60a5fa;
+            color: #007bff;
             font-weight: 600;
             text-decoration: none;
+          }
+          .status-link:hover {
+            text-decoration: underline;
           }
         `}</style>
 

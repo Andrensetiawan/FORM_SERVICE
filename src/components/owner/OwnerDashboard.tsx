@@ -162,7 +162,7 @@ export default function OwnerDashboard() {
             value={totalServices}
             subValue="di semua cabang"
             icon={<List size={24} />}
-            color="indigo"
+            color="gray"
           />
         </div>
 
@@ -218,8 +218,8 @@ export default function OwnerDashboard() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-      <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard Owner</h1>
-      <p className="text-gray-700 mb-8">Ringkasan Analitik Bisnis & Kinerja</p>
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Owner</h1>
+      <p className="text-gray-600 mb-8">Ringkasan analitik bisnis dan kinerja</p>
 
       {renderContent()}
     </motion.div>

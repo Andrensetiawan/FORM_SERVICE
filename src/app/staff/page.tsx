@@ -44,7 +44,7 @@ export default function StaffPage() {
   const [rowsPerPage, setRowsPerPage] = useState<string>("10");
   const [searchText, setSearchText] = useState("");
 
-  const [teknisiOptions, setTeknisiOptions] = useState<string[]>([]);
+  const [teknisiOptions, setTeknisiOptions] = useState<{ email: string; name: string }[]>([]);
   const [cabangOptions, setCabangOptions] = useState<string[]>([]);
 
 
@@ -54,32 +54,31 @@ export default function StaffPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Fetch all users to create a technician email to division map
         const usersSnapshot = await getDocs(collection(db, "users"));
-        const technicianDivisionMap = new Map<string, string>();
-
+        const technicianEmailToNameMap = new Map<string, string>();
+        const technicianEmails = new Set<string>();
 
         usersSnapshot.docs.forEach((doc) => {
           const userData = doc.data() as any;
-          if (userData.role && (userData.role.toLowerCase() === ROLES.STAFF || userData.role.toLowerCase() === ROLES.MANAGER) && userData.email && userData.division) {
-            technicianDivisionMap.set(userData.email, userData.division);
-
+          if (
+            userData.role &&
+            (userData.role.toLowerCase() === ROLES.STAFF ||
+              userData.role.toLowerCase() === ROLES.MANAGER) &&
+            userData.email &&
+            userData.name
+          ) {
+            technicianEmailToNameMap.set(userData.email.trim().toLowerCase(), userData.name);
+            technicianEmails.add(userData.email.trim().toLowerCase());
           }
         });
 
-        // 2. Fetch service requests
         const snap = await getDocs(collection(db, "service_requests"));
         const arr: ServiceRequest[] = snap.docs
           .map((doc) => {
             const dat = doc.data() as any;
-            console.log("Raw timestamp:", dat.timestamp);
-            const assignedTechnicianEmail = dat.assignedTechnician;
-            const assignedTechnicianDivision = assignedTechnicianEmail ? technicianDivisionMap.get(assignedTechnicianEmail) : null;
-
             return {
               ...dat,
               id: doc.id,
-  
             };
           })
           .sort((a, b) => getTime(b.timestamp) - getTime(a.timestamp));
@@ -87,15 +86,26 @@ export default function StaffPage() {
         setData(arr);
         setFiltered(arr);
 
-        const teknisiSet = new Set<string>();
+        const serviceRequestTechnicians = new Set<string>();
         const cabangSet = new Set<string>();
 
         arr.forEach((i) => {
-          if (i.assignedTechnician) teknisiSet.add(String(i.assignedTechnician).trim().toLowerCase());
+          if (i.assignedTechnician) serviceRequestTechnicians.add(String(i.assignedTechnician).trim().toLowerCase());
           if (i.cabang) cabangSet.add(i.cabang);
         });
+        
+        const allUniqueTechnicianEmails = new Set<string>();
+        technicianEmails.forEach(email => allUniqueTechnicianEmails.add(email));
+        serviceRequestTechnicians.forEach(email => allUniqueTechnicianEmails.add(email));
 
-        setTeknisiOptions(Array.from(teknisiSet));
+        const uniqueTechnicianOptions: { email: string; name: string }[] = Array.from(allUniqueTechnicianEmails)
+          .map(email => ({
+            email: email,
+            name: technicianEmailToNameMap.get(email) || email.trim().toLowerCase() // Use name if available, otherwise fallback to cleaned email
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        setTeknisiOptions(uniqueTechnicianOptions);
         setCabangOptions(Array.from(cabangSet));
 
       } catch (error) {
@@ -116,7 +126,10 @@ export default function StaffPage() {
 
     if (filterTeknisi !== "Semua") {
       result = result.filter(
-        (i) => String(i.assignedTechnician || "").trim().toLowerCase() === filterTeknisi.trim().toLowerCase()
+        (i) =>
+          String(i.assignedTechnician || "")
+            .trim()
+            .toLowerCase() === filterTeknisi.trim().toLowerCase()
       );
     }
 
@@ -150,7 +163,7 @@ export default function StaffPage() {
     }
 
     setFiltered(result);
-  }, [filterTeknisi, filterCabang,, searchText, data]);
+  }, [filterTeknisi, filterCabang, searchText, data]);
 
   // =======================================
   // DOWNLOAD CSV (SEMUA DATA)
@@ -243,49 +256,57 @@ export default function StaffPage() {
         {/* CSS KHUSUS HALAMAN INI (SAMA PERSIS DENGAN HTML) */}
         <style jsx global>{`
           body {
-            background-color: #101727;
-            color: #e2e8f0;
+            background-color: #f8f9fa;
+            color: #212529;
           }
           .card {
-            background-color: #1e293b;
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
-            border: 1px solid #2d3748;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
           }
           .input-dark,
           .select-dark {
-            background-color: #2d3748;
-            border-color: #4a5568;
-            color: #e2e8f0;
+            background-color: #ffffff;
+            border-color: #ced4da;
+            color: #495057;
+          }
+          .input-dark:focus,
+          .select-dark:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
           }
           .table-header {
-            background-color: #1f324d;
-            color: #cbd5e0;
-            border-bottom: 2px solid #3b82f6;
+            background-color: #f1f3f5;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
           }
-          .table-body-row:nth-child(odd) {
-            background-color: #1a2434;
+          .table-body-row {
+             border-bottom: 1px solid #e9ecef;
           }
           .table-body-row:nth-child(even) {
-            background-color: #1e293b;
+            background-color: #f8f9fa;
           }
           .table-body-row:hover {
-            background-color: #2a3d53;
+            background-color: #e9ecef;
             transition: background-color 0.2s;
           }
           .status-done {
-            background-color: #10b981;
-            color: #064e3b;
+            background-color: #d4edda;
+            color: #155724;
             font-weight: 700;
           }
           .status-pending {
-            background-color: #f59e0b;
-            color: #78350f;
+            background-color: #fff3cd;
+            color: #856404;
             font-weight: 700;
           }
           .status-link {
-            color: #60a5fa;
+            color: #007bff;
             font-weight: 600;
             text-decoration: none;
+          }
+          .status-link:hover {
+            text-decoration: underline;
           }
         `}</style>
 
@@ -299,7 +320,7 @@ export default function StaffPage() {
 
             {/* FILTER CARD */}
             <div className="card p-4 sm:p-6 rounded-xl mb-4 space-y-4">
-              <h3 className="text-lg font-semibold text-blue-300 border-b border-blue-900/50 pb-2">
+              <h3 className="text-lg font-semibold text-blue-500 border-b border-blue-900/50 pb-2">
                 Filter Data
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -318,9 +339,9 @@ export default function StaffPage() {
                     className="input-dark w-full p-2.5 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-150"
                   >
                     <option value="Semua">Semua Teknisi</option>
-                    {teknisiOptions.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    {teknisiOptions.map((t) => ( // t is now { email, name }
+                      <option key={t.email} value={t.email}>
+                        {t.name}
                       </option>
                     ))}
                   </select>
