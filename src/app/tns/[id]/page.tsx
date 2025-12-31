@@ -197,7 +197,7 @@ export default function ServiceDetailPage() {
     setServiceData((prev: any) => ({ ...prev, ...updatedData }));
   };
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => window.open(`/print/nota/${docId}`, '_blank');
 
   if (loading || loadingData) return <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-800"><h1>Memuat data service...</h1></div>;
   if (!serviceData) return <div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-800"><h1>Data service tidak ditemukan.</h1></div>;
