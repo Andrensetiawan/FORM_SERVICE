@@ -59,8 +59,6 @@ export default function FormService() {
   const [agreeToWhatsApp, setAgreeToWhatsApp] = useState(true);
   const [agreeToEmail, setAgreeToEmail] = useState(true);
   
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-
   const [cabangOptions, setCabangOptions] = useState<string[]>([]);
   const [loadingCabang, setLoadingCabang] = useState(true);
 
@@ -174,7 +172,7 @@ export default function FormService() {
   };
 
   //=====================================================
-  // WHATSAPP HELPER
+  // WHATSAPP & EMAIL HELPERS
   //=====================================================
   const sendToWhatsApp = (phone: string, message: string) => {
     const cleanPhone = phone.replace(/^0/, "62").replace(/\D/g, "");
@@ -182,64 +180,59 @@ export default function FormService() {
     window.open(url, "_blank");
   };
 
-  //=====================================================
-  // EMAIL HELPER
-  //=====================================================
-  const sendEmailNotification = async () => {
+  const sendEmailNotification = () => {
     if (!emailInfo) return;
-    setIsSendingEmail(true);
-    toast.loading("Mengirim email...", { id: "email" });
 
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Otentikasi pengguna gagal.");
-      
-      const token = await user.getIdToken();
-      const { to, subject, data } = emailInfo;
-      const directLink = `${window.location.origin}/tns/${data.docId}`;
+    const { to, subject, data } = emailInfo;
+    const directLink = `${window.location.origin}/tns/${data.docId}`;
 
-      const htmlBody = `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h2>Permintaan Service Diterima</h2>
-          <p>Halo ${data.nama},</p>
-          <p>Permintaan service Anda telah kami terima pada <strong>${new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</strong>.</p>
-          <p>Berikut adalah detail permintaan Anda:</p>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr style="background-color: #f2f2f2;"><td style="padding: 8px; border: 1px solid #ddd;" colspan="2"><strong>INFORMASI SERVICE</strong></td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;">No. Service</td><td style="padding: 8px; border: 1px solid #ddd;">${data.track}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;">Penerima</td><td style="padding: 8px; border: 1px solid #ddd;">${data.penerima_service}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;">Prioritas</td><td style="padding: 8px; border: 1px solid #ddd;">${data.prioritas_service}</td></tr>
-            <tr style="background-color: #f2f2f2;"><td style="padding: 8px; border: 1px solid #ddd;" colspan="2"><strong>INFORMASI PERANGKAT</strong></td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;">Perangkat</td><td style="padding: 8px; border: 1px solid #ddd;">${data.merk} ${data.tipe}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;">Serial Number</td><td style="padding: 8px; border: 1px solid #ddd;">${data.serial_number}</td></tr>
-            <tr><td style="padding: 8px; border: 1px solid #ddd;">Keluhan</td><td style="padding: 8px; border: 1px solid #ddd;">${data.keluhan}</td></tr>
-          </table>
-          <p>Anda dapat mengecek status service Anda secara real-time melalui link berikut:</p>
-          <a href="${directLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Lacak Service</a>
-          <p>Terima kasih.</p>
-        </div>
-      `;
+    const emailBody = `
+Halo ${data.nama},
 
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ to, subject, html: htmlBody }),
-      });
+Permintaan service kamu sudah kami terima pada ${new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })} ✅
 
-      if (!response.ok) throw new Error("Gagal mengirim email.");
-      
-      toast.dismiss("email");
-      toast.success("Email notifikasi berhasil dikirim!");
+Berikut detailnya:
+-------------------------
+INFORMASI CUSTOMER
+-------------------------
+Nama: ${data.nama}
+No HP: ${data.no_hp}
+Alamat: ${data.alamat}
 
-    } catch (err: any) {
-      toast.dismiss("email");
-      toast.error(err.message || "Gagal mengirim email.");
-    } finally {
-      setIsSendingEmail(false);
-    }
+-------------------------
+INFORMASI SERVICE
+-------------------------
+No. Service: ${data.track}
+Penerima: ${data.penerima_service}
+Prioritas: ${data.prioritas_service}
+Cabang: ${data.cabang}
+
+-------------------------
+INFORMASI PERANGKAT
+-------------------------
+Perangkat: ${data.merk} ${data.tipe}
+Serial Number: ${data.serial_number}
+Keluhan: ${data.keluhan}
+Kondisi Awal: ${data.kondisi.join(", ")}
+Garansi: ${data.garansi ? "Ya" : "Tidak"}
+
+-------------------------
+
+Cek status service Anda secara real-time melalui link berikut:
+${directLink}
+
+Kami akan menghubungi Anda kembali setelah proses pengecekan selesai.
+Terima kasih 🙏
+`.trim();
+
+    const gmailUrl = new URL("https://mail.google.com/mail/");
+    gmailUrl.searchParams.set("view", "cm");
+    gmailUrl.searchParams.set("fs", "1");
+    gmailUrl.searchParams.set("to", to);
+    gmailUrl.searchParams.set("su", subject);
+    gmailUrl.searchParams.set("body", emailBody);
+    
+    window.open(gmailUrl.toString(), "_blank");
   };
 
   //=====================================================
@@ -557,10 +550,9 @@ Terima kasih 🙏
                       <button
                         type="button"
                         onClick={sendEmailNotification}
-                        disabled={isSendingEmail}
-                        className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 shadow-md text-sm font-bold disabled:bg-gray-400"
+                        className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 shadow-md text-sm font-bold"
                       >
-                        {isSendingEmail ? "Mengirim..." : "Kirim Notifikasi Email"}
+                        Kirim Notifikasi Email
                       </button>
                     )}
                   </div>
