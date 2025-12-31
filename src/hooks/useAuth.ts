@@ -215,13 +215,43 @@ export default function useAuth() {
   ) => {
     if (password !== confirmPassword) {
       toast.error("Password tidak cocok!");
-      // Early return for this specific validation error
-      return;
+      throw new Error("Password tidak cocok!");
     }
 
     setLoading(true);
 
     try {
+      // Fetch password policy from public API endpoint
+      const response = await fetch("/api/settings/security");
+      if (response.ok) {
+        const policy = await response.json();
+
+        // Only validate if the policy object is not empty
+        if (Object.keys(policy).length > 0) {
+          const validationErrors: string[] = [];
+
+          const passLength = policy.passwordLength ?? 8;
+          if (password.length < passLength) {
+            validationErrors.push(`- Minimal ${passLength} karakter`);
+          }
+          if (policy.requireUppercase && !/[A-Z]/.test(password)) {
+            validationErrors.push("- Harus mengandung huruf kapital (A-Z)");
+          }
+          if (policy.requireNumbers && !/\d/.test(password)) {
+            validationErrors.push("- Harus mengandung angka (0-9)");
+          }
+          if (policy.requireSymbols && !/[!@#$%^&*]/.test(password)) {
+            validationErrors.push("- Harus mengandung simbol (e.g., !@#$%)");
+          }
+
+          if (validationErrors.length > 0) {
+            const errorMessage = "Password Anda tidak memenuhi syarat:\n" + validationErrors.join("\n");
+            throw new Error(errorMessage);
+          }
+        }
+      }
+      // If the fetch fails or returns no policy, registration proceeds without custom validation.
+
       const result = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -242,8 +272,9 @@ export default function useAuth() {
 
       // Return the new user object on success
       return newUser;
-    } catch (err) {
-      // Re-throw the error to be handled by the calling component
+    } catch (err: any) {
+      // Log the full error for debugging but re-throw it for the UI.
+      console.error("Registration process failed:", err);
       throw err;
     } finally {
       setLoading(false);

@@ -267,9 +267,9 @@ export default function LogsViewerPage() {
                       </p>
 
                       <p className="text-gray-600 text-xs mt-1">
-                        {log.timestamp?.toDate
-                          ? log.timestamp.toDate().toLocaleString()
-                          : "No timestamp"}
+                        {(log.timestamp && (log.timestamp.seconds || log.timestamp._seconds))
+                          ? new Date((log.timestamp.seconds || log.timestamp._seconds) * 1000).toLocaleString()
+                          : "Waktu tidak tersedia"}
                       </p>
                     </div>
 

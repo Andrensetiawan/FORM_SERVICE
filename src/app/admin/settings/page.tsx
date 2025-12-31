@@ -5,20 +5,12 @@ import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   Database,
-  Palette,
   Bell,
   Info
 } from "lucide-react";
 import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 
 const tiles = [
-  {
-    title: "Branding & Tampilan",
-    desc: "Atur logo, tema, warna aplikasi, dan mode gelap.",
-    icon: Palette,
-    href: "/admin/settings/branding",
-    variant: "bg-blue-100 text-blue-600 border-blue-200"
-  },
   {
     title: "Keamanan & Akses",
     desc: "Kelola role, izin pengguna, dan autentikasi.",

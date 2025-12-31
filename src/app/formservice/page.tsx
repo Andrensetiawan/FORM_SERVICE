@@ -17,36 +17,49 @@ import {
 import { generateTrackNumber } from "@/lib/trackNumber";
 import useAuth from "@/hooks/useAuth";
 import { createLog } from "@/lib/log";
+import toast from "react-hot-toast";
+import { auth } from "@/lib/firebaseConfig";
+
+const initialForm = {
+  nama: "",
+  alamat: "",
+  no_hp: "",
+  email: "",
+  merk: "",
+  tipe: "",
+  serial_number: "",
+  keluhan: "",
+  spesifikasi_teknis: "",
+  jenis_perangkat: [] as string[],
+  keterangan_perangkat: "",
+  accessories: [] as string[],
+  keterangan_accessories: "",
+  garansi: false,
+  keterangan_garansi: "",
+  kondisi: [] as string[],
+  keterangan_kondisi: "",
+  prioritas_service: "1. Reguler",
+  penerima_service: "",
+  cabang: "",
+};
+
+// Define the type for the form data to be used in email/whatsapp info
+type FormDataType = typeof initialForm;
 
 export default function FormService() {
   const { user, role, loading } = useAuth();
 
-  const initialForm = {
-    nama: "",
-    alamat: "",
-    no_hp: "",
-    email: "",
-    merk: "",
-    tipe: "",
-    serial_number: "",
-    keluhan: "",
-    spesifikasi_teknis: "",
-    jenis_perangkat: [] as string[],
-    keterangan_perangkat: "",
-    accessories: [] as string[],
-    keterangan_accessories: "",
-    garansi: false,
-    keterangan_garansi: "",
-    kondisi: [] as string[],
-    keterangan_kondisi: "",
-    prioritas_service: "1. Reguler",
-    penerima_service: "",
-    cabang: "",
-  };
-
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [waInfo, setWaInfo] = useState<{ phone: string; message: string } | null>(null);
+  const [emailInfo, setEmailInfo] = useState<{ to: string, subject: string, data: FormDataType & {track: string, docId: string} } | null>(null);
+  
+  const [agreeToWhatsApp, setAgreeToWhatsApp] = useState(true);
+  const [agreeToEmail, setAgreeToEmail] = useState(true);
+  
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const [cabangOptions, setCabangOptions] = useState<string[]>([]);
   const [loadingCabang, setLoadingCabang] = useState(true);
@@ -73,6 +86,24 @@ export default function FormService() {
   }, []);
 
   //=====================================================
+  // Auto-fill form from user profile
+  //=====================================================
+  useEffect(() => {
+    if (user) {
+      const updates: { cabang?: string; penerima_service?: string } = {};
+      if (user.cabang) {
+        updates.cabang = user.cabang;
+      }
+      if (user.displayName) {
+        updates.penerima_service = user.displayName;
+      }
+      if (Object.keys(updates).length > 0) {
+        setFormData((prev) => ({ ...prev, ...updates }));
+      }
+    }
+  }, [user]);
+
+  //=====================================================
   // INPUT HANDLER
   //=====================================================
   const handleInputChange = (
@@ -81,6 +112,9 @@ export default function FormService() {
     >
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setSuccessMessage("");
+    setWaInfo(null);
+    setEmailInfo(null);
   };
 
   const toggleCheckbox = (field: keyof typeof formData, value: string) => {
@@ -121,6 +155,12 @@ export default function FormService() {
     required.forEach((f) => {
       if (!String(formData[f]).trim()) missing.push(`${f} wajib diisi.`);
     });
+    
+    // Validasi Nomor HP
+    const phoneRegex = /^(08|628)\d{8,15}$/;
+    if (formData.no_hp && !phoneRegex.test(formData.no_hp.replace(/\D/g, ''))) {
+      missing.push("Format Nomor HP tidak valid. Gunakan format 08... atau 62...");
+    }
 
     if (formData.jenis_perangkat.length === 0)
       missing.push("Pilih minimal 1 jenis perangkat.");
@@ -134,24 +174,106 @@ export default function FormService() {
   };
 
   //=====================================================
+  // WHATSAPP HELPER
+  //=====================================================
+  const sendToWhatsApp = (phone: string, message: string) => {
+    const cleanPhone = phone.replace(/^0/, "62").replace(/\D/g, "");
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
+  //=====================================================
+  // EMAIL HELPER
+  //=====================================================
+  const sendEmailNotification = async () => {
+    if (!emailInfo) return;
+    setIsSendingEmail(true);
+    toast.loading("Mengirim email...", { id: "email" });
+
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Otentikasi pengguna gagal.");
+      
+      const token = await user.getIdToken();
+      const { to, subject, data } = emailInfo;
+      const directLink = `${window.location.origin}/tns/${data.docId}`;
+
+      const htmlBody = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Permintaan Service Diterima</h2>
+          <p>Halo ${data.nama},</p>
+          <p>Permintaan service Anda telah kami terima pada <strong>${new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</strong>.</p>
+          <p>Berikut adalah detail permintaan Anda:</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f2f2f2;"><td style="padding: 8px; border: 1px solid #ddd;" colspan="2"><strong>INFORMASI SERVICE</strong></td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;">No. Service</td><td style="padding: 8px; border: 1px solid #ddd;">${data.track}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;">Penerima</td><td style="padding: 8px; border: 1px solid #ddd;">${data.penerima_service}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;">Prioritas</td><td style="padding: 8px; border: 1px solid #ddd;">${data.prioritas_service}</td></tr>
+            <tr style="background-color: #f2f2f2;"><td style="padding: 8px; border: 1px solid #ddd;" colspan="2"><strong>INFORMASI PERANGKAT</strong></td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;">Perangkat</td><td style="padding: 8px; border: 1px solid #ddd;">${data.merk} ${data.tipe}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;">Serial Number</td><td style="padding: 8px; border: 1px solid #ddd;">${data.serial_number}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;">Keluhan</td><td style="padding: 8px; border: 1px solid #ddd;">${data.keluhan}</td></tr>
+          </table>
+          <p>Anda dapat mengecek status service Anda secara real-time melalui link berikut:</p>
+          <a href="${directLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Lacak Service</a>
+          <p>Terima kasih.</p>
+        </div>
+      `;
+
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ to, subject, html: htmlBody }),
+      });
+
+      if (!response.ok) throw new Error("Gagal mengirim email.");
+      
+      toast.dismiss("email");
+      toast.success("Email notifikasi berhasil dikirim!");
+
+    } catch (err: any) {
+      toast.dismiss("email");
+      toast.error(err.message || "Gagal mengirim email.");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  //=====================================================
   // SUBMIT
   //=====================================================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    // Normalisasi Nomor HP ke format 62
+    const normalizePhoneNumber = (phone: string): string => {
+      const digitsOnly = phone.replace(/\D/g, '');
+      if (digitsOnly.startsWith('08')) {
+        return `62${digitsOnly.substring(1)}`;
+      }
+      return digitsOnly;
+    };
+
+    const normalizedPhone = normalizePhoneNumber(formData.no_hp);
+
     try {
       const track = await generateTrackNumber();
 
       const payload = {
         ...formData,
+        no_hp: normalizedPhone,
         track_number: track,
         status: "pending",
         created_by: user?.uid ?? null,
         timestamp: serverTimestamp(),
       };
 
-      await addDoc(collection(db, "service_requests"), payload);
+      const docRef = await addDoc(collection(db, "service_requests"), payload);
+      const docId = docRef.id;
 
       await createLog({
         uid: user?.uid ?? "",
@@ -161,6 +283,58 @@ export default function FormService() {
       });
 
       setSuccessMessage(`Berhasil tersimpan 🎉 Tracking: ${track}`);
+
+      if (agreeToWhatsApp) {
+        const directLink = `${window.location.origin}/tns/${docId}`;
+        const waMessage = `
+Halo ${formData.nama},
+
+Permintaan service kamu sudah kami terima pada ${new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })} ✅
+
+Berikut detailnya:
+-------------------------
+INFORMASI CUSTOMER
+-------------------------
+Nama: ${formData.nama}
+No HP: ${formData.no_hp}
+Alamat: ${formData.alamat}
+
+-------------------------
+INFORMASI SERVICE
+-------------------------
+No. Service: ${track}
+Penerima: ${formData.penerima_service}
+Prioritas: ${formData.prioritas_service}
+Cabang: ${formData.cabang}
+
+-------------------------
+INFORMASI PERANGKAT
+-------------------------
+Perangkat: ${formData.merk} ${formData.tipe}
+Serial Number: ${formData.serial_number}
+Keluhan: ${formData.keluhan}
+Kondisi Awal: ${formData.kondisi.join(", ")}
+Garansi: ${formData.garansi ? "Ya" : "Tidak"}
+
+-------------------------
+
+Cek status service Anda secara real-time melalui link berikut:
+${directLink}
+
+Kami akan menghubungi Anda kembali setelah proses pengecekan selesai.
+Terima kasih 🙏
+`;
+        setWaInfo({ phone: normalizedPhone, message: waMessage });
+      }
+
+      if (agreeToEmail && formData.email) {
+        setEmailInfo({
+          to: formData.email,
+          subject: `Konfirmasi Permintaan Service #${track}`,
+          data: { ...formData, track, docId },
+        });
+      }
+
       setFormData(initialForm);
       setErrors([]);
     } catch (err) {
@@ -313,15 +487,50 @@ export default function FormService() {
                   <option value="3. Onsite">3. Onsite</option>
                 </select>
 
-                <InputField label="Penerima Service" name="penerima_service" value={formData.penerima_service} onChange={handleInputChange} />
+                <div>
+                  <InputField label="Penerima Service" name="penerima_service" value={formData.penerima_service} onChange={handleInputChange} />
+                  <p className="text-xs text-gray-500 mt-1 italic">
+                    Nama penerima otomatis dari profil kamu
+                  </p>
+                </div>
               </FormSection>
 
               {/* ================= SUBMIT ================= */}
-              <div className="flex justify-end">
-                <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow">
-                  Simpan
-                </button>
+              <div className="border-t pt-6 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="wa-consent"
+                        type="checkbox"
+                        checked={agreeToWhatsApp}
+                        onChange={(e) => setAgreeToWhatsApp(e.target.checked)}
+                        className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="wa-consent" className="text-sm text-gray-700">
+                        Notifikasi via WhatsApp.
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="email-consent"
+                        type="checkbox"
+                        checked={agreeToEmail}
+                        onChange={(e) => setAgreeToEmail(e.target.checked)}
+                        className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="email-consent" className="text-sm text-gray-700">
+                        Notifikasi via Email.
+                      </label>
+                    </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow">
+                    Simpan
+                  </button>
+                </div>
               </div>
+
 
               {errors.length > 0 && (
                 <div className="bg-red-100 text-red-600 p-3 rounded-lg">
@@ -332,8 +541,29 @@ export default function FormService() {
               )}
 
               {successMessage && (
-                <div className="bg-green-100 text-green-700 p-3 rounded-lg font-semibold">
-                  {successMessage}
+                <div className="bg-green-100 text-green-700 p-4 rounded-lg font-semibold space-y-3">
+                  <p>{successMessage}</p>
+                  <div className="flex flex-wrap gap-3">
+                    {waInfo && (
+                      <button
+                        type="button"
+                        onClick={() => sendToWhatsApp(waInfo.phone, waInfo.message)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 shadow-md text-sm font-bold"
+                      >
+                        Kirim Notifikasi WhatsApp
+                      </button>
+                    )}
+                    {emailInfo && (
+                      <button
+                        type="button"
+                        onClick={sendEmailNotification}
+                        disabled={isSendingEmail}
+                        className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 shadow-md text-sm font-bold disabled:bg-gray-400"
+                      >
+                        {isSendingEmail ? "Mengirim..." : "Kirim Notifikasi Email"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </form>

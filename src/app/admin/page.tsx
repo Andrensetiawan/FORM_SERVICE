@@ -13,7 +13,8 @@ import {
   Database,
   LogOut,
   Settings,
-  Users
+  Users,
+  FilePlus,
 } from "lucide-react";
 
 import { db } from "@/lib/firebaseConfig";
@@ -106,38 +107,45 @@ export default function AdminDashboard() {
   // ============================================
   const adminMenus = [
     {
+      title: "Buat Form Service",
+      desc: "Buat permintaan layanan baru untuk customer",
+      icon: <FilePlus size={32} className="text-teal-500" />,
+      href: "/formservice",
+      color: "from-teal-50 to-teal-100",
+    },
+    {
       title: "Manajemen Pengguna",
       desc: "Kelola role, approval & data staff",
       icon: <Users size={32} className="text-blue-500" />,
-      href: "/admin-dashboard/users",
+      href: "/admin/users",
       color: "from-blue-50 to-blue-100",
     },
     {
       title: "Manajemen Cabang",
       desc: "Kelola data cabang & lokasi",
       icon: <Building2 size={32} className="text-green-500" />,
-      href: "/admin-dashboard/cabang",
+      href: "/admin/cabang",
       color: "from-green-50 to-green-100",
     },
     {
       title: "Database",
       desc: "Backup & analisis data",
       icon: <Database size={32} className="text-purple-500" />,
-      href: "/admin-dashboard/database",
+      href: "/admin/database",
       color: "from-purple-50 to-purple-100",
     },
     {
       title: "Audit Log",
       desc: "Riwayat aktivitas sistem",
       icon: <LogOut size={32} className="text-orange-500" />,
-      href: "/admin-dashboard/logs",
+      href: "/admin/logs",
       color: "from-orange-50 to-orange-100",
     },
     {
       title: "Pengaturan Sistem",
       desc: "Konfigurasi & preferensi aplikasi",
       icon: <Settings size={32} className="text-red-500" />,
-      href: "/admin-dashboard/settings",
+      href: "/admin/settings",
       color: "from-red-50 to-red-100",
     },
   ];
@@ -217,9 +225,9 @@ export default function AdminDashboard() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">⚡ Aksi Cepat</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <QuickButton label="➕ Tambah Pengguna Baru" color="bg-blue-600" />
-              <QuickButton label="➕ Tambah Cabang" color="bg-green-600" />
-              <QuickButton label="💾 Backup Database" color="bg-purple-600" />
+              <QuickButton label="➕ Tambah Pengguna Baru" color="bg-blue-600" onClick={() => router.push('/admin/pending-users')} />
+              <QuickButton label="➕ Tambah Cabang" color="bg-green-600" onClick={() => router.push('/admin/cabang')} />
+              <QuickButton label="💾 Backup Database" color="bg-purple-600" onClick={() => router.push('/admin/settings/system')} />
             </div>
           </div>
 
@@ -248,9 +256,18 @@ function StatCard({
 }
 
 /* ------------ QUICK BUTTON ------------ */
-function QuickButton({ label, color }: { label: string; color: string }) {
+function QuickButton({
+  label,
+  color,
+  onClick,
+}: {
+  label: string;
+  color: string;
+  onClick: () => void;
+}) {
   return (
     <button
+      onClick={onClick}
       className={`${color} hover:brightness-110 text-white font-semibold py-3 px-6 rounded-xl transition`}
     >
       {label}
