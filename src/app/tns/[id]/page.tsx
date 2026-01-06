@@ -76,9 +76,15 @@ export default function ServiceDetailPage() {
           return notFound();
         }
         const data = snap.data();
+        const statusLogData = data.status_log || [];
         setServiceData({ id: snap.id, ...data });
-        setStatus(data.status || "pending");
-        setStatusLog(data.status_log || []);
+        setStatusLog(statusLogData);
+        if (statusLogData.length > 0) {
+          const latestStatus = statusLogData[statusLogData.length - 1].status;
+          setStatus(latestStatus);
+        } else {
+          setStatus(data.status || "diterima");
+        }
         if (data.assignedTechnicians) {
           setSelectedTechnicians(Array.isArray(data.assignedTechnicians) ? data.assignedTechnicians : [data.assignedTechnicians]);
         }
@@ -248,13 +254,15 @@ export default function ServiceDetailPage() {
           <h1 className="text-2xl sm:text-3xl font-bold">
             Service Detail: <span className="text-blue-600">{serviceData?.track_number}</span>
           </h1>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors print:hidden"
-          >
-            <Printer size={16} />
-            Cetak/Unduh
-          </button>
+          {user && (
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors print:hidden"
+            >
+              <Printer size={16} />
+              Cetak/Unduh
+            </button>
+          )}
         </div>
 
         <div className="card">

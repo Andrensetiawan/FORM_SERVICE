@@ -44,7 +44,10 @@ const KeyValue = ({ label, value }: { label: string; value: string | undefined }
 );
 
 
+import useAuth from "@/hooks/useAuth";
+
 export default function NotaPembayaran({ data }: NotaPembayaranProps) {
+  const { user } = useAuth();
   const handlePrint = () => {
     window.print();
   };

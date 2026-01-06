@@ -89,14 +89,14 @@ export default function NavbarStaff({ className }: { className?: string }) {
   return (
     <>
       {/* === NAVBAR ATAS === */}
-      <nav className={`bg-card border-b border-main text-main shadow-sm sticky top-0 z-50 ${className}`}>
+      <nav className={`bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-blue-500 shadow-md sticky top-0 z-50 ${className}`}>
         <div className="w-full flex items-center justify-between h-16 px-3 md:px-6">
           {/* Kiri: Tombol Menu + Logo */}
           <div className="flex items-center gap-3">
             {user && (
               <button
                 onClick={() => setMenuOpen(true)}
-                className="text-main hover:text-[var(--accent-color)] transition"
+                className="text-gray-200 hover:text-white transition"
               >
                 <Menu size={26} />
               </button>
@@ -111,9 +111,9 @@ export default function NavbarStaff({ className }: { className?: string }) {
                 alt="Logo"
                 width={40}
                 height={40}
-                className="rounded-full border border-[var(--accent-color)] shadow-sm"
+                className="rounded-full border border-blue-400 shadow-sm"
               />
-              <span className="text-main font-semibold text-lg tracking-wide whitespace-nowrap">
+              <span className="text-white font-semibold text-lg tracking-wide whitespace-nowrap">
                 Alif Cyber Solution
               </span>
             </Link>
@@ -138,16 +138,16 @@ export default function NavbarStaff({ className }: { className?: string }) {
                       toast.dismiss();
                     }, 400);
                   }}
-                  className="rounded-full border border-[var(--accent-color)] shadow-sm cursor-pointer hover:scale-105 hover:border-[var(--accent-color)] transition-transform"
+                  className="rounded-full border border-blue-500 shadow-sm cursor-pointer hover:scale-105 hover:border-blue-400 transition-transform"
                   unoptimized
                 />
-                <span className="absolute -bottom-1 -right-1 text-[10px] font-semibold px-2 py-[2px] rounded-full bg-[var(--accent-color)] text-white">
+                <span className="absolute -bottom-1 -right-1 text-[10px] font-semibold px-2 py-[2px] rounded-full bg-blue-500 text-white">
                   S
                 </span>
               </div>
               <div className="hidden md:flex flex-col text-right">
-                <span className="text-main font-medium">{user?.name}</span>
-                <span className="text-xs text-[var(--accent-color)] capitalize">staff</span>
+                <span className="text-gray-100 font-medium">{user?.name}</span>
+                <span className="text-xs text-blue-400 capitalize">staff</span>
               </div>
             </div>
           )}
@@ -173,31 +173,31 @@ export default function NavbarStaff({ className }: { className?: string }) {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.35, ease: "easeOut" }}
-              className="fixed top-0 left-0 h-full w-[25%] min-w-[280px] bg-card border-r border-main z-[999] flex flex-col"
+              className="fixed top-0 left-0 h-full w-[25%] min-w-[280px] bg-[#0f172a] border-r border-blue-800 z-[999] flex flex-col"
             >
               {/* Header */}
-              <div className="flex justify-between items-center px-6 py-4 border-b border-main">
-                <h2 className="text-main font-semibold text-lg">Navigasi</h2>
+              <div className="flex justify-between items-center px-6 py-4 border-b border-blue-800">
+                <h2 className="text-white font-semibold text-lg">Navigasi</h2>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="text-main hover:text-[var(--accent-color)]"
+                  className="text-gray-200 hover:text-white"
                 >
                   <X size={24} />
                 </button>
               </div>
 
               {/* Profil */}
-              <div className="flex flex-col items-center text-center px-6 py-6 border-b border-main">
+              <div className="flex flex-col items-center text-center px-6 py-6 border-b border-blue-800">
                 <img
                   src={
                     user?.photoURL ||
                     "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                   }
                   alt="Profile"
-                  className="w-28 h-28 rounded-full border-4 border-[var(--accent-color)] object-cover shadow-lg mb-3"
+                  className="w-28 h-28 rounded-full border-4 border-blue-400 object-cover shadow-lg mb-3"
                 />
-                <h2 className="text-lg font-bold text-main">{user?.name}</h2>
-                <p className="mt-1 px-3 py-1 rounded-full text-sm font-semibold capitalize bg-card text-main">
+                <h2 className="text-lg font-bold text-white">{user?.name}</h2>
+                <p className="mt-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">
                   Staff
                 </p>
               </div>
@@ -213,8 +213,8 @@ export default function NavbarStaff({ className }: { className?: string }) {
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                         active
-                          ? "bg-[var(--accent-color)] text-white font-semibold border-l-4 border-[var(--accent-color)]"
-                          : "text-main hover:bg-card hover:text-main"
+                          ? "bg-blue-600 text-white font-semibold border-l-4 border-blue-400"
+                          : "text-gray-200 hover:bg-blue-500 hover:text-white"
                       }`}
                     >
                       {item.icon}
@@ -228,7 +228,7 @@ export default function NavbarStaff({ className }: { className?: string }) {
                     setMenuOpen(false);
                     setIsCustomizationPanelOpen(true);
                   }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all text-main hover:bg-card hover:text-main"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all text-gray-200 hover:bg-blue-500 hover:text-white"
                 >
                   <Settings size={18} />
                   <span>Customization</span>
@@ -236,7 +236,7 @@ export default function NavbarStaff({ className }: { className?: string }) {
               </div>
 
               {/* Logout */}
-              <div className="border-t border-main px-6 py-4 flex items-center justify-end">
+              <div className="border-t border-blue-800 px-6 py-4 flex items-center justify-end">
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 bg-red-500/10 hover:bg-red-600/20 text-red-400 hover:text-red-500 px-4 py-2 rounded-lg transition"

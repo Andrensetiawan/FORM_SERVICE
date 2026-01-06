@@ -20,6 +20,38 @@ type Props = {
   className?: string;
 };
 
+const getStatusColor = (status: string = "") => {
+  const s = status.toLowerCase().replace(/\s/g, '_'); // Normalize status
+  switch (s) {
+    case "diterima":
+    case "diagnosa":
+      return "bg-gray-100 text-gray-800";
+    case "menunggu_konfirmasi":
+    case "testing":
+      return "bg-amber-100 text-amber-800";
+    case "proses_pengerjaan":
+      return "bg-blue-100 text-blue-800";
+    case "siap_diambil":
+    case "selesai":
+      return "bg-green-100 text-green-800";
+    case "batal":
+      return "bg-red-100 text-red-800";
+    // Fallback for old statuses
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "process":
+        return "bg-blue-100 text-blue-800";
+    case "ready":
+        return "bg-teal-100 text-teal-800";
+    case "done":
+        return "bg-green-100 text-green-800";
+    case "cancel":
+        return "bg-red-100 text-red-800";
+    default:
+      return "bg-slate-100 text-slate-800";
+  }
+};
+
 export default function StatusControl({
   status,
   setStatus,
@@ -46,12 +78,14 @@ export default function StatusControl({
               disabled={isSaving || isReadOnly}
               className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-3 py-2 text-sm w-56 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="pending">1. Diagnosa/Pending</option>
-              <option value="process">2. Proses Pengerjaan</option>
-              <option value="waiting_approval">3. Menunggu Konfirmasi</option>
-              <option value="ready">4. Siap Diambil</option>
-              <option value="done">5. Selesai</option>
-              <option value="cancel">9. Batal</option>
+              <option value="diterima">1. Diterima</option>
+              <option value="diagnosa">2. Diagnosa</option>
+              <option value="menunggu_konfirmasi">3. Menunggu Konfirmasi</option>
+              <option value="proses_pengerjaan">4. Proses Pengerjaan</option>
+              <option value="testing">5. Testing</option>
+              <option value="siap_diambil">6. Siap Diambil</option>
+              <option value="selesai">7. Selesai</option>
+              <option value="batal">8. Batal</option>
             </select>
 
             <button
@@ -81,15 +115,7 @@ export default function StatusControl({
                   [{formatDateTime(latestLog.updatedAt)}]
                 </p>
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1
-                    ${
-                      latestLog.status === "pending" ? "bg-yellow-100 text-yellow-800"
-                      : latestLog.status === "process" ? "bg-blue-100 text-blue-800"
-                      : latestLog.status === "ready" ? "bg-teal-100 text-teal-800"
-                      : latestLog.status === "done" ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
-                    }
-                  `}
+                  className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1 ${getStatusColor(latestLog.status)}`}
                 >
                   {latestLog.status}
                 </span>
@@ -108,15 +134,7 @@ export default function StatusControl({
                   </p>
 
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1
-                      ${
-                        log.status === "pending" ? "bg-yellow-100 text-yellow-800"
-                        : log.status === "process" ? "bg-blue-100 text-blue-800"
-                        : log.status === "ready" ? "bg-teal-100 text-teal-800"
-                        : log.status === "done" ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                      }
-                    `}
+                    className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1 ${getStatusColor(log.status)}`}
                   >
                     {log.status}
                   </span>
