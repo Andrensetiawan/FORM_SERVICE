@@ -105,7 +105,7 @@ export default function EstimasiSection({
                       className="w-full bg-white border border-gray-300 rounded px-2 py-1 text-sm text-right focus:ring-blue-500 focus:border-blue-500"
                       type="text"
                       inputMode="numeric"
-                      value={r.harga.toLocaleString("id-ID")}
+                      value={String(r.harga ?? 0)}
                       onChange={(e) => handleChange?.(r.id, "harga", parseNumber(e.target.value))}
                     />
                   )}
@@ -152,7 +152,7 @@ export default function EstimasiSection({
                     className="w-full bg-white border border-gray-300 rounded px-2 py-1 text-sm text-right focus:ring-blue-500 focus:border-blue-500"
                     type="text"
                     inputMode="numeric"
-                    value={dp.toLocaleString("id-ID")}
+                    value={String(dp ?? 0)}
                     onChange={(e) => onDpChange?.(parseNumber(e.target.value))}
                   />
                 )}

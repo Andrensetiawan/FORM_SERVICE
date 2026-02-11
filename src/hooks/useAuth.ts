@@ -9,6 +9,8 @@ import {
   sendEmailVerification,
   signOut,
   User,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 
 import { auth, db } from "@/lib/firebaseConfig";
@@ -37,29 +39,16 @@ interface CustomUser {
   cabang?: string; // Make optional as it might not be present for all roles
   approved: boolean;
   online: boolean;
-  photoURL?: string;
-  displayName?: string;
+  photoURL?: string | null;
+  displayName?: string | null;
   firebaseUser: User;
 }
 
-// ==================================================
-// Ambil dokumen user berdasarkan UID
-// ==================================================
 const fetchUserDoc = async (uid: string) => {
   try {
     const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
-
     if (snap.exists()) return { id: snap.id, data: snap.data() as any };
-
-    const q = query(collection(db, "users"), where("uid", "==", uid));
-    const qSnap = await getDocs(q);
-
-    if (!qSnap.empty) {
-      const d = qSnap.docs[0];
-      return { id: d.id, data: d.data() as any };
-    }
-
     return null;
   } catch (err) {
     console.error("fetchUserDoc error:", err);
@@ -67,9 +56,6 @@ const fetchUserDoc = async (uid: string) => {
   }
 };
 
-// ==================================================
-// Main Hook
-// ==================================================
 export default function useAuth() {
   const [user, setUser] = useState<CustomUser | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
@@ -83,9 +69,21 @@ export default function useAuth() {
       return;
     }
 
+    // If email is not verified, do not establish a session.
+    // This allows the login page to handle the "resend verification" flow
+    // without this hook signing the user out.
+    if (!currentUser.emailVerified) {
+      setUser(null);
+      setRole(null);
+      setLoading(false);
+      return;
+    }
+
     const userDoc = await fetchUserDoc(currentUser.uid);
     if (!userDoc) {
-      toast.error("User tidak ditemukan.");
+      // This can happen if auth exists but firestore doc doesn't.
+      // It's safer to sign out.
+      toast.error("Data pengguna tidak ditemukan.");
       await signOut(auth);
       setLoading(false);
       return;
@@ -95,22 +93,16 @@ export default function useAuth() {
     const userRole = (data.role as string).toLowerCase() as UserRole;
 
     if (!Object.values(ROLES).includes(userRole)) {
-      toast.error("Role user tidak valid.");
+      toast.error("Role pengguna tidak valid.");
       await signOut(auth);
       setLoading(false);
       return;
     }
 
+    // This check now correctly runs only on VERIFIED users.
     if (isRoleRequiringApproval(userRole) && data.approved === false) {
-      toast.error("Akun belum di-approve.");
+      toast.error("Akun Anda belum disetujui oleh admin.");
       await signOut(auth);
-      setLoading(false);
-      return;
-    }
-
-    if (userRole === ROLES.CUSTOMER) {
-      setUser(null);
-      setRole(ROLES.CUSTOMER);
       setLoading(false);
       return;
     }
@@ -120,7 +112,7 @@ export default function useAuth() {
       email: currentUser.email,
       emailVerified: currentUser.emailVerified,
       role: userRole,
-      cabang: data.cabang, // Assuming 'cabang' exists in userDoc.data
+      cabang: data.cabang,
       approved: data.approved,
       online: data.online,
       photoURL: data.photoURL,
@@ -150,7 +142,6 @@ export default function useAuth() {
     return () => unsub();
   }, [loadUser]);
 
-  // LOGIN
   const login = async (email: string, password: string) => {
     setLoading(true);
 
@@ -158,38 +149,40 @@ export default function useAuth() {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const u = result.user;
 
-      if (!u.emailVerified) {
-        toast.error("Email belum diverifikasi.");
-        await signOut(auth);
-        return null;
-      }
-
+      // This is the key part for the UI. We return a user object regardless,
+      // but the `emailVerified` flag will determine the UI flow.
+      // The `loadUser` hook will prevent a full session from starting.
       const userDoc = await fetchUserDoc(u.uid);
-      if (!userDoc) return null;
 
+      // This case is rare but possible if Firestore doc creation failed during registration
+      if (!userDoc) {
+        throw new Error("auth/user-not-found-in-firestore");
+      }
+      
       const userRole = userDoc.data.role as UserRole;
 
-      if (isRoleRequiringApproval(userRole) && userDoc.data.approved === false) {
-        toast.error("Akun belum di-approve.");
-        await signOut(auth);
-        return null;
-      }
-
-      const customUser: CustomUser = {
+       const customUser: CustomUser = {
         uid: u.uid,
         email: u.email,
         emailVerified: u.emailVerified,
         role: userRole,
-        cabang: userDoc.data.cabang, // Assuming 'cabang' exists in userDoc.data
+        cabang: userDoc.data.cabang,
         approved: userDoc.data.approved,
         online: userDoc.data.online,
-        photoURL: userDoc.data.photoURL,
-        displayName: userDoc.data.displayName,
+        photoURL: u.photoURL,
+        displayName: u.displayName,
         firebaseUser: u,
       };
-      setUser(customUser); // Set the internal state
 
-      
+      if (!u.emailVerified) {
+        // Return the user object, but don't set the session.
+        // The UI will use this to show the "resend" button.
+        return customUser;
+      }
+
+      // For verified users, `onAuthStateChanged` will eventually call `loadUser`
+      // which will set the session state. We return the user here for immediate feedback.
+      setUser(customUser);
       createLog({
         uid: u.uid,
         role: userRole,
@@ -198,16 +191,16 @@ export default function useAuth() {
       });
 
       return customUser;
-    } catch (err) {
-      console.error(err);
-      toast.error("Login gagal.");
-      return null;
+
+    } catch (err: any) {
+      console.error("Login error in useAuth:", err);
+      // Re-throw the original Firebase error so the UI can handle it
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // REGISTER DEFAULT: STAFF PENDING
   const register = async (
     email: string,
     password: string,
@@ -217,19 +210,13 @@ export default function useAuth() {
       toast.error("Password tidak cocok!");
       throw new Error("Password tidak cocok!");
     }
-
     setLoading(true);
-
     try {
-      // Fetch password policy from public API endpoint
       const response = await fetch("/api/settings/security");
       if (response.ok) {
         const policy = await response.json();
-
-        // Only validate if the policy object is not empty
         if (Object.keys(policy).length > 0) {
           const validationErrors: string[] = [];
-
           const passLength = policy.passwordLength ?? 8;
           if (password.length < passLength) {
             validationErrors.push(`- Minimal ${passLength} karakter`);
@@ -243,22 +230,14 @@ export default function useAuth() {
           if (policy.requireSymbols && !/[!@#$%^&*]/.test(password)) {
             validationErrors.push("- Harus mengandung simbol (e.g., !@#$%)");
           }
-
           if (validationErrors.length > 0) {
             const errorMessage = "Password Anda tidak memenuhi syarat:\n" + validationErrors.join("\n");
             throw new Error(errorMessage);
           }
         }
       }
-      // If the fetch fails or returns no policy, registration proceeds without custom validation.
-
-      const result = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const result = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = result.user;
-
       await setDoc(doc(db, "users", newUser.uid), {
         uid: newUser.uid,
         email: newUser.email,
@@ -267,13 +246,9 @@ export default function useAuth() {
         online: false,
         createdAt: serverTimestamp(),
       });
-
       await sendEmailVerification(newUser);
-
-      // Return the new user object on success
       return newUser;
     } catch (err: any) {
-      // Log the full error for debugging but re-throw it for the UI.
       console.error("Registration process failed:", err);
       throw err;
     } finally {
@@ -287,46 +262,22 @@ export default function useAuth() {
   };
 
   const refreshVerificationStatus = async () => {
-  try {
-    if (!auth.currentUser) return;
-    await auth.currentUser.reload();
-
-    if (auth.currentUser.emailVerified) {
-      const userDoc = await fetchUserDoc(auth.currentUser.uid);
-      if (userDoc) {
-        const data = userDoc.data;
-        const userRole = (data.role as string).toLowerCase() as UserRole;
-        const customUser: CustomUser = {
-          uid: auth.currentUser.uid,
-          email: auth.currentUser.email,
-          emailVerified: auth.currentUser.emailVerified,
-          role: userRole,
-          cabang: data.cabang,
-          approved: data.approved,
-          online: data.online,
-          photoURL: data.photoURL,
-          displayName: data.displayName,
-          firebaseUser: auth.currentUser,
-        };
-        toast.success("Email sudah diverifikasi!");
-        setUser(customUser);
-      } else {
-        toast.error("Gagal memuat data pengguna setelah verifikasi.");
+    try {
+      if (!auth.currentUser) return;
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        // Manually trigger loadUser to establish session
+        await loadUser(auth.currentUser);
       }
-    } else {
-      toast.error("Email belum diverifikasi!");
+    } catch (err) {
+      console.error("refreshVerificationStatus error:", err);
+      toast.error("Gagal cek status verifikasi.");
     }
-  } catch (err) {
-    console.error("refreshVerificationStatus error:", err);
-    toast.error("Gagal cek status verifikasi.");
-  }
-};
-
+  };
 
   const resendVerification = async () => {
-    if (!auth.currentUser) return toast.error("Tidak ada user.");
+    if (!auth.currentUser) throw new Error("User not logged in for verification resend.");
     await sendEmailVerification(auth.currentUser);
-    toast.success("Email verifikasi dikirim ulang!");
   };
 
   const logout = async () => {
@@ -337,19 +288,56 @@ export default function useAuth() {
           online: false,
           lastActive: serverTimestamp(),
         }).catch(() => {});
-
         await createLog({
           uid: auth.currentUser.uid,
           role: role ?? "unknown",
           action: "logout",
         });
       }
-
       await signOut(auth);
       toast("Logout berhasil!");
     } catch (err) {
       console.error(err);
       toast.error("Logout gagal.");
+    } finally {
+        setLoading(false);
+        setUser(null);
+        setRole(null);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      let userDoc = await fetchUserDoc(user.uid);
+      if (!userDoc) {
+        const newUser = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: ROLES.PENDING,
+          approved: false,
+          online: true,
+          lastActive: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        };
+        await setDoc(doc(db, "users", user.uid), newUser);
+        userDoc = { id: user.uid, data: newUser };
+      } else {
+        await updateDoc(doc(db, "users", user.uid), {
+          online: true,
+          lastActive: serverTimestamp(),
+        });
+      }
+      // `onAuthStateChanged` will handle the rest via `loadUser`
+    } catch (error) {
+      console.error("Google Sign-In error:", error);
+      toast.error("Gagal login dengan Google.");
+    } finally {
       setLoading(false);
     }
   };
@@ -364,5 +352,6 @@ export default function useAuth() {
     resendVerification,
     refreshVerificationStatus,
     logout,
+    signInWithGoogle,
   };
 }

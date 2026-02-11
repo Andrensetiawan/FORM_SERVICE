@@ -164,12 +164,12 @@ if (role not in allowedRoles) → Redirect to /unauthorized
 ### **NavbarPublic** (User tanpa login)
 - Logo/Home
 - Tracking Service
-- Daftar Service
+- Daftar Service Request
 - About/Contact
 
 ### **NavbarStaff** 
 - Logo/Dashboard
-- Daftar Service
+- Daftar Service Request
 - Profile
 - Logout
 

@@ -34,7 +34,7 @@ export default function CommentSection({
       const entry = {
         author: user?.email || "anonymous",
         body: text.trim(),
-        createdAt: serverTimestamp(),
+        createdAt: Date.now(),
       };
 
       await updateDoc(doc(db, "service_requests", docId), {

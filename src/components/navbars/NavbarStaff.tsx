@@ -14,6 +14,7 @@ import {
   Wrench,
   PhoneCall,
   Settings,
+  CircleUser,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -80,6 +81,7 @@ export default function NavbarStaff({ className }: { className?: string }) {
 
   const menuItems = [
     { name: "Home", icon: <Home size={18} />, href: "/staff" },
+    { name: "Profile", icon: <CircleUser size={18} />, href: `/${user?.uid}` },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
     { name: "Contact", icon: <PhoneCall size={18} />, href: "/contact" },
   ];
@@ -111,7 +113,7 @@ export default function NavbarStaff({ className }: { className?: string }) {
                 alt="Logo"
                 width={40}
                 height={40}
-                className="rounded-full border border-blue-400 shadow-sm"
+                className="rounded-full border border-blue-400 shadow-sm object-cover"
               />
               <span className="text-white font-semibold text-lg tracking-wide whitespace-nowrap">
                 Alif Cyber Solution
@@ -205,6 +207,7 @@ export default function NavbarStaff({ className }: { className?: string }) {
               {/* Menu */}
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
                 {menuItems.map((item) => {
+                  if (!item.href || item.href.includes("null")) return null; // Do not render link if href is not ready
                   const active = pathname === item.href;
                   return (
                     <Link

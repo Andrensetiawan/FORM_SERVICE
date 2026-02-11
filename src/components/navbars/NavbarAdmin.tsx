@@ -15,6 +15,7 @@ import {
   Settings,
   BarChart3,
   Home,
+  CircleUser,
   Trash2,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
@@ -60,6 +61,7 @@ export default function NavbarAdmin({ className }: { className?: string }) {
 
   const adminMenus = [
     { name: "Dashboard", icon: <Home size={18} />, href: "/admin" },
+    { name: "Profile", icon: <CircleUser size={18} />, href: `/${user?.uid}` },
     { name: "Pending Approval", icon: <Home size={18} />, href: "/admin/pending-users" },
     {name: "Manajemen Cabang",icon: <Building2 size={18} />,href: "/admin/cabang",},
     { name: "Hapus TNS", icon: <Trash2 size={18} />, href: "/admin/hapus_tns" },
@@ -93,7 +95,7 @@ export default function NavbarAdmin({ className }: { className?: string }) {
                 alt="Logo"
                 width={40}
                 height={40}
-                className="rounded-full border border-blue-400 shadow-sm"
+                className="rounded-full border border-blue-400 shadow-sm object-cover"
               />
               <span className="text-white font-semibold text-lg tracking-wide whitespace-nowrap">
                 Admin Panel

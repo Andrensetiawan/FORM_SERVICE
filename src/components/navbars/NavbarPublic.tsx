@@ -27,7 +27,7 @@ export default function NavbarPublic({ className }: { className?: string }) {
               alt="Logo"
               width={42}
               height={42}
-              className="rounded-full border border-blue-400 shadow-sm"
+              className="rounded-full border border-blue-400 shadow-sm object-cover"
             />
             <span className="text-white font-semibold text-lg sm:text-xl tracking-wide">
               Alif Cyber Solution

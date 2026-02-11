@@ -21,6 +21,7 @@ interface TeknisiUpdateProps {
 interface UnitWorkLogEntry {
     id: string;
     description: string;
+    catatan_rinci: string;
     photo_urls: string[];
     timestamp: number;
     media_items: MediaItem[];
@@ -75,6 +76,7 @@ const TeknisiUpdate: React.FC<TeknisiUpdateProps> = ({
             return {
               id: entry.id || `log-${index}-${Date.now()}`,
               description: entry.description || "",
+              catatan_rinci: entry.catatan_rinci || "",
               photo_urls: photo_urls,
               timestamp: entry.timestamp || Date.now(),
               media_items: photo_urls.map((url: string) => ({ id: url, url, type: url.match(/\.(jpeg|jpg|gif|png)$/) != null ? 'image' : 'video' })),
@@ -129,13 +131,13 @@ const TeknisiUpdate: React.FC<TeknisiUpdateProps> = ({
           const uploadedUrls = await Promise.all(
             entry.media_items.map(item => uploadToCloudinary(item, `unit_work_log_${entry.id}`))
           );
-          return { id: entry.id, description: entry.description, timestamp: entry.timestamp, photo_urls: uploadedUrls };
+          return { id: entry.id, description: entry.description, catatan_rinci: entry.catatan_rinci, timestamp: entry.timestamp, photo_urls: uploadedUrls };
         })
       );
       const payload = { unit_work_log: processedWorkLog };
       const serviceRef = doc(db, "service_requests", docId);
       await updateDoc(serviceRef, payload);
-      await createLog({ uid: user.uid, role: role as UserRole, action: "update_unit_work_log", target: docId, detail: payload });
+      await createLog({ uid: user.uid, role: role as UserRole, action: "update_unit_work_log", target: docId });
       setSuccessMsg("Log Pengerjaan Unit berhasil disimpan!");
       const reloadedLog: UnitWorkLogEntry[] = processedWorkLog.map((entry: any) => ({
             ...entry,
@@ -151,15 +153,21 @@ const TeknisiUpdate: React.FC<TeknisiUpdateProps> = ({
   };
 
   const handleAddNewLogEntry = () => {
-    setUnitWorkLog((prev) => [{ id: `log-${Date.now()}`, description: "", photo_urls: [], timestamp: Date.now(), media_items: [] }, ...prev]);
+    setUnitWorkLog((prev) => [{ id: `log-${Date.now()}`, description: "", catatan_rinci: "", photo_urls: [], timestamp: Date.now(), media_items: [] }, ...prev]);
   };
 
   const handleRemoveLogEntry = (idToRemove: string) => {
-    setUnitWorkLog((prev) => prev.filter((entry) => entry.id !== idToRemove));
+    if (confirm("Anda yakin ingin menolak dan menghapus pengguna ini?")) {
+      setUnitWorkLog((prev) => prev.filter((entry) => entry.id !== idToRemove));
+    }
   };
 
   const handleLogDescriptionChange = (idToUpdate: string, newDescription: string) => {
     setUnitWorkLog((prev) => prev.map((entry) => (entry.id === idToUpdate ? { ...entry, description: newDescription } : entry)));
+  };
+
+  const handleLogCatatanRinciChange = (idToUpdate: string, newCatatanRinci: string) => {
+    setUnitWorkLog((prev) => prev.map((entry) => (entry.id === idToUpdate ? { ...entry, catatan_rinci: newCatatanRinci } : entry)));
   };
   
   const handleLogMediaChange = (idToUpdate: string, newItems: MediaItem[]) => {
@@ -259,6 +267,14 @@ const TeknisiUpdate: React.FC<TeknisiUpdateProps> = ({
                 rows={2}
                 className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 mb-2 disabled:cursor-not-allowed"
                 placeholder="Deskripsi pengerjaan..."
+                disabled={!canEditUnitLog || isSavingUnitLog}
+              ></textarea>
+              <textarea
+                value={entry.catatan_rinci}
+                onChange={(e) => handleLogCatatanRinciChange(entry.id, e.target.value)}
+                rows={4}
+                className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 mb-2 disabled:cursor-not-allowed"
+                placeholder="Catatan rinci pengerjaan..."
                 disabled={!canEditUnitLog || isSavingUnitLog}
               ></textarea>
               <MediaUploadSection

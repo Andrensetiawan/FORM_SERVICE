@@ -36,3 +36,53 @@
   writing-mode: vertical-rl;
   text-orientation: mixed;
 }
+
+.theme-default {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+
+.theme-light {
+  --bg-color: #f3f4f6;
+  --text-color: #000000;
+}
+
+.theme-modern {
+  --bg-color: #eff6ff;
+  --text-color: #1e3a8a;
+}
+
+.theme-blue {
+  --bg-color: #dbeafe;
+  --text-color: #1e40af;
+}
+
+.theme-coffee {
+  --bg-color: #fef3c7;
+  --text-color: #92400e;
+}
+
+.theme-ectoplasm {
+  --bg-color: #ecfdf5;
+  --text-color: #065f46;
+}
+
+.theme-midnight {
+  --bg-color: #111827;
+  --text-color: #f9fafb;
+}
+
+.theme-ocean {
+  --bg-color: #ecfeff;
+  --text-color: #0e7490;
+}
+
+.theme-sunrise {
+  --bg-color: #fff7ed;
+  --text-color: #b45309;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}

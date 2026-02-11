@@ -6,7 +6,7 @@ export interface LogEntry {
   uid: string;
   role: UserRole | "unknown";
   action: string;
-  target?: string;
+  target?: string | null;
   detail?: any;
 }
 

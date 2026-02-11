@@ -17,7 +17,16 @@ import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import useAuth from "@/hooks/useAuth";
 import { ROLES } from "@/lib/roles";
 import { createLog } from "@/lib/log";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil, Save } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
+
+interface Cabang {
+  id: string;
+  name: string;
+  managerId?: string;
+  managerName?: string;
+  managerEmail?: string;
+}
 
 export default function CabangDetailPage({
   params,
@@ -28,9 +37,11 @@ export default function CabangDetailPage({
   const { user, role, loading } = useAuth();
   const router = useRouter();
 
-  const [cabang, setCabang] = useState<any>(null);
+  const [cabang, setCabang] = useState<Cabang | null>(null);
   const [staff, setStaff] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [cabangName, setCabangName] = useState("");
 
   const fetchData = async () => {
     setLoadingData(true);
@@ -42,8 +53,9 @@ export default function CabangDetailPage({
         return;
       }
 
-      const cabangData = { id: cabangDoc.id, ...cabangDoc.data() };
+      const cabangData = { id: cabangDoc.id, ...cabangDoc.data() } as Cabang;
       setCabang(cabangData);
+      setCabangName(cabangData.name);
 
       const staffSnap = await getDocs(
         query(collection(db, "users"), where("cabang", "==", cabangData.id))
@@ -151,10 +163,42 @@ export default function CabangDetailPage({
     }
   };
 
+  const handleSaveName = async () => {
+    if (!cabangName.trim()) {
+      toast.error("Nama cabang tidak boleh kosong.");
+      return;
+    }
+
+    const loadingToast = toast.loading("Menyimpan nama cabang...");
+    try {
+      await updateDoc(doc(db, "cabangs", id), {
+        name: cabangName,
+      });
+
+      await createLog({
+        uid: user?.uid ?? "",
+        role: role ?? "unknown",
+        action: "update_cabang_name",
+        detail: `Updated cabang name to "${cabangName}"`,
+        target: id,
+      });
+
+      toast.dismiss(loadingToast);
+      toast.success("Nama cabang berhasil diperbarui!");
+      setIsEditing(false);
+      fetchData(); // Refresh data
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      toast.error("Gagal menyimpan nama cabang.");
+      console.error("Error saving cabang name:", err);
+    }
+  };
+
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
       <div className="min-h-screen bg-gray-50 pt-16">
         <NavbarSwitcher />
+        <Toaster position="top-center" />
 
         <div className="max-w-4xl mx-auto px-6 py-10">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">
@@ -168,9 +212,35 @@ export default function CabangDetailPage({
           ) : (
             <>
               <div className="bg-white p-6 rounded-xl shadow mb-8">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {cabang.name}
-                </h2>
+                <div className="flex items-center gap-4">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={cabangName}
+                      onChange={(e) => setCabangName(e.target.value)}
+                      className="text-2xl font-bold text-gray-800 bg-gray-100 border border-gray-300 rounded-md px-2 py-1"
+                    />
+                  ) : (
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      {cabang.name}
+                    </h2>
+                  )}
+                  {isEditing ? (
+                    <button
+                      onClick={handleSaveName}
+                      className="px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700 flex items-center gap-1"
+                    >
+                      <Save size={14} /> Simpan
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1"
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
+                  )}
+                </div>
 
                 <p className="mt-3 text-gray-700 font-medium">
                   Manager:{" "}

@@ -1,3 +1,7 @@
+// Ya, semua permintaan telah selesai diimplementasikan.
+// Berikut adalah ringkasan perubahan yang telah dilakukan:
+// 1. Menambahkan kolom "Catatan Rinci" pada log pengerjaan unit untuk memberikan informasi yang lebih detail.
+// 2. Membuat entri log audit global lebih ringkas dengan menghapus detail payload yang tidak perlu.
 "use client";
 
 import { useEffect, useState } from "react";

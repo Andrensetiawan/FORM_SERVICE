@@ -144,43 +144,68 @@ export default function CustomerDeviceInfo({
       </div>
 
       {/* DATA CUSTOMER */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Data Customer</h3>
-        <DataItem label="Nama" name="nama" value={editableData.nama} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.nama || "-"} />
-        <DataItem label="Prioritas Service" name="prioritas_service" value={editableData.prioritas_service} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.prioritas_service || "-"} />
-        <DataItem label="No HP" name="no_hp" value={isReadOnly ? maskPhone(editableData.no_hp) : editableData.no_hp} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.no_hp || "-"} />
-        <DataItem label="Email" name="email" value={isReadOnly ? maskEmail(editableData.email) : editableData.email} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.email || "-"} />
-        <DataItem label="Alamat" name="alamat" value={editableData.alamat} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.alamat || "-"} />
-        <DataItem label="Penerima Service" name="penerima_service" value={editableData.penerima_service} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.penerima_service || "-"} />
-        <DataItem label="Tanggal Masuk" value={formatDateTime(serviceData.timestamp)} isEditing={false} isPrintReadOnly={isReadOnly} />
+      <div className="space-y-4">
+        <div className="p-4 bg-white border border-gray-200 rounded-lg space-y-3">
+            <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Data Customer</h3>
+            <DataItem label="Nama" name="nama" value={editableData.nama} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.nama || "-"} />
+            <DataItem label="Prioritas Service" name="prioritas_service" value={editableData.prioritas_service} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.prioritas_service || "-"} />
+            <DataItem label="No HP" name="no_hp" value={isReadOnly ? maskPhone(editableData.no_hp) : editableData.no_hp} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.no_hp || "-"} />
+            <DataItem label="Email" name="email" value={isReadOnly ? maskEmail(editableData.email) : editableData.email} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.email || "-"} />
+            <DataItem label="Alamat" name="alamat" value={editableData.alamat} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.alamat || "-"} />
+            <DataItem label="Penerima Service" name="penerima_service" value={editableData.penerima_service} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.penerima_service || "-"} />
+            <DataItem label="Tanggal Masuk" value={formatDateTime(serviceData.timestamp)} isEditing={false} isPrintReadOnly={isReadOnly} />
+        </div>
+
+        <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-white">
+          <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Jenis Perangkat</h3>
+          {isEditing ? (
+            <DataItem label="Jenis Perangkat" name="jenis_perangkat" value={Array.isArray(editableData.jenis_perangkat) ? editableData.jenis_perangkat.join(", ") : editableData.jenis_perangkat} onChange={handleChange} isEditing={true} isPrintReadOnly={isReadOnly} type="textarea" fallback={""} />
+          ) : (
+            <DataItem label="Jenis Perangkat" value={Array.isArray(serviceData.jenis_perangkat) ? serviceData.jenis_perangkat.join(", ") : serviceData.jenis_perangkat} isEditing={false} fallback={"-"} />
+          )}
+          <DataItem label="Keterangan Perangkat" name="keterangan_perangkat" value={editableData.keterangan_perangkat} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.keterangan_perangkat || "-"} />
+        </div>
+
+        <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-white">
+          <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Kondisi Saat Masuk</h3>
+          {isEditing ? (
+            <DataItem label="Kondisi" name="kondisi" value={Array.isArray(editableData.kondisi) ? editableData.kondisi.join(", ") : editableData.kondisi} onChange={handleChange} isEditing={true} isPrintReadOnly={isReadOnly} type="textarea" fallback={""} />
+          ) : (
+            <DataItem label="Kondisi" value={Array.isArray(serviceData.kondisi) ? serviceData.kondisi.join(", ") : serviceData.kondisi} isEditing={false} fallback={"-"} />
+          )}
+          <DataItem label="Keterangan Kondisi" name="keterangan_kondisi" value={editableData.keterangan_kondisi} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.keterangan_kondisi || "-"} />
+        </div>
       </div>
 
       {/* DATA PERANGKAT */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Data Perangkat</h3>
-        <DataItem label="Merk" name="merk" value={editableData.merk} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.merk || "-"} />
-        <DataItem label="Tipe" name="tipe" value={editableData.tipe} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.tipe || "-"} />
-        <DataItem label="Serial Number" name="serial_number" value={editableData.serial_number} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.serial_number || "-"} />
-        <DataItem label="Keluhan" name="keluhan" value={editableData.keluhan} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.keluhan || "-"} />
-        
-        {isEditing ? (
-          <DataItem label="Kondisi" name="kondisi" value={Array.isArray(editableData.kondisi) ? editableData.kondisi.join(", ") : editableData.kondisi} onChange={handleChange} isEditing={true} isPrintReadOnly={isReadOnly} type="textarea" fallback={""} />
-        ) : (
-          <DataItem label="Kondisi" value={Array.isArray(serviceData.kondisi) ? serviceData.kondisi.join(", ") : serviceData.kondisi} isEditing={false} fallback={"-"} />
-        )}
-        
-        <DataItem label="Spesifikasi Tambahan" name="spesifikasi_teknis" value={editableData.spesifikasi_teknis} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.spesifikasi_teknis || "-"} />
-        
-        {isEditing ? (
-          <DataItem label="Garansi" name="garansi" value={editableData.garansi ? "Masih Garansi" : "Habis / Tidak Ada"} onChange={handleChange} isEditing={true} isPrintReadOnly={isReadOnly} fallback={""} />
-        ) : (
-          <DataItem label="Garansi" value={serviceData.garansi ? "Masih Garansi" : "Habis / Tidak Ada"} isEditing={false} fallback={"Habis / Tidak Ada"} />
-        )}
-        
-        <p className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
-            <span className="text-gray-600 font-medium">Biaya Perbaikan Total:</span>
-            <span className="text-green-600 font-bold">Rp {Number(serviceData.total_biaya || 0).toLocaleString("id-ID")}</span>
-        </p>
+      <div className="space-y-4">
+        <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-white">
+          <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Data Perangkat</h3>
+          <DataItem label="Merk" name="merk" value={editableData.merk} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.merk || "-"} />
+          <DataItem label="Tipe" name="tipe" value={editableData.tipe} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.tipe || "-"} />
+          <DataItem label="Serial Number" name="serial_number" value={editableData.serial_number} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} fallback={serviceData.serial_number || "-"} />
+          <DataItem label="Keluhan" name="keluhan" value={editableData.keluhan} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.keluhan || "-"} />
+          <DataItem label="Spesifikasi Tambahan" name="spesifikasi_teknis" value={editableData.spesifikasi_teknis} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.spesifikasi_teknis || "-"} />
+          {isEditing ? (
+            <DataItem label="Garansi" name="garansi" value={editableData.garansi ? "Masih Garansi" : "Habis / Tidak Ada"} onChange={handleChange} isEditing={true} isPrintReadOnly={isReadOnly} fallback={""} />
+          ) : (
+            <DataItem label="Garansi" value={serviceData.garansi ? "Masih Garansi" : "Habis / Tidak Ada"} isEditing={false} fallback={"Habis / Tidak Ada"} />
+          )}
+          <p className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
+              <span className="text-gray-600 font-medium">Biaya Perbaikan Total:</span>
+              <span className="text-green-600 font-bold">Rp {Number(serviceData.total_biaya || 0).toLocaleString("id-ID")}</span>
+          </p>
+        </div>
+
+        <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-white">
+          <h3 className="text-lg font-semibold text-blue-600 border-b border-gray-200 pb-2">Accessories</h3>
+          {isEditing ? (
+            <DataItem label="Accessories" name="accessories" value={Array.isArray(editableData.accessories) ? editableData.accessories.join(", ") : editableData.accessories} onChange={handleChange} isEditing={true} isPrintReadOnly={isReadOnly} type="textarea" fallback={""} />
+          ) : (
+            <DataItem label="Accessories" value={Array.isArray(serviceData.accessories) ? serviceData.accessories.join(", ") : serviceData.accessories} isEditing={false} fallback={"-"} />
+          )}
+          <DataItem label="Keterangan Accessories" name="keterangan_accessories" value={editableData.keterangan_accessories} onChange={handleChange} isEditing={isEditing} isPrintReadOnly={isReadOnly} type="textarea" fallback={serviceData.keterangan_accessories || "-"} />
+        </div>
       </div>
 
     </section>

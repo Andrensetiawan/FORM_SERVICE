@@ -19,10 +19,14 @@ import CustomerLog from "@/components/tns/CustomerLog";
 import EstimasiSection from "@/components/tns/EstimasiSection";
 import MediaUploadSection from "@/components/tns/PhotoUploadSection";
 import SignatureSection from "@/components/tns/SignatureSection";
+import PaymentSection from "@/components/tns/PaymentSection";
 import TeknisiUpdate from "@/components/tns/TeknisiUpdate";
+import DPPayment from "@/components/tns/DPPayment";
 
 type EstimasiItem = {
   id: string;
+
+
   item: string;
   harga: number;
   qty: number;
@@ -107,17 +111,31 @@ export default function ServiceDetailPage() {
 
   const formatDateTime = (ts: any) => {
     if (!ts) return "-";
-    let dateValue: number;
-    if (typeof ts === "object" && (ts._seconds || ts.seconds)) {
-      dateValue = (ts._seconds ?? ts.seconds) * 1000;
-    } else if (typeof ts === "number") {
-      dateValue = ts * 1000;
-    } else {
-      return "-";
-    }
-    if (isNaN(dateValue) || dateValue === 0) return "-";
     try {
-      return new Date(dateValue).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
+      // Firestore Timestamp-like object
+      if (typeof ts === "object" && (ts._seconds || ts.seconds)) {
+        const secs = Number(ts._seconds ?? ts.seconds);
+        if (!isNaN(secs) && secs > 0) return new Date(secs * 1000).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
+      }
+
+      // JS Date object
+      if (ts instanceof Date) {
+        return ts.toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
+      }
+
+      // Numeric: could be seconds or milliseconds
+      if (typeof ts === "number") {
+        // Heuristic: numbers > 1e11 are milliseconds (Date.now() ~ 1e12+), otherwise seconds
+        const dateValue = ts > 1e11 ? ts : ts * 1000;
+        if (!isNaN(dateValue) && dateValue > 0) return new Date(dateValue).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
+      }
+
+      // If it's a Firestore serverTimestamp sentinel before resolved, return placeholder
+      if (typeof ts === "object" && ts?.toMillis && typeof ts.toMillis === "function") {
+        return new Date(ts.toMillis()).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" });
+      }
+
+      return "-";
     } catch (error) {
       console.error("Error formatting date:", error);
       return "-";
@@ -132,6 +150,7 @@ export default function ServiceDetailPage() {
       const snap = await getDoc(ref);
       const data = snap.data();
       const safeLog = Array.isArray(data?.status_log) ? data.status_log : [];
+      // Use serverTimestamp() for document-level updatedAt, but use a client timestamp for array entries
       const entry = { status, updatedBy: user?.email || "system", updatedAt: Date.now() };
       await updateDoc(ref, { status, updatedAt: serverTimestamp(), status_log: [...safeLog, entry] });
       await createLog({ uid: user.uid, role: role as UserRole, action: "update_service_status", target: docId, detail: { newStatus: status } });
@@ -290,35 +309,46 @@ export default function ServiceDetailPage() {
           />
         </div>
 
+        <div className="card">
+          <EstimasiSection
+            estimasiItems={estimasiItems}
+            totalEstimasi={totalEstimasi}
+            dp={serviceData?.dp || 0}
+            onDpChange={handleDpChange}
+            handleSave={handleSaveEstimasi}
+            addRow={addRow}
+            removeRow={removeRow}
+            handleChange={handleChange}
+            isSaving={saving}
+            isReadOnly={!isInternal}
+          />
+        </div>
+
+        <div className="card">
+          <PaymentSection
+            serviceData={serviceData}
+            isReadOnly={isPublic}
+          />
+        </div>
+
+        {!isInternal && totalEstimasi > 0 && (
+          <DPPayment
+            docId={docId}
+            totalEstimasi={totalEstimasi}
+            currentDp={serviceData?.dp || 0}
+            buktiTransferPhotoUrl={buktiTransferPhotoUrl}
+            onUpdate={handlePhotoUpdate}
+            setErrorMsg={setErrorMsg}
+            setSuccessMsg={setSuccessMsg}
+            onDpUpdate={handleDpChange}
+          />
+        )}
+
         {isInternal && (
           <>
             <div className="card">
-              <EstimasiSection
-                estimasiItems={estimasiItems}
-                totalEstimasi={totalEstimasi}
-                dp={serviceData?.dp || 0}
-                onDpChange={handleDpChange}
-                handleSave={handleSaveEstimasi}
-                addRow={addRow}
-                removeRow={removeRow}
-                handleChange={handleChange}
-                isSaving={saving}
-              />
-            </div>
-
-            <div className="card">
               <h3 className="text-lg font-semibold mb-4 border-b pb-2">Media & Bukti</h3>
               <div className="grid md:grid-cols-3 gap-6 print:hidden">
-                <MediaUploadSection
-                  docId={docId}
-                  field="transfer_proof_url"
-                  title="Foto Bukti Transfer"
-                  existingUrl={buktiTransferPhotoUrl}
-                  setErrorMsg={setErrorMsg}
-                  setSuccessMsg={setSuccessMsg}
-                  onUpdate={(urls: string[]) => handlePhotoUpdate("transfer_proof_url", urls)}
-                  showCamera={true}
-                />
                 <MediaUploadSection
                   docId={docId}
                   field="handover_photo_url"

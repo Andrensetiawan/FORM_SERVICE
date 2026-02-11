@@ -14,7 +14,7 @@ import {
   FileText,
   Wrench,
   LogOut,
-  Shield,
+  CircleUser,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -58,6 +58,7 @@ export default function NavbarManagement({ className }: { className?: string }) 
   };
 
   const menuItems = [
+    { name: "Profile", icon: <CircleUser size={18} />, href: `/${user?.uid}` },
     // hanya owner atau admin yang melihat menu Pending Approval
     ...(user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN || user?.role === ROLES.MANAGER
       ? [{ name: "Pending Approval", icon: <Users size={18} />, href: "/owner/pending-users" }]
@@ -91,7 +92,7 @@ export default function NavbarManagement({ className }: { className?: string }) 
                 alt="Logo"
                 width={40}
                 height={40}
-                className="rounded-full border border-blue-400 shadow-sm"
+                className="rounded-full border border-blue-400 shadow-sm object-cover"
               />
               <span className="text-white font-semibold text-lg tracking-wide whitespace-nowrap">
                 Alif Cyber Solution

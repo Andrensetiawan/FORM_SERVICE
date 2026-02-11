@@ -13,6 +13,7 @@ import {
   getDocs,
   getDoc,
   doc,
+  setDoc,
 } from "firebase/firestore";
 import { generateTrackNumber } from "@/lib/trackNumber";
 import useAuth from "@/hooks/useAuth";
@@ -268,6 +269,39 @@ Terima kasih 🙏
       const docRef = await addDoc(collection(db, "service_requests"), payload);
       const docId = docRef.id;
 
+      // Generate an unguessable public token and create a lightweight public view
+      const generateToken = () => {
+        try {
+          const arr = crypto.getRandomValues(new Uint8Array(24));
+          return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+        } catch (e) {
+          // Fallback
+          return Math.random().toString(36).slice(2) + Date.now().toString(36);
+        }
+      };
+
+      const publicToken = generateToken();
+
+      const publicData = {
+        docId,
+        track: track,
+        createdAt: serverTimestamp(),
+        // Subset of fields safe to show publicly (customer can view status and estimates)
+        public: {
+          track_number: track,
+          status: "pending",
+          timestamp: serverTimestamp(),
+          estimasi_items: [],
+          total_biaya: 0,
+          dp: 0,
+        },
+      };
+
+      await setDoc(doc(db, "public_views", publicToken), publicData);
+
+      // store token on main document for convenience (non-sensitive)
+      await setDoc(doc(db, "service_requests", docId), { public_view_token: publicToken }, { merge: true });
+
       await createLog({
         uid: user?.uid ?? "",
         role: role ?? "unknown",
@@ -278,7 +312,7 @@ Terima kasih 🙏
       setSuccessMessage(`Berhasil tersimpan 🎉 Tracking: ${track}`);
 
       if (agreeToWhatsApp) {
-        const directLink = `${window.location.origin}/tns/${docId}`;
+        const publicLink = `${window.location.origin}/public/${publicToken}`;
         const waMessage = `
 Halo ${formData.nama},
 
@@ -312,7 +346,7 @@ Garansi: ${formData.garansi ? "Ya" : "Tidak"}
 -------------------------
 
 Cek status service Anda secara real-time melalui link berikut:
-${directLink}
+${publicLink}
 
 Kami akan menghubungi Anda kembali setelah proses pengecekan selesai.
 Terima kasih 🙏
@@ -330,9 +364,9 @@ Terima kasih 🙏
 
       setFormData(initialForm);
       setErrors([]);
-    } catch (err) {
-      console.error("Error:", err);
-      setErrors(["Gagal menyimpan data ke Firestore"]);
+    } catch (err: any) {
+      console.error("Firestore write error:", err?.code, err?.message, err);
+      setErrors([`Gagal menyimpan data ke Firestore: ${err?.message || err?.code || "periksa console"}`]);
     }
   };
 

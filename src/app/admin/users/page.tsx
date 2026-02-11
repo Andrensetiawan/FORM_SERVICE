@@ -87,22 +87,26 @@ export default function AdminUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, email: string} | null>(null);
+
+  const openConfirmationModal = (id: string, email: string) => {
+    setItemToDelete({ id, email });
+    setIsModalOpen(true);
+  };
+
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterCabang, setFilterCabang] = useState<string>("all");
   const [filterDivision, setFilterDivision] = useState<string>("all");
-
-  const [approvalData, setApprovalData] = useState<Record<string, ApprovalData>>({});
 
   const divisionOptions = ["IT", "finance", "admin", "sales", "GA", "teknisi"];
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      // Fetch ALL users now
       const qUsers = query(collection(db, "users"));
       const snap = await getDocs(qUsers);
       const arr: UserRow[] = [];
-      const initialApprovalData: Record<string, ApprovalData> = {};
       
       snap.docs.forEach(d => {
         const raw = d.data();
@@ -120,15 +124,9 @@ export default function AdminUsersPage() {
           photoURL: raw.photoURL,
         };
         arr.push(user);
-        
-        // If user is pending, set up initial data for approval dropdowns
-        if (!user.approved) {
-          initialApprovalData[user.id] = { role: ROLES.STAFF, cabang: "" };
-        }
       });
 
       setUsers(arr);
-      setApprovalData(initialApprovalData);
 
     } catch (err) {
       console.error("Fetch users error:", err);
@@ -191,43 +189,19 @@ export default function AdminUsersPage() {
     }
   };
 
-  const approveUser = async (id: string) => {
-    const { role: newRole, cabang } = approvalData[id];
-    if (!newRole) return toast.error("Silakan pilih role untuk pengguna.");
-    
-    setActionLoading(id);
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
+    setActionLoading(itemToDelete.id);
     try {
-      const userRef = doc(db, "users", id);
-      await updateDoc(userRef, {
-        approved: true,
-        role: newRole,
-        cabang: cabang || "",
-      });
-
-      toast.success(`Pengguna disetujui sebagai ${newRole}!`);
-      await fetchUsers(); // Refetch all users to update the state
-    } catch (err) {
-      console.error("approveUser error:", err);
-      toast.error("Gagal menyetujui pengguna.");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleDelete = async (id: string, email: string) => {
-    const actionText = users.find(u => u.id === id)?.approved ? "menghapus" : "menolak";
-    if (!confirm(`Anda yakin ingin ${actionText} pengguna ${email}?`)) return;
-
-    setActionLoading(id);
-    try {
-      await deleteDoc(doc(db, "users", id));
+      await deleteDoc(doc(db, "users", itemToDelete.id));
       
       createLog({
         uid: adminUser?.uid || "",
         role: currentAdminRole || "unknown",
         action: "delete_user",
-        detail: `Deleted user ${email}`,
-        target: email || "",
+        detail: `Deleted user ${itemToDelete.email}`,
+        target: itemToDelete.email || "",
       });
 
       toast.success("Pengguna berhasil dihapus.");
@@ -237,6 +211,8 @@ export default function AdminUsersPage() {
       toast.error("Gagal menghapus pengguna.");
     } finally {
       setActionLoading(null);
+      setIsModalOpen(false);
+      setItemToDelete(null);
     }
   };
   
@@ -252,16 +228,9 @@ export default function AdminUsersPage() {
       [id]: newChanges,
     }));
   };
-  
-  const handleApprovalChange = (id: string, field: 'role' | 'cabang', value: string) => {
-    setApprovalData(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value as UserRole | string },
-    }));
-  };
 
-  const filteredUsers = users.filter((u) => {
-    const matchRole = filterRole === "all" || u.role === filterRole || (filterRole === "pending" && !u.approved);
+  const filteredUsers = users.filter(u => u.approved).filter((u) => {
+    const matchRole = filterRole === "all" || u.role === filterRole;
     const matchCabang = filterCabang === "all" || u.cabang === filterCabang;
     const matchDivision = filterDivision === "all" || u.division === filterDivision;
     return matchRole && matchCabang && matchDivision;
@@ -275,6 +244,32 @@ export default function AdminUsersPage() {
   
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
+      {isModalOpen && itemToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4 border">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Penghapusan</h3>
+            <p className="text-gray-600 mb-6">
+              Apakah Anda yakin ingin menghapus <strong className="font-bold text-red-600">{itemToDelete.email}</strong>?
+              <br />
+              <span className="text-sm text-gray-500">Tindakan ini tidak dapat dibatalkan.</span>
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen bg-gray-100">
         <NavbarSwitcher />
         <main className="pt-20 max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -306,7 +301,6 @@ export default function AdminUsersPage() {
                 <label className="text-sm font-medium text-gray-700 mb-1 block">Role</label>
                 <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="w-full border border-gray-300 px-3 py-2 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all">
                   <option value="all">Semua Role</option>
-                  <option value="pending">Pending</option>
                   {Object.values(ROLES).filter(r => r !== 'pending' && r !== 'customer').map(r => <option key={r} value={r} className="capitalize">{r}</option>)}
                 </select>
               </div>
@@ -343,11 +337,10 @@ export default function AdminUsersPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.3 }}
-                    className={`bg-white rounded-2xl shadow-lg border-2 ${!u.approved ? 'border-yellow-400' : modified[u.id] ? 'border-blue-500' : 'border-transparent'} transition-all duration-300 flex flex-col`}
+                    className={`bg-white rounded-2xl shadow-lg border-2 ${modified[u.id] ? 'border-blue-500' : 'border-transparent'} transition-all duration-300 flex flex-col`}
                   >
                     {/* Approved User Card */}
-                    {u.approved ? (
-                      <>
+                    <>
                         <div className="p-5 flex-grow">
                           {modified[u.id] && (
                             <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">
@@ -372,42 +365,9 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="bg-gray-50 p-4 rounded-b-2xl mt-auto">
                           <div className="text-xs text-gray-500 mb-3"><p>Created: {u.createdAt ? u.createdAt.toLocaleDateString() : "-"}</p><p>Last Active: {u.lastActive ? u.lastActive.toLocaleString() : "Never"}</p></div>
-                          <button onClick={() => handleDelete(u.id, u.email)} className="w-full flex items-center justify-center gap-2 text-sm text-red-600 font-semibold hover:bg-red-100 p-2 rounded-lg transition-colors"><Trash2 size={14} />Hapus Pengguna</button>
+                          <button onClick={() => openConfirmationModal(u.id, u.email)} className="w-full flex items-center justify-center gap-2 text-sm text-red-600 font-semibold hover:bg-red-100 p-2 rounded-lg transition-colors"><Trash2 size={14} />Hapus Pengguna</button>
                         </div>
                       </>
-                    ) : (
-                      <>
-                      {/* Pending User Card */}
-                        <div className="p-5 flex-grow">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center"><AlertCircle className="text-yellow-500" size={32}/></div>
-                            <div className="truncate">
-                              <p className="font-semibold text-gray-900 truncate" title={u.email}>{u.email}</p>
-                              {u.createdAt && (<p className="text-xs text-gray-500 flex items-center gap-1"><Clock size={12} />Mendaftar pada {u.createdAt.toLocaleDateString()}</p>)}
-                            </div>
-                          </div>
-                          <div className="space-y-3">
-                            <div>
-                              <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5 mb-1"><UserIcon size={14}/> Tetapkan Role</label>
-                              <select value={approvalData[u.id]?.role || ROLES.STAFF} onChange={(e) => handleApprovalChange(u.id, 'role', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                                <option value={ROLES.STAFF}>Staff</option><option value={ROLES.MANAGER}>Manager</option><option value={ROLES.OWNER}>Owner</option><option value={ROLES.ADMIN}>Admin</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium text-gray-600 flex items-center gap-1.5 mb-1"><Briefcase size={14}/> Tetapkan Cabang</label>
-                              <select value={approvalData[u.id]?.cabang || ""} onChange={(e) => handleApprovalChange(u.id, 'cabang', e.target.value)} className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                                <option value="">- Tidak Ditugaskan -</option>
-                                {cabangList.map(c => <option key={c} value={c}>{c}</option>)}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 p-3 grid grid-cols-2 gap-3">
-                          <button onClick={() => handleDelete(u.id, u.email)} disabled={actionLoading === u.id} className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold text-red-600 bg-red-100 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50"><UserX size={16} />{actionLoading === u.id ? "..." : "Tolak"}</button>
-                          <button onClick={() => approveUser(u.id)} disabled={actionLoading === u.id} className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:bg-gray-400"><UserCheck size={16} />{actionLoading === u.id ? "..." : "Setujui"}</button>
-                        </div>
-                      </>
-                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>

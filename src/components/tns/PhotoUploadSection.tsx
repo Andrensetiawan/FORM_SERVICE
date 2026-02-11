@@ -68,6 +68,7 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [previewingImage, setPreviewingImage] = useState<string | null>(null);
+  const [cloudConfigOk, setCloudConfigOk] = useState(true);
 
   useEffect(() => {
     if (mode === 'standalone') {
@@ -78,6 +79,18 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
             type: url.match(/\.(jpeg|jpg|gif|png)$/) != null ? "image" : "video",
         }));
         setInternalItems(initialItems);
+    }
+    // Check Cloudinary config (only relevant when saving/uploading)
+    try {
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) throw new Error("Missing cloud name");
+      if (field) {
+        // getPreset will throw if preset missing
+        getPreset(field);
+      }
+      setCloudConfigOk(true);
+    } catch (e) {
+      console.warn("Cloudinary config missing or incomplete for MediaUploadSection:", e);
+      setCloudConfigOk(false);
     }
   }, [existingUrl, mode]);
 
@@ -251,12 +264,18 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
                 </div>
             )}
             <div className="flex flex-wrap justify-center gap-2">
-                {showCamera && <button onClick={capturePhoto} disabled={!cameraActive || disabled} className="px-4 py-2 bg-blue-600 rounded text-xs text-white flex items-center gap-2 disabled:bg-gray-400"><Camera size={14}/> Ambil Foto</button>}
-                <button onClick={() => fileInputRef.current?.click()} disabled={disabled} className="px-4 py-2 bg-indigo-600 text-white rounded text-xs flex items-center gap-2 disabled:bg-gray-400"><FileUp size={14} /> Pilih File</button>
+                {showCamera && <button onClick={capturePhoto} disabled={!cameraActive || disabled || !cloudConfigOk} className="px-4 py-2 bg-blue-600 rounded text-xs text-white flex items-center gap-2 disabled:bg-gray-400"><Camera size={14}/> Ambil Foto</button>}
+                <button onClick={() => fileInputRef.current?.click()} disabled={disabled || !cloudConfigOk} className="px-4 py-2 bg-indigo-600 text-white rounded text-xs flex items-center gap-2 disabled:bg-gray-400"><FileUp size={14} /> Pilih File</button>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} multiple accept="image/*,video/*" className="hidden" disabled={disabled} />
                 {showCamera && <button onClick={() => (cameraActive ? stopCamera() : startCamera())} disabled={disabled} className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs flex items-center gap-2 disabled:bg-gray-400">{cameraActive ? <CameraOff size={14}/> : <Camera size={14}/>} {cameraActive ? "Matikan" : "Nyalakan"}</button>}
             </div>
         </div>
+
+        {!cloudConfigOk && (
+          <div className="mt-3 p-3 rounded bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
+            Cloudinary belum dikonfigurasi. Upload dinonaktifkan — pastikan environment variables NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME dan preset untuk field `{field}` terpasang.
+          </div>
+        )}
 
         {mediaItems.length > 0 && (
             <div className="mt-4">

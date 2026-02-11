@@ -64,6 +64,10 @@ export default function AdminCabangPage() {
   // State for editing manager
   const [editingManager, setEditingManager] = useState<Record<string, string | null>>({});
 
+  // State for delete confirmation modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [cabangToDelete, setCabangToDelete] = useState<Cabang | null>(null);
+
   const fetchAllData = useCallback(async () => {
     setLoading(true);
     try {
@@ -174,22 +178,27 @@ export default function AdminCabangPage() {
     setSaving(false);
   };
 
-  const handleDeleteCabang = async (cabang: Cabang) => {
-    if (!confirm(`Hapus cabang ${cabang.name}? Semua staff di dalamnya akan di-unassign.`)) return;
-    
+  const openDeleteConfirmationModal = (cabang: Cabang) => {
+    setCabangToDelete(cabang);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteCabang = async () => {
+    if (!cabangToDelete) return;
+
     setSaving(true);
     try {
       // Unassign all users from this branch
-      const usersQuery = query(collection(db, "users"), where("cabang", "==", cabang.name));
+      const usersQuery = query(collection(db, "users"), where("cabang", "==", cabangToDelete.name));
       const usersSnap = await getDocs(usersQuery);
-      await Promise.all(usersSnap.docs.map(uDoc => 
+      await Promise.all(usersSnap.docs.map(uDoc =>
         updateDoc(doc(db, "users", uDoc.id), { cabang: "", role: "staff" })
       ));
 
       // Delete the branch itself
-      await deleteDoc(doc(db, "cabangs", cabang.id));
-      
-      await createLog({ uid: user?.uid ?? "", role: role ?? "unknown", action: "delete_cabang", target: cabang.name });
+      await deleteDoc(doc(db, "cabangs", cabangToDelete.id));
+
+      await createLog({ uid: user?.uid ?? "", role: role ?? "unknown", action: "delete_cabang", target: cabangToDelete.name });
 
       toast.success("Cabang berhasil dihapus");
       await fetchAllData();
@@ -198,6 +207,8 @@ export default function AdminCabangPage() {
       toast.error("Gagal menghapus cabang.");
     }
     setSaving(false);
+    setIsDeleteModalOpen(false);
+    setCabangToDelete(null);
   };
 
   const filteredCabangs = cabangs.filter((c) =>
@@ -240,6 +251,42 @@ export default function AdminCabangPage() {
                   <button type="button" className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-transparent rounded-md hover:bg-gray-200" onClick={() => setIsAddModalOpen(false)}>Batal</button>
                   <button type="button" disabled={saving} onClick={handleAddCabang} className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-gray-400">
                     {saving ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Branch Modal */}
+        <AnimatePresence>
+          {isDeleteModalOpen && cabangToDelete && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-xl font-bold leading-6 text-gray-900">Konfirmasi Penghapusan</h3>
+                <div className="mt-4">
+                  <p className="text-gray-600 mb-6">
+                    Apakah Anda yakin ingin menghapus cabang <strong className="font-bold text-red-600">{cabangToDelete.name}</strong>?
+                    <br />
+                    <span className="text-sm text-gray-500">Semua staff di dalamnya akan di-unassign. Tindakan ini tidak dapat dibatalkan.</span>
+                  </p>
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button type="button" className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-transparent rounded-md hover:bg-gray-200" onClick={() => setIsDeleteModalOpen(false)}>Batal</button>
+                  <button type="button" disabled={saving} onClick={confirmDeleteCabang} className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-5 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:bg-gray-400">
+                    {saving ? 'Menghapus...' : 'Ya, Hapus'}
                   </button>
                 </div>
               </motion.div>
@@ -336,7 +383,7 @@ export default function AdminCabangPage() {
                     </div>
 
                     <div className="bg-gray-50 p-4 border-t flex justify-end">
-                      <button onClick={() => handleDeleteCabang(cabang)} disabled={saving} className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 font-semibold disabled:text-gray-400">
+                      <button onClick={() => openDeleteConfirmationModal(cabang)} disabled={saving} className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 font-semibold disabled:text-gray-400">
                         <Trash2 size={14} />
                         <span>Hapus Cabang</span>
                       </button>

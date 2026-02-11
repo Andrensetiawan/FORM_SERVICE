@@ -9,8 +9,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { Upload, Trash2, ArrowLeft, Mail } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 import TeknisiUpdate from "@/components/tns/TeknisiUpdate";
+import { useTheme } from "@/components/ThemeInitializer";
 import { createLog } from "@/lib/log";
-import { UserRole } from "@/lib/roles";
+import { ROLES, UserRole, divisionOptions } from "@/lib/roles";
 
 // Define a type for the user data
 type UserData = {
@@ -22,27 +23,40 @@ type UserData = {
   photoURL?: string;
   address?: string;
   teknisi_bertugas?: string;
+  colorScheme?: string;
 };
 
 export default function ProfilePage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, role: userRole } = useAuth();
+  const { setTheme } = useTheme();
 
   const [data, setData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedTechnicianName, setSelectedTechnicianName] = useState<string>("");
+  const [colorScheme, setColorScheme] = useState("Default");
+  const [showToolbar, setShowToolbar] = useState(true);
+  const [language, setLanguage] = useState("English (United States)");
 
-  const roleOptions = ["owner", "manager", "staff"];
-  const divisionOptions = ["IT", "finance", "admin", "sales", "GA", "teknisi"];
+  const roleOptions = [ROLES.OWNER, ROLES.MANAGER, ROLES.STAFF, ROLES.ADMIN];
 
   const isAdmin = userRole === "admin";
   const currentUid = user?.uid ?? "";
 
   const setErrorMsg = (msg: string | null) => msg && toast.error(msg);
   const setSuccessMsg = (msg: string | null) => msg && toast.success(msg);
+
+  const divisionColor: { [key: string]: string } = {
+    IT: "bg-blue-100 text-blue-700",
+    finance: "bg-green-100 text-green-700",
+    admin: "bg-red-100 text-red-600",
+    sales: "bg-yellow-100 text-yellow-700",
+    GA: "bg-purple-100 text-purple-700",
+    teknisi: "bg-gray-200 text-gray-700",
+  };
 
   useEffect(() => {
     if (isAdmin && data && (data.role === "staff" || data.role === "manager")) {
@@ -76,6 +90,9 @@ export default function ProfilePage() {
         const userData = { uid: snap.id, ...snap.data() } as UserData;
         setData(userData);
         setSelectedTechnicianName(userData.teknisi_bertugas || "");
+        if (userData.colorScheme) {
+          setColorScheme(userData.colorScheme);
+        }
       } catch (err) {
         toast.error("Gagal memuat data user");
       } finally {
@@ -105,6 +122,7 @@ export default function ProfilePage() {
       const payload = {
         ...data,
         teknisi_bertugas: selectedTechnicianName,
+        colorScheme: colorScheme,
       };
       await updateDoc(doc(db, "users", id as string), payload);
       
@@ -196,19 +214,22 @@ export default function ProfilePage() {
   };
 
   // ============================= BADGE WARNA =============================
-  const divisionColor: { [key: string]: string } = {
-    IT: "bg-blue-100 text-blue-700",
-    finance: "bg-green-100 text-green-700",
-    admin: "bg-red-100 text-red-600",
-    sales: "bg-yellow-100 text-yellow-700",
-    GA: "bg-purple-100 text-purple-700",
-    teknisi: "bg-gray-200 text-gray-700",
-  };
+  const colorSchemes = [
+    { name: 'Default', color: 'bg-gray-500' },
+    { name: 'Light', color: 'bg-gray-200' },
+    { name: 'Modern', color: 'bg-blue-500' },
+    { name: 'Blue', color: 'bg-blue-700' },
+    { name: 'Coffee', color: 'bg-yellow-800' },
+    { name: 'Ectoplasm', color: 'bg-green-500' },
+    { name: 'Midnight', color: 'bg-gray-800' },
+    { name: 'Ocean', color: 'bg-cyan-500' },
+    { name: 'Sunrise', color: 'bg-orange-500' }
+  ];
 
   if (!id) {
     return <div className="h-screen flex justify-center items-center">Memuat ID...</div>;
   }
-
+  
   if (loading || !data) {
     return <div className="h-screen flex justify-center items-center">Memuat data pengguna...</div>;
   }
@@ -224,10 +245,6 @@ export default function ProfilePage() {
           <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-blue-600 font-medium border border-blue-600 hover:text-blue-700 hover:bg-blue-50 mb-4 px-4 py-2 rounded-lg">
             <ArrowLeft size={20} /> Kembali
           </button>
-
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
-            Pengaturan Profil
-          </h1>
 
           <div className="bg-white rounded-2xl shadow-lg border p-8 mb-8">
             <div className="flex flex-col md:flex-row gap-8 items-center">
@@ -272,6 +289,7 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -333,6 +351,55 @@ export default function ProfilePage() {
             <button onClick={handleSave} disabled={saving} className="px-8 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700">
               {saving ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
+          </div>
+
+          <div className="mt-8">
+            <div className="bg-white border shadow rounded-2xl p-6 space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Personal Options</h3>
+              <div>
+                <label className="text-sm font-medium text-gray-800">Administration Color Scheme</label>
+                <div className="flex flex-wrap gap-4">
+                  {colorSchemes.map((scheme) => (
+                    <label key={scheme.name} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="color-scheme"
+                        value={scheme.name}
+                        checked={colorScheme === scheme.name}
+                        onChange={(e) => {
+                          setColorScheme(e.target.value);
+                          setTheme(e.target.value);
+                        }}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className={`w-4 h-4 rounded-full ${scheme.color}`}></span>
+                      <span>{scheme.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={showToolbar}
+                    onChange={(e) => setShowToolbar(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-800">Show Toolbar when viewing site</span>
+                </label>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-800">Language</label>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full mt-1 px-4 py-2 rounded-xl border bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="English (United States)">English (United States)</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       </div>

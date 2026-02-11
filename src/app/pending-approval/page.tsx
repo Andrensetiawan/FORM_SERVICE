@@ -39,7 +39,7 @@ export default function PendingApprovalPage() {
       </motion.div>
 
       <p className="text-gray-500 text-xs mt-6">
-        <span className="text-black">PT.Alif Cyber Solution</span>
+        PT.Alif Cyber Solution
       </p>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   FileBarChart,
   FileText,
   Wrench,
+  CircleUser,
   LogOut,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -49,6 +50,7 @@ export default function NavbarManagement({ className }: { className?: string }) 
       : []),
 
     { name: "Daftar Staff", icon: <ClipboardList size={18} />, href: "/manager/staff" },
+    { name: "Profile", icon: <CircleUser size={18} />, href: `/${user?.uid}` },
     { name: "Laporan", icon: <FileBarChart size={18} />, href: "/manager/laporan" },
     { name: "Form Service", icon: <FileText size={18} />, href: "/formservice" },
     { name: "Status Service", icon: <Wrench size={18} />, href: "/manager" },
@@ -73,9 +75,9 @@ export default function NavbarManagement({ className }: { className?: string }) 
                 width={40}
                 height={40}
                 alt="Logo"
-                className="rounded-full border border-blue-400 shadow-sm"
+                className="rounded-full border border-blue-400 shadow-sm object-cover"
               />
-              <span className="text-white font-semibold text-lg">Alif Cyber Solution</span>
+              <span className="text-white font-semibold text-lg">PT.Alif Cyber Solution</span>
             </Link>
           </div>
 

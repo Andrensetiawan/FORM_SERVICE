@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions (adjust according to your users collection)
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwnerOfService(docId) {
+      return isSignedIn() && get(/databases/$(database)/documents/service_requests/$(docId)).data.created_by == request.auth.uid;
+    }
+
+    // Public views mapping (unguessable token) - readable by anyone
+    match /public_views/{token} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Service requests - restrict direct public read
+    match /service_requests/{docId} {
+      allow read: if isSignedIn() && (isAdmin() || isOwnerOfService(docId));
+      allow create: if true; // formservice currently allows creating while signed in via client
+      allow update: if isSignedIn() && (isAdmin() || isOwnerOfService(docId));
+      allow delete: if isAdmin();
+
+      // Subcollection payments: customers (signed in) can create payment records
+      match /payments/{paymentId} {
+        allow read: if isSignedIn() && (isAdmin() || isOwnerOfService(docId));
+        allow create: if isSignedIn() && request.resource.data.amount is number && request.resource.data.amount > 0;
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+
+      // customer_log should be validated and optionally require auth
+      match /customer_log/{logId} {
+        allow read: if true;
+        allow create: if request.resource.data.body is string
+                    && request.resource.data.body.size() > 0
+                    && request.resource.data.body.size() <= 2000
+                    && (
+                      !request.resource.data.keys().hasAny(['mediaUrls'])
+                      || (request.resource.data.mediaUrls is list && request.resource.data.mediaUrls.size() <= 6)
+                    );
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

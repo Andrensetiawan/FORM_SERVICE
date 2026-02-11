@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AppProvider from "@/components/AppProvider";
 
 export const metadata: Metadata = {
-  title: "Form Service",
+  title: "PT.Alif Cyyber Solution",
   description: "Form Service Customer Input",
+  icons: {
+    icon: "/logo-ico.png",
+  },
 };
 
 export default function RootLayout({
@@ -14,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="min-h-screen">
-        {children}
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );

@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 
 import { Trash2, Search, Filter } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function LogsViewerPage() {
   const { role, loading } = useAuth();
@@ -34,18 +35,8 @@ export default function LogsViewerPage() {
 
   // State for delete confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [logToDeleteId, setLogToDeleteId] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; description: string } | null>(null);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
-
-  // ============================================================
-  // ROLE PROTECTION (ADMIN ONLY)
-  // ============================================================
-
-  
-
-  // ============================================================
-  // FETCH LOGS
-  // ============================================================
 
   const fetchLogs = async () => {
     setLoadingLogs(true);
@@ -61,6 +52,7 @@ export default function LogsViewerPage() {
       setFilteredLogs(arr);
     } catch (err) {
       console.error("Failed to fetch logs:", err);
+      toast.error("Gagal memuat log.");
     } finally {
       setLoadingLogs(false);
     }
@@ -69,10 +61,6 @@ export default function LogsViewerPage() {
   useEffect(() => {
     fetchLogs();
   }, []);
-
-  // ============================================================
-  // FILTER + SEARCH
-  // ============================================================
 
   useEffect(() => {
     let list = [...logs];
@@ -89,63 +77,52 @@ export default function LogsViewerPage() {
     setFilteredLogs(list);
   }, [filterRole, filterAction, searchText, logs]);
 
-
-  // ============================================================
-  // DELETE LOGS
-  // ============================================================
-
-  const executeDeleteLog = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, "logs", id));
-      fetchLogs();
-    } catch (error) {
-      console.error("Error deleting log:", error);
-      // Optionally show a toast notification or error message
-    }
-  };
-
-  const executeDeleteAllLogs = async () => {
-    try {
-      const snap = await getDocs(collection(db, "logs"));
-      snap.forEach(async (d) => await deleteDoc(doc(db, "logs", d.id)));
-      fetchLogs();
-    } catch (error) {
-      console.error("Error deleting all logs:", error);
-      // Optionally show a toast notification or error message
-    }
-  };
-
-  const handleDeleteClick = (logId?: string) => {
-    if (logId) {
-      setLogToDeleteId(logId);
+  const openConfirmationModal = (log?: any) => {
+    if (log) {
+      // Single log deletion
+      setItemToDelete({
+        id: log.id,
+        description: `log '${log.action}' oleh '${log.role}' pada target '${log.target || "system"}'`,
+      });
       setIsDeletingAll(false);
     } else {
-      setLogToDeleteId(null);
+      // Bulk delete all
+      setItemToDelete(null);
       setIsDeletingAll(true);
     }
     setShowDeleteModal(true);
   };
-
-  const handleConfirmDelete = () => {
-    setShowDeleteModal(false);
+  
+  const handleConfirmDelete = async () => {
     if (isDeletingAll) {
-      executeDeleteAllLogs();
-    } else if (logToDeleteId) {
-      executeDeleteLog(logToDeleteId);
+      // Bulk delete
+      const promise = getDocs(collection(db, "logs")).then(snap => {
+        const deletePromises = snap.docs.map(d => deleteDoc(doc(db, "logs", d.id)));
+        return Promise.all(deletePromises);
+      });
+      
+      toast.promise(promise, {
+        loading: "Menghapus semua log...",
+        success: "Semua log berhasil dihapus.",
+        error: "Gagal menghapus semua log."
+      });
+
+    } else if (itemToDelete) {
+      // Single delete
+      const promise = deleteDoc(doc(db, "logs", itemToDelete.id));
+      
+       toast.promise(promise, {
+        loading: `Menghapus ${itemToDelete.description}...`,
+        success: "Log berhasil dihapus.",
+        error: "Gagal menghapus log."
+      });
     }
-    setLogToDeleteId(null);
-    setIsDeletingAll(false);
-  };
 
-  const handleCancelDelete = () => {
     setShowDeleteModal(false);
-    setLogToDeleteId(null);
-    setIsDeletingAll(false);
+    // Refetch data after operations complete
+    setTimeout(fetchLogs, 1500); 
   };
-
-  // ============================================================
-  // UI PREMIUM
-  // ============================================================
+  
 
   return (
     <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.OWNER, ROLES.MANAGER]}>
@@ -161,12 +138,12 @@ export default function LogsViewerPage() {
                 <span className="text-blue-600">🧾</span> Logs Viewer
               </h1>
               <p className="text-gray-600 text-sm mt-1">
-                Pantau aktivitas sistem secara real-time dalam tampilan premium.
+                Pantau aktivitas sistem secara real-time.
               </p>
             </div>
 
             <button
-              onClick={() => handleDeleteClick()}
+              onClick={() => openConfirmationModal()}
               className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg shadow-md font-semibold transition flex items-center gap-2"
             >
               <Trash2 size={18} /> Hapus Semua
@@ -174,7 +151,7 @@ export default function LogsViewerPage() {
           </div>
 
           {/* FILTER BAR */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-300 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-8">
             <div className="flex items-center gap-4 mb-5">
               <Filter size={20} className="text-gray-600" />
               <h2 className="text-lg font-bold text-gray-800">
@@ -186,7 +163,7 @@ export default function LogsViewerPage() {
 
               {/* Filter Role */}
               <select
-                className="border border-gray-400 p-2 rounded-md bg-white text-gray-800 font-medium"
+                className="border border-gray-300 p-2 rounded-lg bg-white text-gray-800 font-medium focus:ring-2 focus:ring-blue-500"
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
               >
@@ -199,7 +176,7 @@ export default function LogsViewerPage() {
 
               {/* Filter Action */}
               <select
-                className="border border-gray-400 p-2 rounded-md bg-white text-gray-800 font-medium"
+                className="border border-gray-300 p-2 rounded-lg bg-white text-gray-800 font-medium focus:ring-2 focus:ring-blue-500"
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value)}
               >
@@ -214,10 +191,10 @@ export default function LogsViewerPage() {
               </select>
 
               {/* Search */}
-              <div className="relative">
+              <div className="relative md:col-span-2">
                 <Search className="absolute left-3 top-3 text-gray-500" size={18} />
                 <input
-                  className="border border-gray-400 p-2 pl-10 rounded-md w-full bg-white text-gray-800 font-medium"
+                  className="border border-gray-300 p-2 pl-10 rounded-lg w-full bg-white text-gray-800 font-medium focus:ring-2 focus:ring-blue-500"
                   placeholder="Cari target / detail..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
@@ -228,7 +205,7 @@ export default function LogsViewerPage() {
           </div>
 
           {/* LOGS LIST */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-300 p-6">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
 
             {loadingLogs ? (
               <p className="text-center text-gray-700 py-6 font-semibold">
@@ -245,37 +222,37 @@ export default function LogsViewerPage() {
                   <div
                     key={log.id}
                     className="
-                      border border-gray-300 
+                      border border-gray-200
                       p-4 rounded-lg 
                       flex justify-between items-center 
                       bg-white 
                       hover:bg-gray-50 
-                      hover:shadow 
-                      transition
+                      hover:shadow-sm
+                      transition-all
                     "
                   >
                     <div>
-                      <p className="font-bold text-gray-900 text-lg">
+                      <p className="font-bold text-gray-900 text-base capitalize">
                         {log.action.replaceAll("_", " ")}
                       </p>
 
-                      <p className="text-gray-800 text-sm mt-1 font-medium">
-                        Role: <span className="font-bold">{log.role}</span>
+                      <p className="text-gray-700 text-sm mt-1">
+                        <span className="font-semibold">Role:</span> {log.role}
                         {log.target && (
-                          <> • Target: <span>{log.target}</span></>
+                          <> • <span className="font-semibold">Target:</span> {log.target}</>
                         )}
                       </p>
 
-                      <p className="text-gray-600 text-xs mt-1">
+                      <p className="text-gray-500 text-xs mt-2">
                         {(log.timestamp && (log.timestamp.seconds || log.timestamp._seconds))
-                          ? new Date((log.timestamp.seconds || log.timestamp._seconds) * 1000).toLocaleString()
+                          ? new Date((log.timestamp.seconds || log.timestamp._seconds) * 1000).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
                           : "Waktu tidak tersedia"}
                       </p>
                     </div>
 
                     <button
-                      onClick={() => handleDeleteClick(log.id)}
-                      className="text-red-600 hover:bg-red-100 p-2 rounded-lg hover:text-red-800 transition"
+                      onClick={() => openConfirmationModal(log)}
+                      className="text-red-500 hover:bg-red-100 p-2 rounded-lg hover:text-red-700 transition"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -290,24 +267,27 @@ export default function LogsViewerPage() {
 
       {/* Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Konfirmasi Penghapusan</h3>
-            <p className="text-gray-700 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4 border">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Konfirmasi Penghapusan</h3>
+            <p className="text-gray-600 mb-6">
               {isDeletingAll
-                ? "Apakah Anda yakin ingin menghapus SEMUA log? Tindakan ini tidak dapat dibatalkan!"
-                : "Apakah Anda yakin ingin menghapus log ini? Tindakan ini tidak dapat dibatalkan."}
+                ? <>Apakah Anda yakin ingin menghapus <strong className="font-bold text-red-600">SEMUA</strong> log? Tindakan ini tidak dapat dibatalkan.</>
+                : <>Apakah Anda yakin ingin menghapus {itemToDelete?.description || 'log ini'}?</>
+              }
+              <br/>
+              <span className="text-sm text-gray-500 mt-1 block">Tindakan ini tidak dapat dibatalkan.</span>
             </p>
             <div className="flex justify-end gap-3">
-              <button
-                onClick={handleCancelDelete}
-                className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-200 transition"
+               <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 Batal
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+                className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 Ya, Hapus
               </button>

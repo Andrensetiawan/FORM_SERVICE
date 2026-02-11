@@ -30,10 +30,20 @@ export default function SignatureSection({
   const [deleting, setDeleting] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [publicId, setPublicId] = useState<string | null>(null);
+  const [cloudConfigOk, setCloudConfigOk] = useState(true);
 
   useEffect(() => {
     setPreview(existingSignature || null);
     setPublicId(existingSignaturePublicId || null);
+    // Check Cloudinary config
+    try {
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) throw new Error("Missing cloud name");
+      if (!process.env.NEXT_PUBLIC_SIGNATURE_PRESET) throw new Error("Missing signature preset");
+      setCloudConfigOk(true);
+    } catch (e) {
+      console.warn("Cloudinary signature config missing:", e);
+      setCloudConfigOk(false);
+    }
   }, [existingSignature, existingSignaturePublicId]);
 
   const uploadToCloudinary = async (dataUrl: string) => {
@@ -74,7 +84,7 @@ export default function SignatureSection({
           status: "signature_saved",
           note: "Tanda tangan customer tersimpan",
           updatedBy: user?.email || "unknown user",
-          updatedAt: new Date(),
+          updatedAt: Date.now(),
         }),
       });
 
@@ -163,7 +173,7 @@ export default function SignatureSection({
             <div className="flex items-center gap-2 pt-2">
               <button 
                 onClick={handleSave} 
-                disabled={saving} 
+                disabled={saving || !cloudConfigOk} 
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:bg-blue-400"
               >
                 {saving ? "Menyimpan..." : <><Save size={18} /> Simpan Tanda Tangan</>}
@@ -228,6 +238,11 @@ export default function SignatureSection({
                 </ol>
              </div>
           </div>
+        </div>
+      )}
+      {!cloudConfigOk && (
+        <div className="mt-3 p-3 rounded bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
+          Cloudinary signature preset atau cloud name belum dikonfigurasi. Simpan tanda tangan dinonaktifkan.
         </div>
       )}
     </section>
