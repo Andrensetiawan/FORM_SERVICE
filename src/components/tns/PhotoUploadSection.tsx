@@ -192,13 +192,14 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
     setCameraActive(false);
   };
 
-  const getPreset = () => {
-    if(!field) return undefined;
+  const getPreset = (targetField?: string) => {
+    const effectiveField = targetField ?? field;
+    if (!effectiveField) return undefined;
     let preset: string | undefined;
-    if (field.includes("signature")) preset = process.env.NEXT_PUBLIC_SIGNATURE_PRESET;
-    else if (field.includes("unit_work_log")) preset = process.env.NEXT_PUBLIC_TEKNISI_PRESET;
+    if (effectiveField.includes("signature")) preset = process.env.NEXT_PUBLIC_SIGNATURE_PRESET;
+    else if (effectiveField.includes("unit_work_log")) preset = process.env.NEXT_PUBLIC_TEKNISI_PRESET;
     else {
-      switch (field) {
+      switch (effectiveField) {
         case "handover_photo_url": preset = process.env.NEXT_PUBLIC_HANDOVER_PRESET; break;
         case "pickup_photo_url": preset = process.env.NEXT_PUBLIC_PICKUP_PRESET; break;
         case "transfer_proof_url": preset = process.env.NEXT_PUBLIC_PAYMENT_PRESET; break;
