@@ -19,6 +19,7 @@ import CustomerLog from "@/components/tns/CustomerLog";
 import EstimasiSection from "@/components/tns/EstimasiSection";
 import MediaUploadSection from "@/components/tns/PhotoUploadSection";
 import SignatureSection from "@/components/tns/SignatureSection";
+import ReviewInviteCard from "@/components/tns/ReviewInviteCard";
 import PaymentSection from "@/components/tns/PaymentSection";
 import TeknisiUpdate from "@/components/tns/TeknisiUpdate";
 import DPPayment from "@/components/tns/DPPayment";
@@ -370,6 +371,10 @@ export default function ServiceDetailPage() {
                   showCamera={true}
                 />
               </div>
+            </div>
+
+            <div className="card">
+              <ReviewInviteCard customerName={serviceData?.nama} customerPhone={serviceData?.no_hp} />
             </div>
 
             <div className="card">
