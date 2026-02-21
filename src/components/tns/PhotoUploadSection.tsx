@@ -5,13 +5,7 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
 import { Trash2, FileUp, Camera, CameraOff, Loader2 } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
-
-export interface MediaItem {
-  id: string;
-  url: string;
-  type: "image" | "video";
-  file?: File;
-}
+import { MediaItem } from "@/components/tns/types";
 
 type Props = {
   title?: string;
@@ -74,9 +68,10 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
     if (mode === 'standalone') {
         const urls = Array.isArray(existingUrl) ? existingUrl : (typeof existingUrl === 'string' && existingUrl ? [existingUrl] : []);
         const initialItems: MediaItem[] = urls.map(url => ({
-            id: url,
-            url,
-            type: url.match(/\.(jpeg|jpg|gif|png)$/) != null ? "image" : "video",
+          id: url,
+          url,
+          type: url.match(/\.(jpeg|jpg|gif|png)$/) != null ? "image" : "video",
+          caption: "",
         }));
         setInternalItems(initialItems);
     }
@@ -102,6 +97,8 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
       url: URL.createObjectURL(file),
       type: file.type.startsWith("video/") ? "video" : "image",
       file: file,
+      caption: "",
+      fileName: file.name,
     }));
     setMediaItems([...mediaItems, ...newItems]);
   };
@@ -114,7 +111,7 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
     c.height = v.videoHeight;
     c.getContext("2d")?.drawImage(v, 0, 0, c.width, c.height);
     const dataUrl = c.toDataURL("image/jpeg", 0.9);
-    const newItem: MediaItem = { id: `cam-${Date.now()}`, url: dataUrl, type: "image" };
+    const newItem: MediaItem = { id: `cam-${Date.now()}`, url: dataUrl, type: "image", caption: "" };
     setMediaItems([...mediaItems, newItem]);
   };
 
@@ -238,7 +235,7 @@ const MediaUploadSection = forwardRef<HTMLDivElement, Props>(({
 
       setSuccessMsg?.(`Lampiran berhasil disimpan.`);
       onUpdate?.(allUrls);
-      setInternalItems(allUrls.map(url => ({id: url, url, type: url.match(/\.(jpeg|jpg|gif|png)$/) != null ? "image" : "video" })));
+      setInternalItems(allUrls.map(url => ({id: url, url, type: url.match(/\.(jpeg|jpg|gif|png)$/) != null ? "image" : "video", caption: "" })));
     } catch (err: any) {
       setErrorMsg?.("Gagal menyimpan lampiran: " + err.message);
     } finally {

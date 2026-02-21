@@ -15,7 +15,7 @@ type Props = {
   onCommentsUpdated?: (c: any[]) => void;
 };
 
-export default function CommentSection({
+export default function CustomerCommentSection({
   docId,
   comments = [],
   user,

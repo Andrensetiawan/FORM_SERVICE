@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -21,8 +21,10 @@ import MediaUploadSection from "@/components/tns/PhotoUploadSection";
 import SignatureSection from "@/components/tns/SignatureSection";
 import ReviewInviteCard from "@/components/tns/ReviewInviteCard";
 import PaymentSection from "@/components/tns/PaymentSection";
-import TeknisiUpdate from "@/components/tns/TeknisiUpdate";
+import TeknisiUpdateForm from "@/components/tns/technician/TeknisiUpdateForm";
+import TechnicianAssignmentCard from "@/components/tns/technician/TechnicianAssignmentCard";
 import DPPayment from "@/components/tns/DPPayment";
+import SalesAssignmentCard from "@/components/tns/sales/SalesAssignmentCard";
 
 type EstimasiItem = {
   id: string;
@@ -49,6 +51,7 @@ export default function ServiceDetailPage() {
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [selectedTechnicians, setSelectedTechnicians] = useState<string[]>([]);
+  const logSectionRef = useRef<HTMLDivElement | null>(null);
 
   const docId = (params as any)?.id as string;
 
@@ -388,19 +391,38 @@ export default function ServiceDetailPage() {
                 className="print:hidden"
               />
             </div>
-            
-            <div className="card">
-              <h3 className="text-lg font-semibold border-b pb-2 mb-4">
-                Penugasan Teknisi (TNS: {serviceData?.track_number})
-              </h3>
-              <TeknisiUpdate
+
+            <SalesAssignmentCard
+              docId={docId}
+              initialSalesName={serviceData?.sales || serviceData?.sales_name || serviceData?.assignedSales || ""}
+              isEditing={canAssignTechnician}
+              setErrorMsg={setErrorMsg}
+              setSuccessMsg={setSuccessMsg}
+              onSalesUpdated={(newSales: string) =>
+                handleInfoUpdate({ sales: newSales, sales_name: newSales, assignedSales: newSales })
+              }
+            />
+
+            <TechnicianAssignmentCard
+              docId={docId}
+              currentTechnicians={selectedTechnicians}
+              onTechnicianSelect={handleSelectTechnician}
+              isEditing={canAssignTechnician}
+              setErrorMsg={setErrorMsg}
+              setSuccessMsg={setSuccessMsg}
+              trackNumber={serviceData?.track_number}
+              onScrollToLog={() =>
+                logSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            />
+
+            <div ref={logSectionRef} className="card">
+              <TeknisiUpdateForm
                 docId={docId}
-                currentTechnicians={selectedTechnicians}
-                onTechnicianSelect={handleSelectTechnician}
-                isEditing={canAssignTechnician}
-                canEditUnitLog={canEditUnitLogSection}
                 setErrorMsg={setErrorMsg}
                 setSuccessMsg={setSuccessMsg}
+                canEditUnitLog={canEditUnitLogSection}
+                trackNumber={serviceData?.track_number}
               />
             </div>
           </>

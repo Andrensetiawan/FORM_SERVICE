@@ -20,37 +20,7 @@ type Props = {
   className?: string;
 };
 
-const getStatusColor = (status: string = "") => {
-  const s = status.toLowerCase().replace(/\s/g, '_'); // Normalize status
-  switch (s) {
-    case "diterima":
-    case "diagnosa":
-      return "bg-gray-100 text-gray-800";
-    case "menunggu_konfirmasi":
-    case "testing":
-      return "bg-amber-100 text-amber-800";
-    case "proses_pengerjaan":
-      return "bg-blue-100 text-blue-800";
-    case "siap_diambil":
-    case "selesai":
-      return "bg-green-100 text-green-800";
-    case "batal":
-      return "bg-red-100 text-red-800";
-    // Fallback for old statuses
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    case "process":
-        return "bg-blue-100 text-blue-800";
-    case "ready":
-        return "bg-teal-100 text-teal-800";
-    case "done":
-        return "bg-green-100 text-green-800";
-    case "cancel":
-        return "bg-red-100 text-red-800";
-    default:
-      return "bg-slate-100 text-slate-800";
-  }
-};
+const formatStatusLabel = (status: string = "") => status.replace(/_/g, " ").trim() || status;
 
 export default function StatusControl({
   status,
@@ -114,11 +84,7 @@ export default function StatusControl({
                 <p className="text-gray-500 text-xs mb-1">
                   [{formatDateTime(latestLog.updatedAt)}]
                 </p>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1 ${getStatusColor(latestLog.status)}`}
-                >
-                  {latestLog.status}
-                </span>
+                <p className="text-sm font-semibold text-gray-800">{formatStatusLabel(latestLog.status)}</p>
                 {latestLog.note && <p className="text-gray-800 mt-1">{latestLog.note}</p>}
                 <p className="text-gray-500 text-xs mt-1">Oleh: {latestLog.updatedBy || "-"}</p>
               </div>
@@ -132,13 +98,7 @@ export default function StatusControl({
                   <p className="text-gray-500 text-xs mb-1">
                     [{formatDateTime(log.updatedAt)}]
                   </p>
-
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mb-1 ${getStatusColor(log.status)}`}
-                  >
-                    {log.status}
-                  </span>
-
+                  <p className="text-sm font-semibold text-gray-800">{formatStatusLabel(log.status)}</p>
                   {log.note && <p className="text-gray-800 mt-1">{log.note}</p>}
                   <p className="text-gray-500 text-xs mt-1">Oleh: {log.updatedBy || "-"}</p>
                 </li>

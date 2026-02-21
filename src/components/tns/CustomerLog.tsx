@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebaseConfig';
-import MediaUploadSection, { MediaItem } from './PhotoUploadSection';
+import MediaUploadSection from './PhotoUploadSection';
+import { MediaItem } from '@/components/tns/types';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 type CustomerLogProps = {

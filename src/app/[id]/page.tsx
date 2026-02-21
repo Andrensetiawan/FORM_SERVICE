@@ -8,7 +8,7 @@ import NavbarSwitcher from "@/components/navbars/NavbarSwitcher";
 import toast, { Toaster } from "react-hot-toast";
 import { Upload, Trash2, ArrowLeft, Mail } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
-import TeknisiUpdate from "@/components/tns/TeknisiUpdate";
+import TeknisiUpdateForm from "@/components/tns/technician/TeknisiUpdateForm";
 import { useTheme } from "@/components/ThemeInitializer";
 import { createLog } from "@/lib/log";
 import { ROLES, UserRole, divisionOptions } from "@/lib/roles";

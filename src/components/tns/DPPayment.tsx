@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { doc, updateDoc, serverTimestamp, addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebaseConfig";
-import PhotoUploadSection, { MediaItem } from "./PhotoUploadSection";
+import PhotoUploadSection from "./PhotoUploadSection";
+import { MediaItem } from "@/components/tns/types";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import useAuth from "@/hooks/useAuth";
 
