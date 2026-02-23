@@ -44,6 +44,15 @@ const initialForm = {
   cabang: "",
 };
 
+const isInternalRole = (role?: string | null) =>
+  !!role && ["admin", "owner", "manager", "staff"].includes(role);
+
+const buildFallbackTrackNumber = () => {
+  const timePart = Date.now().toString(36).toUpperCase();
+  const randPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `PUB-${timePart}-${randPart}`;
+};
+
 // Define the type for the form data to be used in email/whatsapp info
 type FormDataType = typeof initialForm;
 
@@ -253,23 +262,18 @@ Terima kasih 🙏
     };
 
     const normalizedPhone = normalizePhoneNumber(formData.no_hp);
+    const canUseProtectedCounter = isInternalRole(role);
+    let track = buildFallbackTrackNumber();
+
+    if (canUseProtectedCounter) {
+      try {
+        track = await generateTrackNumber();
+      } catch (counterErr) {
+        console.warn("Gagal menggunakan counter internal, pakai fallback nomor pelacakan.", counterErr);
+      }
+    }
 
     try {
-      const track = await generateTrackNumber();
-
-      const payload = {
-        ...formData,
-        no_hp: normalizedPhone,
-        track_number: track,
-        status: "pending",
-        created_by: user?.uid ?? null,
-        timestamp: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(collection(db, "service_requests"), payload);
-      const docId = docRef.id;
-
-      // Generate an unguessable public token and create a lightweight public view
       const generateToken = () => {
         try {
           const arr = crypto.getRandomValues(new Uint8Array(24));
@@ -281,6 +285,19 @@ Terima kasih 🙏
       };
 
       const publicToken = generateToken();
+
+      const payload = {
+        ...formData,
+        no_hp: normalizedPhone,
+        track_number: track,
+        status: "pending",
+        created_by: user?.uid ?? null,
+        timestamp: serverTimestamp(),
+        public_view_token: publicToken,
+      };
+
+      const docRef = await addDoc(collection(db, "service_requests"), payload);
+      const docId = docRef.id;
 
       const publicData = {
         docId,
@@ -298,9 +315,6 @@ Terima kasih 🙏
       };
 
       await setDoc(doc(db, "public_views", publicToken), publicData);
-
-      // store token on main document for convenience (non-sensitive)
-      await setDoc(doc(db, "service_requests", docId), { public_view_token: publicToken }, { merge: true });
 
       await createLog({
         uid: user?.uid ?? "",
