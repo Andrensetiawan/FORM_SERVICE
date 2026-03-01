@@ -3,7 +3,8 @@ import { doc, getDocs, updateDoc, collection, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebaseConfig";
 import { ROLES, UserRole } from "@/lib/roles";
 import useAuth from "@/hooks/useAuth";
-import MediaUploadSection, { MediaItem } from "@/components/tns/PhotoUploadSection";
+import MediaUploadSection from "@/components/tns/PhotoUploadSection";
+import { MediaItem } from "@/components/tns/types";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { createLog } from "@/lib/log";
 
