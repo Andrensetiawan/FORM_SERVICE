@@ -57,40 +57,40 @@ const TeknisiAssignmentSection: React.FC<TeknisiAssignmentSectionProps> = ({
         </div>
         <div>
           <label className="block text-xs font-bold text-gray-600 mb-1">Teknisi Terpilih</label>
-          <div className="w-full border border-gray-300 rounded-lg px-2 py-2 flex flex-wrap gap-2 items-center min-h-[42px] bg-gray-50">
-            {selectedTechnicians.length === 0 && <span className="text-gray-500 text-sm"></span>}
+          {isEditing && (
+            <div className="w-full mb-3">
+              <select
+                className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm"
+                value=""
+                onChange={onSelectionChange}
+                disabled={isSaving || availableTechnicians.length === 0}
+              >
+                <option value="">Tambah teknisi...</option>
+                {availableTechnicians.map((tech: any) => (
+                  <option key={tech.id} value={tech.email}>{tech.name || tech.email}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {selectedTechnicians.length === 0 && <span className="text-gray-500 text-sm">Belum ada teknisi yang dipilih</span>}
             {selectedTechnicians.map((techEmail) => {
               const technician = technicians.find((t) => t.email === techEmail);
               return (
-                <div key={techEmail} className="bg-white border border-gray-300 rounded-full px-3 py-1 text-sm flex items-center gap-2 shadow-sm">
+                <div key={techEmail} className="bg-white border border-gray-300 rounded px-3 py-2 text-sm flex items-center gap-2 shadow-sm w-fit">
                   <span>{technician?.name || techEmail}</span>
                   {isEditing && (
                     <button
                       type="button"
                       onClick={() => onRemoveTechnician(techEmail)}
-                      className="text-gray-400 hover:text-red-600 text-xs"
+                      className="text-red-500 hover:text-red-700 text-lg font-medium leading-none"
                     >
-                      hapus
+                      ×
                     </button>
                   )}
                 </div>
               );
             })}
-            {isEditing && (
-              <div className="flex-1 min-w-[140px]">
-                <select
-                  className="w-full rounded border border-dashed border-gray-300 bg-white px-2 py-1 text-sm"
-                  value=""
-                  onChange={onSelectionChange}
-                  disabled={isSaving || availableTechnicians.length === 0}
-                >
-                  <option value="">Tambah teknisi...</option>
-                  {availableTechnicians.map((tech: any) => (
-                    <option key={tech.id} value={tech.email}>{tech.name || tech.email}</option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         </div>
         {isEditing && (

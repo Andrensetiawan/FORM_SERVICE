@@ -335,7 +335,7 @@ export default function ServiceDetailPage() {
           />
         </div>
 
-        {!isInternal && totalEstimasi > 0 && (
+        {totalEstimasi > 0 && (
           <DPPayment
             docId={docId}
             totalEstimasi={totalEstimasi}

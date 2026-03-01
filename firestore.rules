@@ -100,6 +100,33 @@ service cloud.firestore {
         // Hanya admin/owner yang boleh menghapus
         allow delete: if isAdmin() || isOwner();
       }
+
+      match /comments/{commentId} {
+        // PUBLIC boleh membaca komentar
+        allow read: if true;
+
+        // PUBLIC boleh membuat komentar
+        allow create: if true;
+
+        // Admin & Owner boleh update/delete komentar
+        allow update, delete: if isAdmin() || isOwner();
+
+        // Pembuat komentar boleh delete komentarnya sendiri
+        allow delete: if request.auth != null &&
+          request.auth.uid == resource.data.userId;
+      }
+
+      match /dp_payments/{dpId} {
+        // PUBLIC boleh membaca DP payments
+        allow read, list: if true;
+
+        // PUBLIC (customer tanpa login) dan Internal boleh create DP
+        // Hanya perlu ada dokumen, tidak perlu auth
+        allow create: if true;
+
+        // Internal boleh update/delete DP (untuk approve/manage)
+        allow update, delete: if isInternal();
+      }
     }
 
     // ======================

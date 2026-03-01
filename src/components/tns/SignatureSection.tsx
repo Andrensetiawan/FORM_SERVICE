@@ -150,8 +150,12 @@ export default function SignatureSection({
       <h3 className="text-lg font-semibold text-blue-600">Tanda Tangan Digital (Persetujuan)</h3>
 
       {preview ? (
-        <div className="space-y-4 text-center">
-            <p className="text-sm text-gray-600">Tanda tangan sudah tersimpan:</p>
+        <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <p className="text-lg font-semibold text-green-700">✓ Sudah Ditandatangani</p>
+              <p className="text-sm text-green-600 mt-1">Anda telah menyetujui semua persyaratan layanan</p>
+            </div>
+            <p className="text-sm text-gray-600 text-center">Tanda tangan tersimpan:</p>
             <div className="h-40 bg-gray-100 rounded flex items-center justify-center p-2 border border-gray-300">
               <img src={preview} className="h-full object-contain" alt="Saved Signature" />
             </div>
@@ -190,52 +194,73 @@ export default function SignatureSection({
           </div>
           
           <div className="space-y-2">
-             <p className="text-sm text-gray-600">Dengan menandatangani, Anda menyetujui:</p>
-             <div className="prose prose-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <ol className="text-gray-700 list-decimal pl-5">
-                  <li>
-                    <em>Perbaikan sesuai kemampuan teknisi:</em> Perbaikan
-                    dilakukan sesuai kapasitas, ilmu, dan pengalaman teknisi.
-                  </li>
-                  <li>
-                    <em>Risiko kerusakan bisa bertambah:</em> Jika kondisi
-                    kerusakan berubah/bertambah parah saat diperbaiki, itu di
-                    luar tanggung jawab penyedia layanan.
-                  </li>
-                  <li>
-                    <em>Perbaikan setelah persetujuan:</em> Estimasi waktu
-                    dan biaya diinformasikan terlebih dahulu, perbaikan
-                    dilakukan setelah disetujui pelanggan.
-                  </li>
-                  <li>
-                    <em>Tidak bisa batal sepihak:</em> Perbaikan tidak bisa
-                    dibatalkan jika sudah dikonfirmasi.
-                  </li>
-                  <li>
-                    <em>Barang tidak diambil 30 hari:</em> Penyedia layanan
-                    tidak bertanggung jawab jika barang tidak diambil dalam 30
-                    hari setelah konfirmasi selesai, termasuk risiko force
-                    majeure.
-                  </li>
-                  <li>
-                    <em>Data & software tanggung jawab pelanggan:</em> Data,
-                    dokumen, dan aplikasi adalah tanggung jawab pelanggan.
-                  </li>
-                  <li>
-                    <em>Risiko kehilangan data:</em> Kehilangan/kerusakan
-                    data saat perbaikan bukan tanggung jawab teknisi, pelanggan
-                    dianggap sudah backup.
-                  </li>
-                  <li>
-                    <em>Biaya pembatalan:</em> Cancel fee berkisar
-                    Rp50.000 – Rp100.000.
-                  </li>
-                  <li>
-                    <em>Garansi terbatas:</em> Garansi hanya untuk kerusakan
-                    yang sama, batal jika segel rusak, barang cacat/terbakar,
-                    atau akibat kelalaian pemakaian.
-                  </li>
-                </ol>
+             <p className="text-sm text-gray-600 font-semibold mb-3">Dengan menandatangani, Anda menyetujui:</p>
+             <div className="space-y-2 text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                <div className="space-y-3 text-sm">
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">1.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Perbaikan sesuai kemampuan teknisi</p>
+                      <p className="text-gray-600">Perbaikan dilakukan sesuai kapasitas, ilmu, dan pengalaman teknisi.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">2.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Risiko kerusakan bisa bertambah</p>
+                      <p className="text-gray-600">Jika kondisi kerusakan berubah/bertambah parah saat diperbaiki, itu di luar tanggung jawab penyedia layanan.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">3.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Perbaikan setelah persetujuan</p>
+                      <p className="text-gray-600">Estimasi waktu dan biaya diinformasikan terlebih dahulu, perbaikan dilakukan setelah disetujui pelanggan.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">4.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Tidak bisa batal sepihak</p>
+                      <p className="text-gray-600">Perbaikan tidak bisa dibatalkan jika sudah dikonfirmasi.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">5.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Barang tidak diambil 30 hari</p>
+                      <p className="text-gray-600">Penyedia layanan tidak bertanggung jawab jika barang tidak diambil dalam 30 hari setelah konfirmasi selesai, termasuk risiko force majeure.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">6.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Data & software tanggung jawab pelanggan</p>
+                      <p className="text-gray-600">Data, dokumen, dan aplikasi adalah tanggung jawab pelanggan.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">7.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Risiko kehilangan data</p>
+                      <p className="text-gray-600">Kehilangan/kerusakan data saat perbaikan bukan tanggung jawab teknisi, pelanggan dianggap sudah backup.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">8.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Biaya pembatalan (Cancel Fee)</p>
+                      <p className="text-gray-600">Cancel fee berkisar Rp50.000 – Rp100.000 sesuai tingkat kerusakan.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-blue-600 font-bold flex-shrink-0">9.</span>
+                    <div>
+                      <p className="font-semibold text-gray-800">Garansi terbatas</p>
+                      <p className="text-gray-600">Garansi hanya untuk kerusakan yang sama, batal jika segel rusak, barang cacat/terbakar, atau akibat kelalaian pemakaian.</p>
+                    </div>
+                  </div>
+                </div>
              </div>
           </div>
         </div>

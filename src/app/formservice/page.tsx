@@ -362,6 +362,9 @@ Garansi: ${formData.garansi ? "Ya" : "Tidak"}
 Cek status service Anda secara real-time melalui link berikut:
 ${publicLink}
 
+⚠️ PENTING:
+Mohon diperhatikan bahwa kami menerapkan Biaya Pengecekan (Cancel Fee) senilai Rp50.000 - Rp100.000 (tergantung tingkat kerusakan). Biaya ini wajib dibayarkan apabila proses perbaikan dibatalkan setelah pengecekan dilakukan.
+
 Kami akan menghubungi Anda kembali setelah proses pengecekan selesai.
 Terima kasih 🙏
 `;

@@ -24,7 +24,7 @@ export default function PaymentSection({
     <section className={`space-y-4 ${className}`}>
       <h3 className="text-lg font-semibold text-blue-600">Pembayaran via QR</h3>
       <div className="flex flex-col md:flex-row gap-6 items-center">
-        <div className="w-40 h-40 flex-shrink-0">
+        <div className="w-72 h-72 flex-shrink-0">
           <img src={qrCodeUrl} alt="QR Code for payment" className="w-full h-full object-contain" />
         </div>
         <div className="space-y-2 text-sm">
@@ -45,9 +45,9 @@ export default function PaymentSection({
             <p className="text-gray-600">
               <span className="font-semibold">Bank:</span> BCA
               <br />
-              <span className="font-semibold">No. Rekening:</span> 676-034-1507 (a.n. Fitra Elrinal M)
+              <span className="font-semibold">No. Rekening:</span> 676-034-1507 (a.n. Fitra Erlinar M)
               <br />
-              <span className="font-semibold">Berita Transfer:</span> {serviceData?.track_number}
+              <span className="font-semibold">Berita Transfer:</span> {serviceData?.track_number} (a.n. Fitra Erlinar M)
             </p>
           </div>
         </div>
