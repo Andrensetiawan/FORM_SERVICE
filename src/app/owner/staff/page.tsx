@@ -37,6 +37,7 @@ export default function StaffPage() {
   const [data, setData] = useState<ServiceRequest[]>([]);
   const [filtered, setFiltered] = useState<ServiceRequest[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [filterTeknisi, setFilterTeknisi] = useState("Semua");
   const [filterCabang, setFilterCabang] = useState("Semua");
@@ -79,7 +80,7 @@ export default function StaffPage() {
             return {
               ...dat,
               id: doc.id,
-  
+              assignedTechnicianDivision, // Save division to object
             };
           })
           .sort((a, b) => getTime(b.timestamp) - getTime(a.timestamp));
@@ -100,6 +101,7 @@ export default function StaffPage() {
 
       } catch (error) {
         console.error("❌ Gagal ambil data:", error);
+        setError("Gagal memuat data. Silakan refresh halaman.");
       } finally {
         setLoadingData(false);
       }
@@ -150,7 +152,7 @@ export default function StaffPage() {
     }
 
     setFiltered(result);
-  }, [filterTeknisi, filterCabang,, searchText, data]);
+  }, [filterTeknisi, filterCabang, searchText, data]);
 
   // =======================================
   // DOWNLOAD CSV (SEMUA DATA)
@@ -220,6 +222,22 @@ export default function StaffPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-gray-200">
         Loading data...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="text-center">
+          <p className="text-red-500 text-xl mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Refresh Halaman
+          </button>
+        </div>
       </div>
     );
   }

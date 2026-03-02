@@ -102,6 +102,8 @@ export default function useAuth() {
     // This check now correctly runs only on VERIFIED users.
     if (isRoleRequiringApproval(userRole) && data.approved === false) {
       toast.error("Akun Anda belum disetujui oleh admin.");
+      setUser(null);
+      setRole(null);
       await signOut(auth);
       setLoading(false);
       return;
@@ -127,19 +129,28 @@ export default function useAuth() {
       lastActive: serverTimestamp(),
     }).catch(() => {});
 
-    window.addEventListener("beforeunload", () => {
-      updateDoc(doc(db, "users", currentUser.uid), {
-        online: false,
-        lastActive: serverTimestamp(),
-      }).catch(() => {});
-    });
-
     setLoading(false);
   }, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, loadUser);
-    return () => unsub();
+    
+    // Set up beforeunload listener once
+    const handleBeforeUnload = () => {
+      if (auth.currentUser) {
+        updateDoc(doc(db, "users", auth.currentUser.uid), {
+          online: false,
+          lastActive: serverTimestamp(),
+        }).catch(() => {});
+      }
+    };
+    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    
+    return () => {
+      unsub();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, [loadUser]);
 
   const login = async (email: string, password: string) => {
@@ -183,8 +194,9 @@ export default function useAuth() {
       // For verified users, `onAuthStateChanged` will eventually call `loadUser`
       // which will set the session state. We return the user here for immediate feedback.
       setUser(customUser);
-      createLog({
+      await createLog({
         uid: u.uid,
+        email: email,
         role: userRole,
         action: "login",
         target: email,
@@ -210,32 +222,43 @@ export default function useAuth() {
       toast.error("Password tidak cocok!");
       throw new Error("Password tidak cocok!");
     }
-    setLoading(true);
+    
     try {
-      const response = await fetch("/api/settings/security");
-      if (response.ok) {
-        const policy = await response.json();
-        if (Object.keys(policy).length > 0) {
-          const validationErrors: string[] = [];
-          const passLength = policy.passwordLength ?? 8;
-          if (password.length < passLength) {
-            validationErrors.push(`- Minimal ${passLength} karakter`);
-          }
-          if (policy.requireUppercase && !/[A-Z]/.test(password)) {
-            validationErrors.push("- Harus mengandung huruf kapital (A-Z)");
-          }
-          if (policy.requireNumbers && !/\d/.test(password)) {
-            validationErrors.push("- Harus mengandung angka (0-9)");
-          }
-          if (policy.requireSymbols && !/[!@#$%^&*]/.test(password)) {
-            validationErrors.push("- Harus mengandung simbol (e.g., !@#$%)");
-          }
-          if (validationErrors.length > 0) {
-            const errorMessage = "Password Anda tidak memenuhi syarat:\n" + validationErrors.join("\n");
-            throw new Error(errorMessage);
-          }
+      // Fetch password policy with error handling
+      let policy = {};
+      try {
+        const response = await fetch("/api/settings/security");
+        if (response.ok) {
+          policy = await response.json();
+        } else {
+          console.warn("Failed to fetch password policy, using defaults");
+        }
+      } catch (fetchError) {
+        console.warn("Network error fetching password policy:", fetchError);
+        // Continue with default policy (no validation)
+      }
+      
+      if (Object.keys(policy).length > 0) {
+        const validationErrors: string[] = [];
+        const passLength = (policy as any).passwordLength ?? 8;
+        if (password.length < passLength) {
+          validationErrors.push(`- Minimal ${passLength} karakter`);
+        }
+        if ((policy as any).requireUppercase && !/[A-Z]/.test(password)) {
+          validationErrors.push("- Harus mengandung huruf kapital (A-Z)");
+        }
+        if ((policy as any).requireNumbers && !/\d/.test(password)) {
+          validationErrors.push("- Harus mengandung angka (0-9)");
+        }
+        if ((policy as any).requireSymbols && !/[!@#$%^&*]/.test(password)) {
+          validationErrors.push("- Harus mengandung simbol (e.g., !@#$%)");
+        }
+        if (validationErrors.length > 0) {
+          const errorMessage = "Password Anda tidak memenuhi syarat:\n" + validationErrors.join("\n");
+          throw new Error(errorMessage);
         }
       }
+      
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = result.user;
       await setDoc(doc(db, "users", newUser.uid), {
@@ -251,8 +274,6 @@ export default function useAuth() {
     } catch (err: any) {
       console.error("Registration process failed:", err);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -280,7 +301,7 @@ export default function useAuth() {
     await sendEmailVerification(auth.currentUser);
   };
 
-  const logout = async () => {
+  const logout = async (silent = false) => {
     setLoading(true);
     try {
       if (auth.currentUser) {
@@ -290,15 +311,20 @@ export default function useAuth() {
         }).catch(() => {});
         await createLog({
           uid: auth.currentUser.uid,
+          email: auth.currentUser.email || undefined,
           role: role ?? "unknown",
           action: "logout",
         });
       }
       await signOut(auth);
-      toast("Logout berhasil!");
+      if (!silent) {
+        toast.success("Logout berhasil!");
+      }
     } catch (err) {
       console.error(err);
-      toast.error("Logout gagal.");
+      if (!silent) {
+        toast.error("Logout gagal.");
+      }
     } finally {
         setLoading(false);
         setUser(null);
@@ -313,7 +339,9 @@ export default function useAuth() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       let userDoc = await fetchUserDoc(user.uid);
+      
       if (!userDoc) {
+        // New user - create Firestore document
         const newUser = {
           uid: user.uid,
           email: user.email,
@@ -325,18 +353,37 @@ export default function useAuth() {
           lastActive: serverTimestamp(),
           createdAt: serverTimestamp(),
         };
-        await setDoc(doc(db, "users", user.uid), newUser);
-        userDoc = { id: user.uid, data: newUser };
+        
+        try {
+          await setDoc(doc(db, "users", user.uid), newUser);
+          userDoc = { id: user.uid, data: newUser };
+          
+          // For new users, immediately sign them out and show pending message
+          toast.error("Akun berhasil dibuat. Menunggu persetujuan admin.");
+          await signOut(auth);
+          setUser(null);
+          setRole(null);
+          setLoading(false);
+          return;
+        } catch (firestoreError) {
+          console.error("Failed to create user document:", firestoreError);
+          // Clean up Firebase Auth user if Firestore creation fails
+          await user.delete();
+          throw new Error("Gagal membuat akun. Silakan coba lagi.");
+        }
       } else {
+        // Existing user - update online status
         await updateDoc(doc(db, "users", user.uid), {
           online: true,
           lastActive: serverTimestamp(),
         });
       }
       // `onAuthStateChanged` will handle the rest via `loadUser`
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google Sign-In error:", error);
-      toast.error("Gagal login dengan Google.");
+      toast.error(error.message || "Gagal login dengan Google.");
+      setUser(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }

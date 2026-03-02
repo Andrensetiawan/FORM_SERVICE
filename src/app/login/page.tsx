@@ -43,6 +43,7 @@ export default function Login() {
 
       // Redirect pending/unapproved users
       if (role === ROLES.PENDING || (isRoleRequiringApproval(role) && !approved)) {
+        toast.error("Akun menunggu persetujuan admin.");
         router.push("/pending-approval");
         return;
       }
@@ -142,9 +143,14 @@ export default function Login() {
     try {
       await signInWithGoogle();
       // Redirection is handled by the main useEffect hook
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google sign in error", error);
-      toast.error("Terjadi kesalahan saat masuk dengan Google.");
+      // Handle popup closed by user gracefully
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        // User cancelled, no error message needed
+        return;
+      }
+      toast.error(error?.message || "Terjadi kesalahan saat masuk dengan Google.");
     } finally {
       setGoogleLoading(false);
     }
@@ -170,6 +176,14 @@ export default function Login() {
     if (!auth.currentUser) {
        toast.error("Gagal mendapatkan data user. Coba login kembali.");
        return;
+    }
+    
+    // Reload user data to check latest verification status
+    await auth.currentUser.reload();
+    if (auth.currentUser.emailVerified) {
+      toast.success("Email sudah terverifikasi! Silakan refresh halaman.");
+      setShowResend(false);
+      return;
     }
 
     toast.loading("Mengirim ulang email...");

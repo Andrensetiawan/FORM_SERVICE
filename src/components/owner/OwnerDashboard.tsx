@@ -146,14 +146,14 @@ export default function OwnerDashboard() {
           <StatCard
             title="Layanan Selesai"
             value={completedServices}
-            subValue={`${((completedServices / totalServices) * 100).toFixed(1)}% dari total`}
+            subValue={totalServices > 0 ? `${((completedServices / totalServices) * 100).toFixed(1)}% dari total` : "Belum ada data"}
             icon={<CheckCircle size={24} />}
             color="blue"
           />
           <StatCard
             title="Layanan Pending"
             value={pendingServices}
-            subValue={`${((pendingServices / totalServices) * 100).toFixed(1)}% dari total`}
+            subValue={totalServices > 0 ? `${((pendingServices / totalServices) * 100).toFixed(1)}% dari total` : "Belum ada data"}
             icon={<Clock size={24} />}
             color="yellow"
           />
@@ -167,48 +167,108 @@ export default function OwnerDashboard() {
         </div>
 
         {/* ================== PERFORMA CABANG ================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <BarChart size={20} /> Performa per Cabang
-            </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                <BarChart size={24} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Performa per Cabang</h3>
+            </div>
 
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                  <th className="px-4 py-2 text-left font-semibold">Cabang</th>
-                  <th className="px-4 py-2 text-left font-semibold">Pendapatan</th>
-                  <th className="px-4 py-2 text-left font-semibold">Total Layanan</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {branchData.map((b) => (
-                  <tr key={b.name} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-2 text-gray-800 font-medium">{b.name}</td>
-                    <td className="px-4 py-2 text-gray-800">{formatCurrency(b.pendapatan)}</td>
-                    <td className="px-4 py-2 text-gray-800">{b.jumlahLayanan}</td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Cabang</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pendapatan</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Total Layanan</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {branchData.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-12 text-center">
+                        <div className="text-gray-400">
+                          <BarChart size={48} className="mx-auto mb-2 opacity-50" />
+                          <p className="text-sm italic">Belum ada data cabang</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    branchData.map((b, index) => (
+                      <motion.tr 
+                        key={b.name} 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="hover:bg-indigo-50/50 transition-colors duration-200 group"
+                      >
+                        <td className="px-4 py-4">
+                          <span className="font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                            {b.name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="font-bold text-emerald-600">{formatCurrency(b.pendapatan)}</span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            {b.jumlahLayanan} layanan
+                          </span>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* ================== AKTIVITAS TERBARU ================== */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Activity size={20} /> Aktivitas Terbaru
-            </h3>
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+              <div className="p-2 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg">
+                <Activity size={24} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Aktivitas Terbaru</h3>
+            </div>
 
-            <ul className="space-y-4">
-              {recentActivity.map((service) => (
-                <li key={service.id}>
-                  <p className="font-semibold text-gray-900">{service.nama}</p>
-                  <p className="text-sm text-gray-700">
-                    {service.track_number} • {service.cabang} •{' '}
-                    <span className="font-medium capitalize">{service.status}</span>
-                  </p>
+            <ul className="space-y-3">
+              {recentActivity.length === 0 ? (
+                <li className="text-center py-8">
+                  <Activity size={48} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm text-gray-400 italic">Belum ada aktivitas terbaru</p>
                 </li>
-              ))}
+              ) : (
+                recentActivity.map((service, index) => (
+                  <motion.li 
+                    key={service.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200 border border-transparent hover:border-gray-200"
+                  >
+                    <p className="font-bold text-gray-900 mb-1">{service.nama}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 flex-wrap">
+                      <span className="font-mono font-semibold text-indigo-600">{service.track_number}</span>
+                      <span className="text-gray-400">•</span>
+                      <span className="font-medium">{service.cabang}</span>
+                      <span className="text-gray-400">•</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
+                        ${
+                          service.status === 'done' ? 'bg-green-100 text-green-800' :
+                          service.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                          service.status === 'process' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }
+                      `}>
+                        {service.status}
+                      </span>
+                    </div>
+                  </motion.li>
+                ))
+              )}
             </ul>
           </div>
         </div>
@@ -217,9 +277,17 @@ export default function OwnerDashboard() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Owner</h1>
-      <p className="text-gray-600 mb-8">Ringkasan analitik bisnis dan kinerja</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.5 }}
+    >
+      <div className="mb-8">
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent mb-3">
+          Dashboard Owner
+        </h1>
+        <p className="text-gray-600 text-lg">Ringkasan analitik bisnis dan kinerja perusahaan</p>
+      </div>
 
       {renderContent()}
     </motion.div>

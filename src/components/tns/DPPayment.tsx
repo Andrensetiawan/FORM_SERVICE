@@ -7,6 +7,7 @@ import PhotoUploadSection from "./PhotoUploadSection";
 import { MediaItem } from "@/components/tns/types";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import useAuth from "@/hooks/useAuth";
+import { createLog } from "@/lib/log";
 import { Trash2, X } from "lucide-react";
 
 interface DPPaymentRecord {
@@ -139,6 +140,14 @@ export default function DPPayment({ docId, totalEstimasi, currentDp, buktiTransf
             const updatedPayments = dpPayments.filter(p => p.id !== paymentId);
             setDpPayments(updatedPayments);
             await syncApprovedDp(updatedPayments);
+            await createLog({
+                uid: user?.uid || "",
+                email: user?.email || undefined,
+                role: role || "unknown",
+                action: "delete_dp_payment",
+                target: docId,
+                detail: { paymentId, deletedAt: new Date().toISOString() }
+            });
             setSuccessMsg("Pembayaran DP berhasil dihapus");
         } catch (err: any) {
             console.error("Delete error:", err);
@@ -163,6 +172,14 @@ export default function DPPayment({ docId, totalEstimasi, currentDp, buktiTransf
             const updatedPayments = dpPayments.map(p => p.id === paymentId ? { ...p, status: 'approved' } : p);
             setDpPayments(updatedPayments);
             await syncApprovedDp(updatedPayments);
+            await createLog({
+                uid: user.uid,
+                email: user.email || undefined,
+                role: role || "unknown",
+                action: "approve_dp_payment",
+                target: docId,
+                detail: { paymentId, approvedBy: user.email }
+            });
             setSuccessMsg("DP berhasil diapprove!");
         } catch (err: any) {
             console.error("Approve error:", err);
@@ -187,6 +204,14 @@ export default function DPPayment({ docId, totalEstimasi, currentDp, buktiTransf
             const updatedPayments = dpPayments.map(p => p.id === paymentId ? { ...p, status: 'rejected' } : p);
             setDpPayments(updatedPayments);
             await syncApprovedDp(updatedPayments);
+            await createLog({
+                uid: user.uid,
+                email: user.email || undefined,
+                role: role || "unknown",
+                action: "reject_dp_payment",
+                target: docId,
+                detail: { paymentId, rejectedBy: user.email }
+            });
             setSuccessMsg("DP berhasil ditolak");
         } catch (err: any) {
             console.error("Reject error:", err);
@@ -197,6 +222,17 @@ export default function DPPayment({ docId, totalEstimasi, currentDp, buktiTransf
     };
 
     const handleSubmitPayment = async () => {
+        if (user) {
+            await createLog({
+                uid: user.uid,
+                email: user.email || undefined,
+                role: role || "unknown",
+                action: "create_dp_payment",
+                target: docId,
+                detail: { amount: dpAmount, note: note }
+            });
+        }
+        
         if (dpAmount < 100000) {
             setErrorMsg("DP minimal 100,000");
             return;

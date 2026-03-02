@@ -13,41 +13,52 @@ interface StatCardProps {
   color: ColorKey;
 }
 
-const colorSchemes: Record<ColorKey, { bg: string; text: string }> = {
+const colorSchemes: Record<ColorKey, { gradient: string; iconBg: string; iconColor: string; accentColor: string }> = {
   green: {
-    bg: 'bg-green-100',
-    text: 'text-green-800',
+    gradient: 'from-emerald-500 to-green-600',
+    iconBg: 'bg-gradient-to-br from-emerald-400 to-green-500',
+    iconColor: 'text-white',
+    accentColor: 'text-emerald-600',
   },
   blue: {
-    bg: 'bg-blue-100',
-    text: 'text-blue-800',
+    gradient: 'from-blue-500 to-indigo-600',
+    iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-500',
+    iconColor: 'text-white',
+    accentColor: 'text-blue-600',
   },
   yellow: {
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-800',
+    gradient: 'from-amber-500 to-orange-600',
+    iconBg: 'bg-gradient-to-br from-amber-400 to-orange-500',
+    iconColor: 'text-white',
+    accentColor: 'text-amber-600',
   },
   gray: {
-    bg: 'bg-gray-100',
-    text: 'text-gray-800',
+    gradient: 'from-slate-500 to-gray-600',
+    iconBg: 'bg-gradient-to-br from-slate-400 to-gray-500',
+    iconColor: 'text-white',
+    accentColor: 'text-slate-600',
   },
 };
 
 export const StatCard = ({ title, value, subValue, icon, color }: StatCardProps) => {
-  const { bg, text } = colorSchemes[color] || colorSchemes.gray;
+  const { gradient, iconBg, iconColor, accentColor } = colorSchemes[color] || colorSchemes.gray;
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-      className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+      whileHover={{ y: -6, scale: 1.02 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      className="relative bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden group"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</h3>
-          <p className="text-3xl font-bold text-gray-900 my-1">{value}</p>
-          <p className={`text-xs ${text} font-medium`}>{subValue}</p>
+      {/* Gradient overlay on hover */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+      
+      <div className="relative flex items-start justify-between">
+        <div className="flex-1">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{title}</h3>
+          <p className={`text-4xl font-extrabold ${accentColor} mb-2`}>{value}</p>
+          <p className="text-sm text-gray-600 font-medium">{subValue}</p>
         </div>
-        <div className={`p-4 rounded-full ${bg} ${text}`}>
+        <div className={`p-3 rounded-xl ${iconBg} ${iconColor} shadow-md`}>
           {icon}
         </div>
       </div>

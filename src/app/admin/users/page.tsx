@@ -164,18 +164,19 @@ export default function AdminUsersPage() {
         const changes = modified[uid];
         await updateDoc(doc(db, "users", uid), { ...changes });
 
-        Object.entries(changes).forEach(([key, value]) => {
+        for (const [key, value] of Object.entries(changes)) {
           const oldValue = oldUser[key as keyof UserRow];
           if (value !== oldValue) {
-            createLog({
+            await createLog({
               uid: adminUser?.uid || "",
+              email: adminUser?.email || undefined,
               role: currentAdminRole || "unknown",
               action: `change_${key}`,
               detail: `from ${oldValue} → ${value}`,
               target: oldUser.email || "",
             });
           }
-        });
+        }
       }));
 
       toast.success("Perubahan berhasil disimpan.");
@@ -196,8 +197,9 @@ export default function AdminUsersPage() {
     try {
       await deleteDoc(doc(db, "users", itemToDelete.id));
       
-      createLog({
+      await createLog({
         uid: adminUser?.uid || "",
+        email: adminUser?.email || undefined,
         role: currentAdminRole || "unknown",
         action: "delete_user",
         detail: `Deleted user ${itemToDelete.email}`,

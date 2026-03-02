@@ -77,23 +77,30 @@ export default function ServiceReportPage() {
         let serviceQuery = query(collection(db, "service_requests"));
 
         const now = new Date();
-        const nowUtc = new Date(now.toISOString()); // Get current date/time in UTC string, then parse it back as a Date object to ensure UTC interpretation
 
         let queryStartDate: Date | null = null;
         let queryEndDate: Date | null = null;
 
         if (selectedPeriod === "today") {
-          queryStartDate = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth(), nowUtc.getDate())); // Start of today in UTC
-          queryEndDate = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth(), nowUtc.getDate(), 23, 59, 59, 999)); // End of today in UTC
+          queryStartDate = new Date();
+          queryStartDate.setHours(0, 0, 0, 0);
+          queryEndDate = new Date();
+          queryEndDate.setHours(23, 59, 59, 999);
         } else if (selectedPeriod === "week") {
-          const dayOfWeek = nowUtc.getUTCDay(); // 0 for Sunday, 1 for Monday
-          const diff = nowUtc.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday of the current UTC week
-
-          queryStartDate = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth(), diff));
-          queryEndDate = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth(), diff + 6, 23, 59, 59, 999)); // End of Sunday of the current UTC week
+          const dayOfWeek = now.getDay();
+          const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+          
+          queryStartDate = new Date(now.getFullYear(), now.getMonth(), diff);
+          queryStartDate.setHours(0, 0, 0, 0);
+          
+          queryEndDate = new Date(now.getFullYear(), now.getMonth(), diff + 6);
+          queryEndDate.setHours(23, 59, 59, 999);
         } else if (selectedPeriod === "month") {
-          queryStartDate = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth(), 1)); // Start of the month in UTC
-          queryEndDate = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth() + 1, 0, 23, 59, 59, 999)); // End of the month in UTC
+          queryStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          queryStartDate.setHours(0, 0, 0, 0);
+          
+          queryEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          queryEndDate.setHours(23, 59, 59, 999);
         }
 
         console.log("Fetching services for period:", selectedPeriod);

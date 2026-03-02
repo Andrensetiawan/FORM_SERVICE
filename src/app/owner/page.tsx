@@ -10,7 +10,7 @@ export default function OwnerPage() {
     <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.MANAGER]}>
       <div className="min-h-screen bg-gray-100">
         <NavbarSwitcher />
-        <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-20 pt-40">
           <OwnerDashboard />
         </main>
       </div>
