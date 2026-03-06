@@ -86,12 +86,12 @@ service cloud.firestore {
         allow read: if true;
 
         // PUBLIC boleh membuat customer_log entry, tapi batasi ukuran dan media count
-        allow create: if request.resource.data.body is string
-                      && request.resource.data.body.size() > 0
-                      && request.resource.data.body.size() <= 2000
+        allow create: if request.resource.data.comment is string
+                      && request.resource.data.comment.size() >= 0
+                      && request.resource.data.comment.size() <= 2000
                       && (
                         !request.resource.data.keys().hasAny(['mediaUrls'])
-                        || (request.resource.data.mediaUrls is list && request.resource.data.mediaUrls.size() <= 6)
+                        || (request.resource.data.mediaUrls is list && request.resource.data.mediaUrls.size() <= 10)
                       );
 
         // Tidak mengizinkan update (immutable)
