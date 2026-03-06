@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebaseConfig";
@@ -15,7 +15,7 @@ type LastPageLog = {
 const LAST_LOG_KEY = "__last_page_log__";
 const DUPLICATE_WINDOW_MS = 10000;
 
-export default function RouteActivityLogger() {
+function RouteActivityLoggerInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -79,4 +79,12 @@ export default function RouteActivityLogger() {
   }, [pathname, searchParams]);
 
   return null;
+}
+
+export default function RouteActivityLogger() {
+  return (
+    <Suspense fallback={null}>
+      <RouteActivityLoggerInner />
+    </Suspense>
+  );
 }

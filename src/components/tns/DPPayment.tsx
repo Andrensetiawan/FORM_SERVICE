@@ -430,6 +430,7 @@ export default function DPPayment({ docId, totalEstimasi, currentDp, buktiTransf
                         Min: Rp 100.000, Max: Rp {totalEstimasi.toLocaleString("id-ID")}
                     </p>
                 </div>
+
                 <div className="flex gap-3">
                     <button 
                         onClick={handleSaveDP} 

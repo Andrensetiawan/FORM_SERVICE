@@ -18,12 +18,12 @@ export async function createLog(entry: LogEntry) {
     const currentUser = auth.currentUser;
 
     await addDoc(collection(db, "logs"), {
+      ...entry,
       uid: entry.uid || currentUser?.uid || "unknown",
       email: entry.email ?? currentUser?.email ?? undefined,
       userAgent:
         entry.userAgent ??
         (typeof navigator !== "undefined" ? navigator.userAgent : undefined),
-      ...entry,
       timestamp: serverTimestamp(),
     });
   } catch (err) {

@@ -34,6 +34,45 @@ export default function PublicViewPage() {
   const [buktiTransferPhotoUrl, setBuktiTransferPhotoUrl] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const companyRules = [
+    {
+      title: "Perbaikan sesuai kemampuan teknisi",
+      description: "Perbaikan dilakukan sesuai kapasitas, ilmu, dan pengalaman teknisi.",
+    },
+    {
+      title: "Risiko kerusakan bisa bertambah",
+      description: "Jika kondisi kerusakan berubah/bertambah parah saat diperbaiki, itu di luar tanggung jawab penyedia layanan.",
+    },
+    {
+      title: "Perbaikan setelah persetujuan",
+      description: "Estimasi waktu dan biaya diinformasikan terlebih dahulu, perbaikan dilakukan setelah disetujui pelanggan.",
+    },
+    {
+      title: "Tidak bisa batal sepihak",
+      description: "Perbaikan tidak bisa dibatalkan jika sudah dikonfirmasi.",
+    },
+    {
+      title: "Barang tidak diambil 30 hari",
+      description: "Penyedia layanan tidak bertanggung jawab jika barang tidak diambil dalam 30 hari setelah konfirmasi selesai, termasuk risiko force majeure.",
+    },
+    {
+      title: "Data & software tanggung jawab pelanggan",
+      description: "Data, dokumen, dan aplikasi adalah tanggung jawab pelanggan.",
+    },
+    {
+      title: "Risiko kehilangan data",
+      description: "Kehilangan/kerusakan data saat perbaikan bukan tanggung jawab teknisi, pelanggan dianggap sudah backup.",
+    },
+    {
+      title: "Biaya pembatalan (Cancel Fee)",
+      description: "Cancel fee berkisar Rp50.000 – Rp100.000 sesuai tingkat kerusakan.",
+    },
+    {
+      title: "Garansi terbatas",
+      description: "Garansi hanya untuk kerusakan yang sama, batal jika segel rusak, barang cacat/terbakar, atau akibat kelalaian pemakaian.",
+    },
+  ];
+
   const setErrorMsg = (msg: string | null) => { if (msg) toast.error(msg); };
   const setSuccessMsg = (msg: string | null) => { if (msg) toast.success(msg); };
 
@@ -144,6 +183,10 @@ export default function PublicViewPage() {
           padding: 1.5rem;
           margin-bottom: 1.5rem;
         }
+        .card.card-warning {
+          background-color: #fffbeb !important;
+          border-color: #fcd34d !important;
+        }
         .card .bg-\[\#0f1c33\] {
           background-color: transparent !important;
           border: none !important;
@@ -222,6 +265,21 @@ export default function PublicViewPage() {
             onDpUpdate={handleDpChange}
           />
         )}
+
+        <div className="card card-warning">
+          <h3 className="text-lg font-semibold mb-3 border-b pb-2">Aturan Layanan Perusahaan</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Mohon dibaca sebelum proses perbaikan berjalan.
+          </p>
+          <ol className="list-decimal pl-5 space-y-3 text-sm text-gray-700">
+            {companyRules.map((rule, index) => (
+              <li key={rule.title}>
+                <p className="font-semibold text-gray-800">{rule.title}</p>
+                <p>{rule.description}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
 
         <div className="card">
           <CustomerLog
